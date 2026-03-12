@@ -1,0 +1,26 @@
+# IntelliJ
+.idea/
+*.iml
+
+# Gradle build outputs
+backend/build/
+backend/bin/
+backend/.gradle/
+renter/backend/build/
+renter/backend/bin/
+renter/backend/.gradle/
+
+# Node.js
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+
+# Environment files
+.env
+**/.env
+.env.*
+**/.env.*
+
+# Logs
+*.log

@@ -307,7 +307,7 @@ pipeline {
                     mkdir -p /home/ubuntu/nginx
 
                     # nginx.conf 생성 (placeholder 치환)
-                    cp infra/nginx/nginx.conf /home/ubuntu/nginx/nginx.conf
+                    cp /home/ubuntu/infra/nginx/nginx.conf /home/ubuntu/nginx/nginx.conf
                     sed -i "s|__BACKEND_HOST__|backend-$BACKEND_COLOR|g" /home/ubuntu/nginx/nginx.conf
                     sed -i "s|__RENTER_ROOT__|/usr/share/nginx/html/renter-$RENTER_COLOR|g" /home/ubuntu/nginx/nginx.conf
                     sed -i "s|__COMPANY_ROOT__|/usr/share/nginx/html/company-$COMPANY_COLOR|g" /home/ubuntu/nginx/nginx.conf

@@ -8,7 +8,7 @@ pipeline {
 
     environment {
         TARGET_BRANCH = "release"
-        DOCKER_NETWORK = "app-network"
+        DOCKER_NETWORK = "care-network"
 
         // Backend
         BACKEND_IMAGE = "spring-boot-app:latest"

@@ -303,17 +303,13 @@ pipeline {
 
                     echo "Active - Backend: $BACKEND_COLOR, Renter: $RENTER_COLOR, Company: $COMPANY_COLOR"
 
-                    # nginx.conf 저장 디렉토리 초기화
-                    mkdir -p /home/ubuntu/nginx
+                    # nginx.conf 생성 (placeholder 치환) → bind mount 경로에 직접 write
+                    cp infra/nginx/nginx.conf /home/ubuntu/infra/nginx/nginx.conf
+                    sed -i "s|__BACKEND_HOST__|backend-$BACKEND_COLOR|g" /home/ubuntu/infra/nginx/nginx.conf
+                    sed -i "s|__RENTER_ROOT__|/usr/share/nginx/html/renter-$RENTER_COLOR|g" /home/ubuntu/infra/nginx/nginx.conf
+                    sed -i "s|__COMPANY_ROOT__|/usr/share/nginx/html/company-$COMPANY_COLOR|g" /home/ubuntu/infra/nginx/nginx.conf
 
-                    # nginx.conf 생성 (placeholder 치환)
-                    cp infra/nginx/nginx.conf /home/ubuntu/nginx/nginx.conf
-                    sed -i "s|__BACKEND_HOST__|backend-$BACKEND_COLOR|g" /home/ubuntu/nginx/nginx.conf
-                    sed -i "s|__RENTER_ROOT__|/usr/share/nginx/html/renter-$RENTER_COLOR|g" /home/ubuntu/nginx/nginx.conf
-                    sed -i "s|__COMPANY_ROOT__|/usr/share/nginx/html/company-$COMPANY_COLOR|g" /home/ubuntu/nginx/nginx.conf
-
-                    # Nginx 설정 검증 후 무중단 reload
-                    docker cp /home/ubuntu/nginx/nginx.conf ${NGINX_CONTAINER}:/etc/nginx/conf.d/default.conf
+                    # Nginx 설정 검증 후 무중단 reload (bind mount이므로 docker cp 불필요)
                     docker exec ${NGINX_CONTAINER} nginx -t
                     docker exec ${NGINX_CONTAINER} nginx -s reload
 

@@ -313,7 +313,7 @@ pipeline {
                     sed -i "s|__COMPANY_ROOT__|/usr/share/nginx/html/company-$COMPANY_COLOR|g" /home/ubuntu/nginx/nginx.conf
 
                     # Nginx 설정 검증 후 무중단 reload
-                    cat /home/ubuntu/nginx/nginx.conf | docker exec -i ${NGINX_CONTAINER} sh -c "cat > /etc/nginx/conf.d/default.conf"
+                    docker cp /home/ubuntu/nginx/nginx.conf ${NGINX_CONTAINER}:/etc/nginx/conf.d/default.conf
                     docker exec ${NGINX_CONTAINER} nginx -t
                     docker exec ${NGINX_CONTAINER} nginx -s reload
 

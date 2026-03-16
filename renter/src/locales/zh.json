@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "main": "主页",
+    "myCar": "我的车",
+    "profile": "个人资料"
+  },
+  "profile": {
+    "title": "个人资料",
+    "account": "账户",
+    "settings": "设置",
+    "support": "支持",
+    "editInfo": "编辑资料",
+    "reservations": "预订记录",
+    "languageSettings": "语言设置",
+    "notifications": "通知设置",
+    "customerSupport": "客服中心",
+    "logout": "退出登录",
+    "wallet": "我的钱包",
+    "viewAll": "查看全部",
+    "availableBalance": "可用余额",
+    "cardHint": "点击翻转",
+    "userName": "用户"
+  },
+  "language": {
+    "pageTitle": "选择语言",
+    "settingsTitle": "语言设置",
+    "current": "当前语言",
+    "confirm": "确认",
+    "save": "保存"
+  },
+  "home": {
+    "search": "搜索",
+    "pickupCountry": "取车国家",
+    "pickupLocation": "取车地点",
+    "pickupDate": "取车日期",
+    "returnDate": "还车日期",
+    "time": "时间",
+    "carType": "车辆类型",
+    "showAll": "查看所有可用车辆",
+    "country": "国家",
+    "carKind": "车型",
+    "company": "公司"
+  },
+  "common": {
+    "signIn": "登录",
+    "signUp": "注册",
+    "back": "返回",
+    "loading": "加载中..."
+  }
+}

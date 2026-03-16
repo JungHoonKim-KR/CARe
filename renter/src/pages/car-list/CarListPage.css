@@ -1,0 +1,254 @@
+/* ── 전체 ────────────────────────────────── */
+.cl-wrap {
+  min-height: 100vh;
+  background: #fff;
+  padding-bottom: 80px;
+}
+
+/* ── 헤더 ────────────────────────────────── */
+.cl-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.cl-back {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.cl-header-info {
+  flex: 1;
+}
+
+.cl-loc {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cl-date {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
+}
+
+.cl-logo {
+  width: 68px;
+  flex-shrink: 0;
+}
+
+/* ── 필터 칩 ─────────────────────────────── */
+.cl-filter-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px;
+  overflow-x: auto;
+  background: #fff;
+  border-bottom: 1px solid #f5f5f5;
+  scrollbar-width: none;
+}
+
+.cl-filter-row::-webkit-scrollbar { display: none; }
+
+.cl-chip {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1.5px solid #e8e8e8;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.cl-chip.on {
+  border-color: #F7A633;
+  background: #F7A633;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ── 정렬 바 ─────────────────────────────── */
+.cl-sort-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: #fafafa;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.cl-count {
+  font-size: 13px;
+  color: #999;
+  font-weight: 500;
+}
+
+.cl-sorts {
+  display: flex;
+  gap: 4px;
+}
+
+.cl-sort {
+  padding: 4px 10px;
+  border-radius: 14px;
+  border: 1px solid #e8e8e8;
+  background: #fff;
+  font-size: 12px;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.cl-sort.on {
+  border-color: #F7A633;
+  color: #F7A633;
+  font-weight: 700;
+}
+
+/* ── 카드 목록 ───────────────────────────── */
+.cl-list {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── 차량 카드 ───────────────────────────── */
+.cl-card {
+  border: 1px solid #f0f0f0;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.13s;
+  background: #fff;
+}
+
+.cl-card:active {
+  transform: scale(0.985);
+}
+
+/* 이미지 영역 */
+.cl-img {
+  position: relative;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cl-emoji {
+  font-size: 72px;
+  line-height: 1;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.08));
+}
+
+.cl-heart {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: rgba(255,255,255,0.88);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+/* 정보 영역 */
+.cl-info {
+  padding: 14px 16px 16px;
+  border-top: 1px solid #f5f5f5;
+}
+
+.cl-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 7px;
+}
+
+.cl-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.cl-star  { color: #F7A633; font-size: 13px; }
+.cl-rv    { font-size: 13px; font-weight: 700; color: #111; }
+.cl-rcnt  { font-size: 12px; color: #aaa; }
+
+.cl-dot-sep {
+  font-size: 12px;
+  color: #ddd;
+  margin: 0 2px;
+}
+
+.cl-tag {
+  background: #f5f5f5;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #666;
+  font-weight: 500;
+}
+
+.cl-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cl-price { margin: 0; }
+
+.cl-pnum {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111;
+}
+
+.cl-punit {
+  font-size: 12px;
+  color: #999;
+}
+
+.cl-btn {
+  background: #F7A633;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+
+.cl-btn:active { opacity: 0.85; }

@@ -20,6 +20,11 @@ import DIDPassportGuidePage from './pages/did-auth/DIDPassportGuidePage'
 import DIDCameraPage from './pages/did-auth/DIDCameraPage'
 import DIDConfirmPage from './pages/did-auth/DIDConfirmPage'
 import ScanPage from './pages/scan/ScanPage'
+import CarFaceAuthPage from './pages/car-faceauth/CarFaceAuthPage'
+import CarSmartKeyPage from './pages/car-smartkey/CarSmartKeyPage'
+import CarCrackPage from './pages/car-crack/CarCrackPage'
+import DamageHistoryPage from './pages/damage-history/DamageHistoryPage'
+import DamageDetailPage from './pages/damage-detail/DamageDetailPage'
 
 function App() {
   return (
@@ -46,6 +51,11 @@ function App() {
           <Route path="/did-guide" element={<DIDPassportGuidePage />} />
           <Route path="/did-camera" element={<DIDCameraPage />} />
           <Route path="/did-confirm" element={<DIDConfirmPage />} />
+          <Route path="/car-faceauth" element={<CarFaceAuthPage />} />
+          <Route path="/car-crack" element={<CarCrackPage />} />
+          <Route path="/car-smartkey" element={<CarSmartKeyPage />} />
+          <Route path="/damage-history" element={<DamageHistoryPage />} />
+          <Route path="/damage-detail" element={<DamageDetailPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

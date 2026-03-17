@@ -1,4 +1,4 @@
-package com.care.domain.member.entity;
+package com.care.domain.renter.entity;
 
 import com.care.global.entity.BaseEntity;
 import jakarta.persistence.*;

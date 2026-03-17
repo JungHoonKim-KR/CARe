@@ -24,6 +24,12 @@ export const getScratchDetail = async (scratchId) => {
   return response.data
 }
 
+// 차량 전체 흠집 이력 조회 (해당 차량의 모든 예약 기록)
+export const getCarScratchHistory = async (carId) => {
+  const response = await api.get(`/api/cars/${carId}/scratches`)
+  return response.data
+}
+
 // 스마트키 활성화
 export const activateSmartKey = async (reservationId) => {
   const response = await api.post(`/api/renter/reservations/${reservationId}/smart-key/activate`)

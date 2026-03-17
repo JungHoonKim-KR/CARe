@@ -1,0 +1,364 @@
+.mc-page {
+  min-height: 100vh;
+  background: #f5f5f7;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 80px;
+  position: relative;
+}
+
+/* 로딩 */
+.mc-loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #888;
+  font-size: 14px;
+}
+
+.mc-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #eee;
+  border-top-color: #F7A633;
+  border-radius: 50%;
+  animation: mc-spin 0.8s linear infinite;
+}
+
+@keyframes mc-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 빈 상태 */
+.mc-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+}
+
+.mc-empty-icon {
+  width: 72px;
+  opacity: 0.4;
+}
+
+.mc-empty-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #222;
+  margin: 0;
+}
+
+.mc-empty-desc {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.mc-empty-btn {
+  margin-top: 8px;
+  background: #F7A633;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 32px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* 스크롤 영역 */
+.mc-scroll {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* 차량 헤더 */
+.mc-car-header {
+  background: white;
+  padding: 24px 20px 16px;
+}
+
+.mc-plate-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.mc-plate {
+  font-size: 13px;
+  color: #888;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.mc-nft-badge {
+  background: #F7A633;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+.mc-car-name {
+  font-size: 26px;
+  font-weight: 800;
+  color: #111;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+/* 차량 이미지 */
+.mc-car-image-wrap {
+  background: white;
+  padding: 8px 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+}
+
+.mc-car-image {
+  width: 100%;
+  max-width: 320px;
+  object-fit: contain;
+}
+
+.mc-car-emoji-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.mc-car-emoji {
+  font-size: 120px;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.12));
+}
+
+/* 배터리/주행 카드 */
+.mc-stats-card {
+  background: white;
+  margin: 8px 0 0;
+  padding: 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mc-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.mc-stat-divider {
+  width: 1px;
+  height: 36px;
+  background: #e5e5e5;
+}
+
+.mc-stat-label {
+  font-size: 13px;
+  color: #888;
+  margin: 0;
+}
+
+.mc-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+
+/* 예약 정보 카드 */
+.mc-info-card {
+  background: white;
+  margin: 8px 0 0;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mc-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mc-info-label {
+  font-size: 14px;
+  color: #888;
+}
+
+.mc-info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+}
+
+/* 흠집 섹션 */
+.mc-scratch-section {
+  background: white;
+  margin: 8px 0 0;
+  padding: 20px;
+}
+
+.mc-scratch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.mc-scratch-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mc-scratch-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #222;
+}
+
+.mc-scratch-badge {
+  background: #FF4D4F;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+}
+
+.mc-scratch-more {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #F7A633;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.mc-scratch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #f8f8f8;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.mc-scratch-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  gap: 16px;
+  border-bottom: 1px solid #efefef;
+}
+
+.mc-scratch-item:last-child {
+  border-bottom: none;
+}
+
+.mc-scratch-date {
+  font-size: 13px;
+  color: #aaa;
+  min-width: 80px;
+}
+
+.mc-scratch-desc {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.mc-scratch-empty {
+  text-align: center;
+  font-size: 14px;
+  color: #bbb;
+  padding: 20px 0;
+}
+
+/* 스마트키 */
+.mc-smartkey-bar {
+  position: fixed;
+  bottom: 88px;
+  left: 16px;
+  right: 16px;
+  z-index: 100;
+}
+
+.mc-smartkey-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #F7A633;
+  border-radius: 18px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 20px rgba(247, 166, 51, 0.45);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.mc-smartkey-bar.active .mc-smartkey-inner {
+  background: #2d9e5b;
+  box-shadow: 0 4px 20px rgba(45, 158, 91, 0.4);
+}
+
+.mc-smartkey-icon-wrap {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mc-smartkey-label {
+  flex: 1;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.mc-smartkey-toggle {
+  background: rgba(255, 255, 255, 0.22);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.mc-smartkey-toggle:active {
+  background: rgba(255, 255, 255, 0.38);
+}

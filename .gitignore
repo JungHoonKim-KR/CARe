@@ -17,7 +17,7 @@ dist/
 **/dist/
 
 # Environment files
-.env
+backend/.env
 **/.env
 .env.*
 **/.env.*

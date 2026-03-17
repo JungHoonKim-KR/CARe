@@ -36,6 +36,62 @@ function formatDateLabel(dateStr) {
   return { month: d.getMonth() + 1, day: d.getDate(), weekday: WEEKDAYS[d.getDay()] }
 }
 
+
+function getPickupStatus(reservation) {
+  if (!reservation?.startDate || !reservation?.endDate) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const start = new Date(reservation.startDate)
+  start.setHours(0, 0, 0, 0)
+  const end = new Date(reservation.endDate)
+  end.setHours(0, 0, 0, 0)
+
+  const msPerDay = 1000 * 60 * 60 * 24
+  const daysToStart = Math.round((start - today) / msPerDay)
+  const daysToEnd   = Math.round((end - today) / msPerDay)
+  const totalRental = Math.round((end - start) / msPerDay)
+  const elapsedRental = Math.round((today - start) / msPerDay)
+
+  if (daysToStart > 0) {
+    // 픽업 전
+    return {
+      type: 'before',
+      label: `픽업 D-${daysToStart}`,
+      sub: `${reservation.startDate.replace(/-/g, '.')} 픽업 예정`,
+      color: '#F7A633',
+      progress: 0,
+    }
+  } else if (daysToStart === 0) {
+    // 픽업 당일
+    return {
+      type: 'today',
+      label: '오늘 픽업 가능!',
+      sub: '픽업 장소로 이동해주세요',
+      color: '#4CAF50',
+      progress: 0,
+    }
+  } else if (daysToEnd > 0) {
+    // 대여 중
+    const progress = totalRental > 0 ? Math.min(elapsedRental / totalRental, 1) : 0
+    return {
+      type: 'active',
+      label: `반납 D-${daysToEnd}`,
+      sub: `${reservation.endDate.replace(/-/g, '.')} 반납 예정`,
+      color: '#5B8DEF',
+      progress,
+    }
+  } else {
+    // 반납일 당일 or 이후
+    return {
+      type: 'return',
+      label: '반납일',
+      sub: '오늘 차량을 반납해주세요',
+      color: '#888',
+      progress: 1,
+    }
+  }
+}
+
 export default function MyCarPage() {
   const navigate = useNavigate()
   const [reservation, setReservation] = useState(null)
@@ -103,6 +159,7 @@ export default function MyCarPage() {
   const crackDone = reservation
     ? localStorage.getItem(`crackDone_${reservation.reservationId}`) === 'true'
     : false
+  const pickupStatus = getPickupStatus(reservation)
   const startLabel = formatDateLabel(reservation.startDate)
   const endLabel = formatDateLabel(reservation.endDate)
 
@@ -177,6 +234,25 @@ export default function MyCarPage() {
               <p className="mc-schedule-time">{reservation.endTime || '--:--'}</p>
             </div>
           </div>
+          {/* 진행 바 + D-day */}
+          {pickupStatus && (
+            <div className="mc-schedule-progress-wrap">
+              <div className="mc-schedule-bar-bg">
+                <div
+                  className="mc-schedule-bar-fill"
+                  style={{
+                    width: pickupStatus.type === 'active' ? `${pickupStatus.progress * 100}%` :
+                           pickupStatus.type === 'return' ? '100%' : '0%',
+                    background: pickupStatus.color,
+                  }}
+                />
+              </div>
+              <span className="mc-schedule-dday" style={{ color: pickupStatus.color }}>
+                {pickupStatus.label}
+              </span>
+            </div>
+          )}
+
           <div className="mc-schedule-location">
             <svg width="13" height="13" viewBox="0 0 24 24">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" fill="#F7A633"/>

@@ -581,3 +581,34 @@
   padding: 4px;
   font-family: inherit;
 }
+
+
+/* ── 일정 카드 내 진행 바 ──────────────── */
+.mc-schedule-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 10px;
+}
+
+.mc-schedule-bar-bg {
+  flex: 1;
+  height: 7px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mc-schedule-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+  min-width: 4px;
+}
+
+.mc-schedule-dday {
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  letter-spacing: -0.3px;
+}

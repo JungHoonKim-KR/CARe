@@ -92,9 +92,10 @@ export default function BookingCompletePage() {
         <div style={{ height: 120 }} />
       </div>
 
-      {/* 닫기 버튼 */}
+      {/* 하단 버튼 */}
       <div className="bc-btn-area">
-        <button className="bc-btn" onClick={() => navigate('/home')}>닫기</button>
+        <button className="bc-btn-ghost" onClick={() => navigate('/home')}>홈으로</button>
+        <button className="bc-btn" onClick={() => navigate('/my-car')}>내 차량 확인하기 →</button>
       </div>
 
       <BottomNav />

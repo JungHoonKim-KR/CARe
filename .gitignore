@@ -40,3 +40,29 @@ __pycache__/
 .claude
 .tldr
 .tldignore
+
+# OS files (의도치 않은 설정 공유 방지)
+.DS_Store
+Thumbs.db
+
+# Package Manager Caches (빌드 속도와 저장 공간 최적화)
+.npm/
+.eslintcache
+package-lock.json  
+
+# Testing & Coverage (리포트 파일 제외)
+coverage/
+backend/build/reports/
+
+# Temporary files & IDE extras
+*.tmp
+*.bak
+*.swp
+.vscode/           
+!.vscode/settings.json 
+
+# Python/기타 (혹시 모를 스크립트 도구 대비)
+__pycache__/
+*.py[cod]
+models/
+**/models/*.pt

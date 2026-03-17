@@ -15,6 +15,9 @@ import CarDetailPage from './pages/car-detail/CarDetailPage'
 import PaymentPage from './pages/payment/PaymentPage'
 import BookingCompletePage from './pages/booking-complete/BookingCompletePage'
 import WalletPage from './pages/wallet/WalletPage'
+import DamageHistoryPage from './pages/damage-history/DamageHistoryPage'
+import DamageDetailPage from './pages/damage-detail/DamageDetailPage'
+import ScanPage from './pages/scan/ScanPage'
 
 function App() {
   return (
@@ -23,6 +26,7 @@ function App() {
         <Routes>
           <Route path="/" element={<SplashPage />} />
           <Route path="/landing" element={<LandingPage />} />
+          <Route path="/scan" element={<ScanPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -36,6 +40,8 @@ function App() {
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/booking-complete" element={<BookingCompletePage />} />
           <Route path="/wallet" element={<WalletPage />} />
+          <Route path="/damage-history" element={<DamageHistoryPage />} />
+          <Route path="/damage-detail" element={<DamageDetailPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

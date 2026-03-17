@@ -28,7 +28,7 @@ spring:
     activate:
       on-profile: local
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:demoapp}
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:care}
     username: ${DB_USER:root}
     password: ${DB_PASS:1234}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -46,9 +46,10 @@ spring:
       port: ${REDIS_PORT:6379}
 
 blockchain:
-  rpc-url: ${BLOCKCHAIN_RPC_URL:https://rpc-amoy.polygon.technology}
-  private-key: ${PRIVATE_KEY:}
-  chain-id: ${BLOCKCHAIN_CHAIN_ID:80002}
+
+  rpc-url: ${RPC_URL:https://rpc.ssafy-blockchain.com}
+  private-key: ${PRIVATE_KEY:your-private-key-here}
+  chain-id: ${CHAIN_ID:31221}
   contracts:
     car-nft: ${CAR_NFT_ADDRESS:}
     did-registry: ${DID_REGISTRY_ADDRESS:}

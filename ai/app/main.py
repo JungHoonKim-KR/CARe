@@ -4,7 +4,8 @@ from app.api.routes.health import router as health_router
 from app.api.routes.scratches import router as scratches_router
 from app.api.routes.face import router as face_router
 
-
+from dotenv import load_dotenv
+load_dotenv()
 def create_app() -> FastAPI:
     app = FastAPI(
         title="Scratch Comparison API",

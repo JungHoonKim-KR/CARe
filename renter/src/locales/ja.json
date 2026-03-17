@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "main": "メイン",
+    "myCar": "マイカー",
+    "profile": "プロフィール"
+  },
+  "profile": {
+    "title": "プロフィール",
+    "account": "アカウント",
+    "settings": "設定",
+    "support": "サポート",
+    "editInfo": "プロフィール編集",
+    "reservations": "予約履歴",
+    "languageSettings": "言語設定",
+    "notifications": "通知設定",
+    "customerSupport": "カスタマーサポート",
+    "logout": "ログアウト",
+    "wallet": "マイウォレット",
+    "viewAll": "すべて見る",
+    "availableBalance": "利用可能残高",
+    "cardHint": "タップして裏返す",
+    "userName": "ユーザー"
+  },
+  "language": {
+    "pageTitle": "言語を選択してください",
+    "settingsTitle": "言語設定",
+    "current": "現在の言語",
+    "confirm": "選択する",
+    "save": "保存する"
+  },
+  "home": {
+    "search": "検索",
+    "pickupCountry": "ピックアップ国",
+    "pickupLocation": "ピックアップ場所",
+    "pickupDate": "ピックアップ日",
+    "returnDate": "返却日",
+    "time": "時間",
+    "carType": "車両タイプ",
+    "showAll": "すべての利用可能な車を見る",
+    "country": "国",
+    "carKind": "車種",
+    "company": "会社"
+  },
+  "common": {
+    "signIn": "ログイン",
+    "signUp": "新規登録",
+    "back": "戻る",
+    "loading": "読み込み中..."
+  }
+}

@@ -1,0 +1,57 @@
+# ===========================================
+# 공통 설정 (모든 프로파일 공통)
+# ===========================================
+server:
+  servlet:
+    context-path: ${CONTEXT_PATH:/api}
+  multipart:
+    max-file-size: 20MB
+    max-request-size: 20MB
+
+spring:
+  profiles:
+    active: local
+  application:
+    name: care
+
+logging:
+  level:
+    com.sonata.inspection: ${LOGGING_LEVEL_ROOT:debug}
+    org.springframework.integration: info
+
+---
+# ===========================================
+# local 프로파일 전용 설정
+# ===========================================
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:care}
+    username: ${DB_USER:root}
+    password: ${DB_PASS:1234}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:true}
+    properties:
+      hibernate:
+        format_sql: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+blockchain:
+
+  rpc-url: ${RPC_URL:https://rpc.ssafy-blockchain.com}
+  private-key: ${PRIVATE_KEY:your-private-key-here}
+  chain-id: ${CHAIN_ID:31221}
+  contracts:
+    car-nft: ${CAR_NFT_ADDRESS:}
+    did-registry: ${DID_REGISTRY_ADDRESS:}
+    mock-usdc: ${MOCK_USDC_ADDRESS:}
+    rental: ${RENTAL_CONTRACT_ADDRESS:}

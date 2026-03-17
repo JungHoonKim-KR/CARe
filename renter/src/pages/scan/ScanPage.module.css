@@ -1,0 +1,212 @@
+/* ScanPage.module.css */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  min-height: 100dvh;
+  background: #0a0a0a;
+  color: #fff;
+  gap: 16px;
+}
+
+/* ── 구역 진행 표시 ── */
+.progress {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 480px;
+  justify-content: center;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.stepDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #444;
+  transition: background 0.2s;
+}
+
+.step.active .stepDot  { background: #fff; }
+.step.done .stepDot    { background: #34c759; }
+.step.hasDefect .stepDot { background: #ff3b30; }
+
+.stepLabel {
+  font-size: 10px;
+  color: #888;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.step.active .stepLabel { color: #fff; }
+.step.done .stepLabel   { color: #34c759; }
+
+/* ── 구역 타이틀 ── */
+.zoneTitle {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* ── 카메라 뷰 ── */
+.viewWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #111;
+}
+
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ── 카운트다운 ── */
+.countdown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+}
+
+/* ── 분석 중 ── */
+.analyzing {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  font-size: 14px;
+  padding: 6px 16px;
+  border-radius: 20px;
+}
+
+/* ── 버튼 ── */
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.captureBtn {
+  padding: 14px 48px;
+  background: #fff;
+  color: #000;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.captureBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.retakeBtn {
+  padding: 14px 48px;
+  background: transparent;
+  color: #fff;
+  border: 1.5px solid #fff;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── 캡처 결과 썸네일 ── */
+.result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.thumbnail {
+  width: 100%;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.resultText {
+  font-size: 15px;
+  color: #aaa;
+}
+
+/* ── 완료 요약 화면 ── */
+.summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.summary h2 {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+}
+
+.summaryCard {
+  background: #1a1a1a;
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.summaryCard img {
+  width: 100%;
+  border-radius: 6px;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+}
+
+.summaryCard p {
+  font-size: 13px;
+  color: #aaa;
+  margin: 0;
+}
+
+.defect { color: #ff3b30 !important; font-weight: 600; }
+.clean  { color: #34c759 !important; }

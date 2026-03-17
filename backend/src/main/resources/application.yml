@@ -46,9 +46,9 @@ spring:
       port: ${REDIS_PORT:6379}
 
 blockchain:
-  rpc-url: https://ethereum-sepolia-rpc.publicnode.com
+  rpc-url: ${RPC_URL:https://rpc.ssafy-blockchain.com}
   private-key: ${PRIVATE_KEY:your-private-key-here}
-  chain-id: 11155111
+  chain-id: ${CHAIN_ID:31221}
   contracts:
     car-nft: ${CAR_NFT_ADDRESS:}
     did-registry: ${DID_REGISTRY_ADDRESS:}

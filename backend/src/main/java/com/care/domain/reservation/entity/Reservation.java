@@ -2,7 +2,7 @@ package com.care.domain.reservation.entity;
 
 import com.care.domain.car.entity.OwnedCar;
 import com.care.domain.company.entity.Insurance;
-import com.care.domain.member.entity.Renter;
+import com.care.domain.renter.entity.Renter;
 import com.care.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;

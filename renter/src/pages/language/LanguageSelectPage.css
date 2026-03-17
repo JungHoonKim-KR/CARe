@@ -34,11 +34,12 @@
 }
 
 .lang-title {
+  padding: 20px;
   font-size: 22px;
   font-weight: 700;
   color: #222;
   text-align: center;
-  margin: 32px 0 16px;
+  margin: 32px 0 40px;
 }
 
 .lang-card {
@@ -46,6 +47,7 @@
   border-radius: 16px;
   padding: 0 20px;
   overflow: hidden;
+  margin-top: 36px;
 }
 
 .lang-current {

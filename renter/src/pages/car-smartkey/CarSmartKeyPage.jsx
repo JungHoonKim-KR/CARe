@@ -1,0 +1,125 @@
+import { useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import './CarSmartKeyPage.css'
+
+export default function CarSmartKeyPage() {
+  const navigate = useNavigate()
+  const { state } = useLocation()
+  const reservation = state?.reservation
+
+  const [locked, setLocked] = useState(false)
+
+  const carName = reservation?.carName || '내 차량'
+  const plateNumber = reservation?.plateNumber || '---'
+  const batteryLevel = reservation?.batteryLevel ?? null
+
+  return (
+    <div className="sk-page">
+      {/* 헤더 */}
+      <div className="sk-header">
+        <div className="sk-header-left">
+          <div className="sk-header-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#F7A633">
+              <path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+            </svg>
+          </div>
+          <span className="sk-header-title">Smart Key</span>
+        </div>
+        <button className="sk-close-btn" onClick={() => navigate('/my-car')}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6L18 18" stroke="#444" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      {/* 차량 카드 */}
+      <div className="sk-car-card">
+        <div className="sk-car-info">
+          <p className="sk-car-label">내 차량</p>
+          <p className="sk-car-name">{carName}</p>
+          <p className="sk-car-plate">{plateNumber}</p>
+        </div>
+        {batteryLevel != null && (
+          <div className="sk-battery">
+            <div className="sk-battery-icon">
+              <div className="sk-battery-fill" style={{ width: `${batteryLevel}%` }} />
+            </div>
+            <span className="sk-battery-text">{batteryLevel}%</span>
+          </div>
+        )}
+      </div>
+
+      {/* 잠금/해제 버튼 */}
+      <div className="sk-lock-section">
+        <button
+          className={`sk-lock-btn${locked ? ' locked' : ''}`}
+          onClick={() => setLocked((v) => !v)}
+        >
+          <div className="sk-lock-glow" />
+          <div className="sk-lock-inner">
+            {locked ? (
+              <svg width="52" height="52" viewBox="0 0 24 24" fill="white">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+              </svg>
+            ) : (
+              <svg width="52" height="52" viewBox="0 0 24 24" fill="white">
+                <path d="M12 1C9.24 1 7 3.24 7 6v1H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2h-1V6c0-2.76-2.24-5-5-5zm0 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm4-7H8V6c0-2.21 1.79-4 4-4s4 1.79 4 4v2z"/>
+              </svg>
+            )}
+          </div>
+        </button>
+
+        <p className={`sk-lock-status${locked ? ' locked' : ''}`}>
+          {locked ? 'LOCKED' : 'UNLOCKED'}
+        </p>
+        <p className="sk-lock-hint">탭하여 {locked ? '잠금 해제' : '잠금'}</p>
+        <p className="sk-lock-sub">· 홀드하여 제어</p>
+      </div>
+
+      {/* 기능 버튼 3개 */}
+      <div className="sk-actions">
+        <button className="sk-action-btn" onClick={() => {}}>
+          <div className="sk-action-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="13" width="18" height="8" rx="2" stroke="#555" strokeWidth="2"/>
+              <path d="M3 13V10a2 2 0 012-2h14a2 2 0 012 2v3" stroke="#555" strokeWidth="2"/>
+              <rect x="7" y="3" width="10" height="5" rx="1" stroke="#555" strokeWidth="1.5"/>
+            </svg>
+          </div>
+          <span className="sk-action-label">트렁크</span>
+        </button>
+
+        <button className="sk-action-btn" onClick={() => {}}>
+          <div className="sk-action-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <polygon points="11,3 21,12 11,21 11,15 3,15 3,9 11,9" stroke="#555" strokeWidth="2" strokeLinejoin="round" fill="none"/>
+            </svg>
+          </div>
+          <span className="sk-action-label">경적</span>
+        </button>
+
+        <button className="sk-action-btn" onClick={() => {}}>
+          <div className="sk-action-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <circle cx="18" cy="5" r="3" stroke="#555" strokeWidth="2"/>
+              <circle cx="6" cy="12" r="3" stroke="#555" strokeWidth="2"/>
+              <circle cx="18" cy="19" r="3" stroke="#555" strokeWidth="2"/>
+              <path d="M8.59 13.51L15.42 17.49M15.41 6.51L8.59 10.49" stroke="#555" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <span className="sk-action-label">키 공유</span>
+        </button>
+      </div>
+
+      {/* 차량 반납 */}
+      <div className="sk-return-wrap">
+        <button className="sk-return-btn" onClick={() => navigate('/my-car')}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" fill="#555"/>
+          </svg>
+          <span>차량 반납하기</span>
+        </button>
+      </div>
+    </div>
+  )
+}

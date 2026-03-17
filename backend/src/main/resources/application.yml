@@ -13,6 +13,8 @@ spring:
     active: local
   application:
     name: care
+  config:
+    import: optional:file:.env
 
 logging:
   level:
@@ -28,9 +30,9 @@ spring:
     activate:
       on-profile: local
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:care}
-    username: ${DB_USER:root}
-    password: ${DB_PASS:1234}
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASS}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -51,7 +53,6 @@ jwt:
   refresh-token-expiration: 604800000
 
 blockchain:
-
   rpc-url: ${RPC_URL:https://rpc.ssafy-blockchain.com}
   private-key: ${PRIVATE_KEY:your-private-key-here}
   chain-id: ${CHAIN_ID:31221}

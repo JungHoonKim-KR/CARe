@@ -33,14 +33,17 @@ public class JwtUtil {
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
+    // 사용자 ID와 역할을 받아 Access Token을 생성 (15분)
     public String generateAccessToken(String userId, String role) {
         return buildToken(userId, role, accessTokenExpiration);
     }
 
+    // 사용자 ID와 역할을 받아 Refresh Token을 생성 (7일)
     public String generateRefreshToken(String userId, String role) {
         return buildToken(userId, role, refreshTokenExpiration);
     }
 
+    // 실제 JWT 토큰 조립
     private String buildToken(String userId, String role, long expiration) {
         Date now = new Date();
         return Jwts.builder()
@@ -53,6 +56,7 @@ public class JwtUtil {
                 .compact();
     }
 
+    // 토큰을 열어 안에 들어 있는 정보(Claim) 확인
     public Claims parseClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(key)
@@ -61,6 +65,7 @@ public class JwtUtil {
                 .getBody();
     }
 
+    // 토큰 유효성 검사
     public boolean validateToken(String token) {
         try {
             parseClaims(token);
@@ -70,10 +75,12 @@ public class JwtUtil {
         }
     }
 
+
     public String getUserId(String token) {
         return parseClaims(token).getSubject();
     }
 
+    // 토큰 고유 식별자 추출 (블랙리스트에서 사용)
     public String getJti(String token) {
         return parseClaims(token).getId();
     }

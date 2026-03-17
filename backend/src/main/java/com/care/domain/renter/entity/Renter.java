@@ -1,18 +1,18 @@
-package com.care.domain.company.entity;
+package com.care.domain.renter.entity;
 
 import com.care.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "company")
+@Table(name = "renter")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Company extends BaseEntity {
+public class Renter extends BaseEntity {
 
     @Id
-    @Column(name = "company_id", length = 100)
-    private String companyId;
+    @Column(name = "user_id", length = 100)
+    private String userId;
 
     @Column(name = "name", length = 100, nullable = false)
     private String name;
@@ -23,9 +23,6 @@ public class Company extends BaseEntity {
     @Column(name = "password_hash", length = 255, nullable = false)
     private String passwordHash;
 
-    @Column(name = "biz_number", length = 50)
-    private String bizNumber;
-
     @Column(name = "wallet_address", length = 100, unique = true)
     private String walletAddress;
 
@@ -34,18 +31,6 @@ public class Company extends BaseEntity {
 
     @Column(name = "did_verified", nullable = false)
     private boolean didVerified = false;
-
-    @Column(name = "country_code", length = 2)
-    private String countryCode;
-
-    @Column(name = "city", length = 50)
-    private String city;
-
-    @Column(name = "airport_id", length = 50)
-    private String airportId;
-
-    @Column(name = "detail_address", length = 255)
-    private String detailAddress;
 
     @Column(name = "language_code", length = 10)
     private String languageCode;

@@ -6,10 +6,15 @@
 
 - app/main.py: FastAPI 앱 진입점
 - app/api/routes: API 라우터
+  - app/api/routes/scratches.py: 스크래치 비교 API
+  - app/api/routes/face.py: 얼굴 인증 API (DeepFace)
 - app/schemas: 요청/응답 스키마
 - app/services: 유즈케이스(비즈니스 로직) 계층
+  - app/services/scratch_comparison_service.py: 스크래치 비교 서비스
+  - app/services/face_service.py: 얼굴 인증 서비스
 - app/models: 모델 구현체 모음
-  - app/models/resnet50_v3: 현재 스크래치 비교 모델
+  - app/models/resnet50_v3: 스크래치 비교 모델 (ResNet50)
+  - app/models/deepface: 얼굴 인증 모델 (DeepFace/VGG-Face)
 - app/cli: 로컬 실행용 스크립트
 
 새 모델이 추가되면 app/models 아래에 모델별 폴더를 추가하고,
@@ -19,23 +24,29 @@
 
 ### Windows Git Bash (MINGW64)
 
+```bash
   cd ai
   python -m venv .venv
   source .venv/Scripts/activate
   python -m pip install --upgrade pip
   pip install -r requirements.txt
+```
 
 ### macOS/Linux (bash/zsh)
 
+```bash
     cd ai
     python3.11 -m venv .venv
     source .venv/bin/activate
     pip install --upgrade pip
     pip install -r requirements.txt
+```
 
 ## 3) 서버 실행
 
+```
     uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
 
 Swagger UI:
 - http://localhost:8000/docs
@@ -88,3 +99,52 @@ Swagger UI:
 - 최초 실행 시 torchvision이 ResNet50 가중치를 다운로드할 수 있어 초기 응답이 느릴 수 있습니다.
 - GPU가 없어도 CPU로 자동 동작합니다.
 - Windows Git Bash에서는 source .venv/bin/activate가 아니라 source .venv/Scripts/activate를 사용해야 합니다.
+
+---
+
+## 8) DeepFace 얼굴 인증 (추가됨)
+
+국제운전면허증 사진과 셀카를 비교하여 동일인 여부를 판단하는 API가 추가되었습니다.
+
+### 추가된 파일
+
+- `app/api/routes/face.py`
+- `app/services/face_service.py`
+- `app/schemas/face.py`
+
+### 패키지 재설치 (기존 팀원)
+
+requirements.txt에 deepface가 추가되었으므로 한 번 더 실행해주세요.
+
+    pip install -r requirements.txt
+
+> 최초 실행 시 DeepFace 모델 가중치 자동 다운로드 (~500MB, `~/.deepface/weights/`에 캐싱)
+
+### API 엔드포인트 (수정가능성 O)
+
+- POST /api/v1/reservations/{reservationId}/face-auth
+- Content-Type: multipart/form-data
+- 필수 form-data 필드:
+  - id_photo (파일) - 국제운전면허증 사진
+  - selfie (파일) - 본인 셀카
+
+응답 예시:
+
+    {
+      "verified": true,
+      "distance": 0.3241,
+      "threshold": 0.4000,
+      "model": "VGG-Face"
+    }
+
+### curl 테스트
+
+    curl -X POST "http://localhost:8000/api/v1/face/verify" \
+      -F "id_photo=@license.jpg" \
+      -F "selfie=@selfie.jpg"
+
+### 참고
+
+- `verified: true` → 동일인, `false` → 불일치
+- `distance`가 낮을수록 유사도 높음
+- `enforce_detection=False` 설정으로 얼굴 감지 실패 시에도 에러 없이 동작

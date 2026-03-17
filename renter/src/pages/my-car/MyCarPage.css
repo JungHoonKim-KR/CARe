@@ -362,3 +362,253 @@
 .mc-smartkey-toggle:active {
   background: rgba(255, 255, 255, 0.38);
 }
+
+/* 대여 일정 카드 */
+.mc-schedule-card {
+  background: white;
+  margin: 8px 0 0;
+  padding: 20px 20px 16px;
+}
+
+.mc-schedule-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #aaa;
+  margin: 0 0 16px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.mc-schedule-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.mc-schedule-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mc-schedule-col:last-child {
+  align-items: flex-end;
+}
+
+.mc-schedule-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+  width: fit-content;
+}
+
+.mc-schedule-tag.pickup {
+  background: #FFF3E0;
+  color: #F7A633;
+}
+
+.mc-schedule-tag.return {
+  background: #E8F5E9;
+  color: #2d9e5b;
+}
+
+.mc-schedule-date {
+  font-size: 18px;
+  font-weight: 800;
+  color: #111;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.mc-schedule-weekday {
+  font-size: 14px;
+  font-weight: 500;
+  color: #888;
+}
+
+.mc-schedule-time {
+  font-size: 26px;
+  font-weight: 900;
+  color: #F7A633;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.mc-schedule-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  padding-top: 18px;
+}
+
+.mc-schedule-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 13px;
+  color: #888;
+}
+
+/* 스마트키 버튼 (button으로 변경) */
+/* === smartkey button (line 461 block is the active one) */
+.mc-smartkey-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #F7A633;
+  border-radius: 18px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 20px rgba(247, 166, 51, 0.45);
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.1s;
+}
+
+.mc-smartkey-inner:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* ─── Smart Key 잠금 상태 ──────────────────────────────────── */
+.mc-smartkey-inner.locked {
+  background: #bbb;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+
+.mc-smartkey-lock-badge {
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255,255,255,0.28);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ─── 외관 촬영 필요 모달 ──────────────────────────────────── */
+.mc-alert-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  animation: mc-overlay-in 0.2s ease;
+}
+
+@keyframes mc-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.mc-alert-sheet {
+  width: 100%;
+  background: white;
+  border-radius: 24px 24px 0 0;
+  padding: 28px 24px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: mc-sheet-up 0.28s cubic-bezier(0.32,0.72,0,1);
+}
+
+@keyframes mc-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.mc-alert-icon {
+  width: 60px;
+  height: 60px;
+  background: #FFF3E0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.mc-alert-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #111;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.mc-alert-desc {
+  font-size: 14px;
+  color: #888;
+  text-align: center;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.mc-alert-btn {
+  width: 100%;
+  background: #F7A633;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 8px;
+  transition: opacity 0.15s;
+}
+
+.mc-alert-btn:active { opacity: 0.85; }
+
+.mc-alert-cancel {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #bbb;
+  cursor: pointer;
+  padding: 4px;
+  font-family: inherit;
+}
+
+
+/* ── 일정 카드 내 진행 바 ──────────────── */
+.mc-schedule-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 10px;
+}
+
+.mc-schedule-bar-bg {
+  flex: 1;
+  height: 7px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mc-schedule-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+  min-width: 4px;
+}
+
+.mc-schedule-dday {
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  letter-spacing: -0.3px;
+}

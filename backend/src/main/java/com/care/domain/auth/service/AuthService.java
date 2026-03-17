@@ -102,7 +102,7 @@ public class AuthService {
     // 토큰 갱신
     public TokenResponse refresh(String refreshToken) {
         if (!jwtUtil.validateToken(refreshToken)) {
-            throw new IllegalArgumentException("유효하지 않은 리프레시 토큰입니다.");
+            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
         }
 
         String userId = jwtUtil.getUserId(refreshToken);

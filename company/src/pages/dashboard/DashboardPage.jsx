@@ -10,21 +10,18 @@ export default function DashboardPage() {
       title: '총 수익',
       value: '12,500,000원',
       subtitle: '전체 누적 수익',
-      icon: '📈',
       trend: null,
     },
     {
       title: '정산 대기',
       value: '850,000원',
       subtitle: '처리 대기 중',
-      icon: '📄',
       trend: null,
     },
     {
       title: '운영 현황',
       value: '8대',
       subtitle: '완료 예약 45건',
-      icon: '🚗',
       trend: null,
     },
   ]

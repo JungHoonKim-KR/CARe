@@ -6,10 +6,10 @@ export default function Sidebar() {
   const location = useLocation()
 
   const menuItems = [
-    { id: 'dashboard', icon: '🏠', label: '대시보드', path: '/dashboard' },
-    { id: 'cars', icon: '🚗', label: '차량 관리', path: '/cars' },
-    { id: 'reservations', icon: '📅', label: '예약 관리', path: '/reservations' },
-    { id: 'profile', icon: '👤', label: '내 정보', path: '/profile' },
+    { id: 'dashboard', label: '대시보드', path: '/dashboard' },
+    { id: 'cars', label: '차량 관리', path: '/cars' },
+    { id: 'reservations', label: '예약 관리', path: '/reservations' },
+    { id: 'profile', label: '내 정보', path: '/profile' },
   ]
 
   const bottomItems = [
@@ -21,7 +21,6 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <span className="logo-icon">🚗</span>
           <span className="logo-text">CARe 업체</span>
         </div>
       </div>

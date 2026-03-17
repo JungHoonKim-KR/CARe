@@ -30,7 +30,6 @@ export default function ReservationTable({ reservations }) {
             <tr key={reservation.id}>
               <td>
                 <div className="cell-with-icon">
-                  <span className="cell-icon">🚗</span>
                   <div className="cell-content">
                     <div className="cell-primary">{reservation.carName}</div>
                     <div className="cell-secondary">{reservation.carType}</div>
@@ -40,7 +39,6 @@ export default function ReservationTable({ reservations }) {
 
               <td>
                 <div className="cell-with-icon">
-                  <span className="cell-icon">👤</span>
                   <div className="cell-content">
                     <div className="cell-primary">{reservation.renterName}</div>
                     <div className="cell-secondary">{reservation.renterCountry}</div>
@@ -50,7 +48,6 @@ export default function ReservationTable({ reservations }) {
 
               <td>
                 <div className="cell-with-icon">
-                  <span className="cell-icon">📅</span>
                   <div className="cell-content">
                     <div className="cell-primary">{reservation.startDate}</div>
                     <div className="cell-secondary">- {reservation.endDate}</div>
@@ -60,7 +57,6 @@ export default function ReservationTable({ reservations }) {
 
               <td>
                 <div className="cell-with-icon">
-                  <span className="cell-icon">📍</span>
                   <div className="cell-content">
                     <div className="cell-primary">{reservation.location}</div>
                   </div>

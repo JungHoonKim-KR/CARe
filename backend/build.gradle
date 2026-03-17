@@ -46,7 +46,10 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
-    // Web3j (Sepolia 블록체인 연동 — 명세서 프로젝트와 동일 버전)
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // Web3j (Polygon Amoy 블록체인 연동)
     implementation 'org.web3j:core:4.12.2'
 
     // Lombok

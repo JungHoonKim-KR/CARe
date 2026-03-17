@@ -13,8 +13,8 @@ export default function Sidebar() {
   ]
 
   const bottomItems = [
-    { id: 'settings', icon: '⚙️', label: '설정', path: '/settings' },
-    { id: 'logout', icon: '🚪', label: '로그아웃', path: '/logout' },
+    { id: 'settings', label: '설정', path: '/settings' },
+    { id: 'logout', label: '로그아웃', path: '/logout' },
   ]
 
   return (

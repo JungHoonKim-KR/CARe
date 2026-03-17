@@ -46,6 +46,7 @@ spring:
       port: ${REDIS_PORT:6379}
 
 blockchain:
+
   rpc-url: ${RPC_URL:https://rpc.ssafy-blockchain.com}
   private-key: ${PRIVATE_KEY:your-private-key-here}
   chain-id: ${CHAIN_ID:31221}

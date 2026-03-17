@@ -17,7 +17,6 @@ export default function ReservationList({ reservations }) {
       {reservations.map((reservation) => (
         <div key={reservation.id} className="reservation-item">
           <div className="reservation-car">
-            <span className="car-icon">🚗</span>
             <div className="car-info">
               <div className="car-name">{reservation.carName}</div>
               <div className="customer-name">{reservation.customerName}</div>

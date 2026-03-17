@@ -15,8 +15,10 @@ import CarDetailPage from './pages/car-detail/CarDetailPage'
 import PaymentPage from './pages/payment/PaymentPage'
 import BookingCompletePage from './pages/booking-complete/BookingCompletePage'
 import WalletPage from './pages/wallet/WalletPage'
-import DamageHistoryPage from './pages/damage-history/DamageHistoryPage'
-import DamageDetailPage from './pages/damage-detail/DamageDetailPage'
+import DIDAuthPage from './pages/did-auth/DIDAuthPage'
+import DIDPassportGuidePage from './pages/did-auth/DIDPassportGuidePage'
+import DIDCameraPage from './pages/did-auth/DIDCameraPage'
+import DIDConfirmPage from './pages/did-auth/DIDConfirmPage'
 import ScanPage from './pages/scan/ScanPage'
 
 function App() {
@@ -40,8 +42,10 @@ function App() {
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/booking-complete" element={<BookingCompletePage />} />
           <Route path="/wallet" element={<WalletPage />} />
-          <Route path="/damage-history" element={<DamageHistoryPage />} />
-          <Route path="/damage-detail" element={<DamageDetailPage />} />
+          <Route path="/did-auth" element={<DIDAuthPage />} />
+          <Route path="/did-guide" element={<DIDPassportGuidePage />} />
+          <Route path="/did-camera" element={<DIDCameraPage />} />
+          <Route path="/did-confirm" element={<DIDConfirmPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

@@ -15,12 +15,14 @@
 
 .home-logo {
   width: 100px;
+  flex-shrink: 0;
 }
 
 .home-header-right {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .lang-btn {
@@ -40,12 +42,24 @@
 }
 
 .did-badge {
-  background: #F7A633;
-  color: #fff;
   font-size: 11px;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 5px 11px;
   border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-block;
+  border: none;
+}
+
+.did-badge--verified {
+  background: #4B79D4;
+  color: #fff;
+}
+
+.did-badge--pending {
+  background: #F7A633;
+  color: #fff;
 }
 
 /* 카테고리 */

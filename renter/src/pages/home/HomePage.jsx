@@ -66,6 +66,10 @@ const formReducer = (state, action) => {
 export default function HomePage() {
   const navigate = useNavigate()
 
+  const didVerified =
+    localStorage.getItem('passport_verified') === 'true' &&
+    localStorage.getItem('license_verified') === 'true'
+
   const [form, dispatch] = useReducer(formReducer, initialFormState)
   const setForm = (updater) => {
     if (typeof updater === 'function') {
@@ -78,7 +82,7 @@ export default function HomePage() {
   const [countrySheet, setCountrySheet] = useState(false)
   const [airportSheet, setAirportSheet] = useState(false)
   const [carTypeSheet, setCarTypeSheet] = useState(false)
-  const [dateModal, setDateModal] = useState(null) // 'pickup' | 'return'
+  const [dateModal, setDateModal] = useState(null)
   const [countrySearch, setCountrySearch] = useState('')
   const [airportSearch, setAirportSearch] = useState('')
 
@@ -88,8 +92,7 @@ export default function HomePage() {
       c.sub.toLowerCase().includes(countrySearch.toLowerCase())
   )
 
-  const airportList =
-    AIRPORTS[form.countryCode] || AIRPORTS.DEFAULT
+  const airportList = AIRPORTS[form.countryCode] || AIRPORTS.DEFAULT
   const filteredAirports = airportList.filter(
     (a) =>
       a.name.toLowerCase().includes(airportSearch.toLowerCase()) ||
@@ -142,7 +145,13 @@ export default function HomePage() {
             <span className="lang-icon">🌐</span>
             <span>한국어</span>
           </button>
-          <span className="did-badge">DiD Verified</span>
+          <span
+            className={`did-badge ${didVerified ? 'did-badge--verified' : 'did-badge--pending'}`}
+            onClick={() => navigate(didVerified ? '/wallet' : '/did-auth')}
+            style={{ cursor: 'pointer' }}
+          >
+            {didVerified ? '✓ DID Verified' : '인증이 필요해요'}
+          </span>
         </div>
       </header>
 
@@ -164,18 +173,13 @@ export default function HomePage() {
 
       {/* 검색 폼 */}
       <div className="search-card">
-        {/* 픽업 국가 */}
-        <button
-          className="search-field"
-          onClick={() => setCountrySheet(true)}
-        >
+        <button className="search-field" onClick={() => setCountrySheet(true)}>
           <span className="field-icon">📍</span>
           <span className={form.country ? 'field-value' : 'field-placeholder'}>
             {form.country || '픽업 국가명'}
           </span>
         </button>
 
-        {/* 픽업 위치 */}
         <button
           className="search-field"
           onClick={() => form.country && setAirportSheet(true)}
@@ -187,12 +191,8 @@ export default function HomePage() {
           </span>
         </button>
 
-        {/* 날짜/시간 행 */}
         <div className="date-row">
-          <button
-            className="search-field date-field"
-            onClick={() => setDateModal('pickup')}
-          >
+          <button className="search-field date-field" onClick={() => setDateModal('pickup')}>
             <span className="field-icon">📅</span>
             <div className="date-content">
               <span className="date-label">픽업 날짜</span>
@@ -213,10 +213,7 @@ export default function HomePage() {
         </div>
 
         <div className="date-row">
-          <button
-            className="search-field date-field"
-            onClick={() => setDateModal('return')}
-          >
+          <button className="search-field date-field" onClick={() => setDateModal('return')}>
             <span className="field-icon">📅</span>
             <div className="date-content">
               <span className="date-label">반납 날짜</span>
@@ -236,18 +233,13 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* 차량 종류 */}
-        <button
-          className="search-field"
-          onClick={() => setCarTypeSheet(true)}
-        >
+        <button className="search-field" onClick={() => setCarTypeSheet(true)}>
           <span className="field-icon">🚗</span>
           <span className={form.carType ? 'field-value' : 'field-placeholder'}>
             {form.carType || '차량 종류'}
           </span>
         </button>
 
-        {/* 체크박스 */}
         <label className="checkbox-row">
           <input
             type="checkbox"

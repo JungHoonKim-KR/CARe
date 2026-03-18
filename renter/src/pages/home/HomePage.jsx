@@ -187,7 +187,7 @@ export default function HomePage() {
             onClick={() => navigate(didVerified ? '/wallet' : '/did-auth')}
             style={{ cursor: 'pointer' }}
           >
-            {didVerified ? '✓ DID Verified' : '인증이 필요해요'}
+            {didVerified ? 'DID' : '미인증'}
           </span>
         </div>
       </header>

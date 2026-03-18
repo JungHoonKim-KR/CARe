@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { issueSmartKey, unlockSmartKey } from '../../api/reservation'
 import './CarSmartKeyPage.css'
 
 export default function CarSmartKeyPage() {
@@ -13,6 +14,20 @@ export default function CarSmartKeyPage() {
   const pickupReady  = faceAuthDone && crackDone
 
   const [locked, setLocked] = useState(!pickupReady)
+
+  const handleLockToggle = async () => {
+    if (!pickupReady) return
+    try {
+      if (locked) {
+        await unlockSmartKey(rid)
+      } else {
+        await issueSmartKey(rid)
+      }
+      setLocked((v) => !v)
+    } catch (e) {
+      alert('스마트키 제어에 실패했습니다.')
+    }
+  }
 
   const carName = reservation?.carName || '내 차량'
   const plateNumber = reservation?.plateNumber || '---'
@@ -103,7 +118,7 @@ export default function CarSmartKeyPage() {
       <div className="sk-lock-section">
         <button
           className={`sk-lock-btn${locked ? ' locked' : ''}${!pickupReady ? ' prereq-locked' : ''}`}
-          onClick={() => pickupReady && setLocked((v) => !v)}
+          onClick={handleLockToggle}
           disabled={!pickupReady}
         >
           <div className="sk-lock-glow" />

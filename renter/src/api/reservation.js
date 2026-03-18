@@ -30,8 +30,15 @@ export const getCarScratchHistory = async (carId) => {
   return response.data
 }
 
-// 스마트키 활성화
-export const activateSmartKey = async (reservationId) => {
-  const response = await api.post(`/api/renter/reservations/${reservationId}/smart-key/activate`)
+
+// 스마트키 발급
+export const issueSmartKey = async (reservationId) => {
+  const response = await api.post(`/api/reservations/${reservationId}/smart-key`)
+  return response.data
+}
+
+// 스마트키 잠금해제
+export const unlockSmartKey = async (reservationId) => {
+  const response = await api.post(`/api/reservations/${reservationId}/smart-key/unlock`)
   return response.data
 }

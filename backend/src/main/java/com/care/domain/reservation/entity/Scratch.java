@@ -9,6 +9,8 @@ import lombok.*;
 @Table(name = "scratch")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class Scratch extends BaseEntity {
 
     @Id

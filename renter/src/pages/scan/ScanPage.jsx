@@ -3,27 +3,33 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState } from 'react'
+import { useParams, useLocation } from 'react-router-dom'
 import { Scanner }     from './scanner.js'
 import { drawBoxes, clearOverlay } from './overlay.js'
 import { ZONES }       from './zones.js'
 import styles          from './ScanPage.module.css'
 
 export default function ScanPage() {
+  const { reservationId } = useParams()
+  const location          = useLocation()
+  const logType           = location.state?.logType || 'BEFORE'  // BEFORE / AFTER
+
   const videoRef   = useRef(null)
   const canvasRef  = useRef(null)
   const scannerRef = useRef(null)
 
-  const [zoneIndex,   setZoneIndex]   = useState(0)   // 현재 구역 인덱스
-  const [countdown,   setCountdown]   = useState(0)   // 3→2→1→0
-  const [isAnalyzing, setIsAnalyzing] = useState(false) // API 호출 중
-  const [captures,    setCaptures]    = useState({})   // { zoneId: { dataUrl, boxes } }
-  const [isDone,      setIsDone]      = useState(false) // 전체 완료
+  const [zoneIndex,   setZoneIndex]   = useState(0)
+  const [countdown,   setCountdown]   = useState(0)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [captures,    setCaptures]    = useState({})
+  const [isDone,      setIsDone]      = useState(false)
 
   const currentZone = ZONES[zoneIndex]
 
   // ── 카메라 시작
   useEffect(() => {
-    let stream = null
+    let stream    = null
+    let cancelled = false
 
     async function startCamera() {
       try {
@@ -31,18 +37,21 @@ export default function ScanPage() {
           video: { facingMode: 'environment', width: 1280, height: 720 },
           audio: false,
         })
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-          await videoRef.current.play()
+        if (cancelled) { stream.getTracks().forEach(t => t.stop()); return }
+        const video = videoRef.current
+        if (!video) return
+        video.srcObject = stream
+        video.onloadedmetadata = () => {
+          if (!cancelled) video.play().catch(() => {})
         }
       } catch (err) {
-        console.error('[ScanPage] 카메라 접근 실패', err)
+        if (!cancelled) console.error('[ScanPage] 카메라 접근 실패', err)
       }
     }
 
     startCamera()
-
     return () => {
+      cancelled = true
       stream?.getTracks().forEach(t => t.stop())
     }
   }, [])
@@ -52,23 +61,21 @@ export default function ScanPage() {
     const video = videoRef.current
     if (!video) return
 
-    const scanner = new Scanner(video)
+    // reservationId + logType 넘김
+    const scanner = new Scanner(video, reservationId, logType)
     scannerRef.current = scanner
 
-    scanner.onCountdown = (n) => {
-      setCountdown(n)
-    }
+    scanner.onCountdown = (n) => setCountdown(n)
 
     scanner.onCapture = (zoneId, dataUrl, boxes) => {
       setIsAnalyzing(false)
       setCaptures(prev => ({ ...prev, [zoneId]: { dataUrl, boxes } }))
 
-      // bbox 오버레이 그리기
       if (canvasRef.current && videoRef.current) {
         drawBoxes(canvasRef.current, videoRef.current, boxes)
       }
 
-      // 1.5초 후 다음 구역으로 자동 이동
+      // 1.5초 후 다음 구역 자동 이동
       setTimeout(() => {
         const nextIndex = zoneIndex + 1
         if (nextIndex >= ZONES.length) {
@@ -80,9 +87,7 @@ export default function ScanPage() {
       }, 1500)
     }
 
-    return () => {
-      scannerRef.current = null
-    }
+    return () => { scannerRef.current = null }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoneIndex])
 
@@ -124,9 +129,9 @@ export default function ScanPage() {
             key={z.id}
             className={[
               styles.step,
-              i < zoneIndex         ? styles.done    : '',
-              i === zoneIndex       ? styles.active  : '',
-              captures[z.id]?.boxes?.length > 0 ? styles.hasDefect : '',
+              i < zoneIndex                         ? styles.done      : '',
+              i === zoneIndex                       ? styles.active    : '',
+              captures[z.id]?.boxes?.length > 0    ? styles.hasDefect : '',
             ].join(' ')}
           >
             <span className={styles.stepDot} />
@@ -144,24 +149,12 @@ export default function ScanPage() {
 
           {/* 카메라 뷰 */}
           <div className={styles.viewWrapper}>
-            <video
-              ref={videoRef}
-              className={styles.video}
-              playsInline
-              muted
-            />
-            {/* bbox 오버레이 canvas */}
-            <canvas
-              ref={canvasRef}
-              className={styles.overlay}
-            />
+            <video ref={videoRef} className={styles.video} playsInline muted />
+            <canvas ref={canvasRef} className={styles.overlay} />
 
-            {/* 카운트다운 표시 */}
             {countdown > 0 && (
               <div className={styles.countdown}>{countdown}</div>
             )}
-
-            {/* 분석 중 표시 */}
             {isAnalyzing && countdown === 0 && (
               <div className={styles.analyzing}>분석 중...</div>
             )}
@@ -178,16 +171,13 @@ export default function ScanPage() {
                 {isAnalyzing ? '분석 중...' : '촬영'}
               </button>
             ) : (
-              <button
-                className={styles.retakeBtn}
-                onClick={handleRetake}
-              >
+              <button className={styles.retakeBtn} onClick={handleRetake}>
                 재촬영
               </button>
             )}
           </div>
 
-          {/* 캡처된 썸네일 + 결과 */}
+          {/* 캡처 썸네일 + 결과 */}
           {currentCapture && (
             <div className={styles.result}>
               <img
@@ -196,7 +186,7 @@ export default function ScanPage() {
                 className={styles.thumbnail}
               />
               <p className={styles.resultText}>
-                {currentCapture.boxes.length > 0
+                {currentCapture.boxes?.length > 0
                   ? `흠집 ${currentCapture.boxes.length}개 감지됨`
                   : '흠집 없음'}
               </p>
@@ -225,10 +215,7 @@ export default function ScanPage() {
           </div>
           <button
             className={styles.captureBtn}
-            onClick={() => {
-              /* TODO: 결과를 다음 페이지로 넘기거나 API 저장 */
-              console.log('최종 결과:', captures)
-            }}
+            onClick={() => console.log('최종 결과:', captures)}
           >
             완료
           </button>

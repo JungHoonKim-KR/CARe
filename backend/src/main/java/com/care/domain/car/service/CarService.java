@@ -1,0 +1,105 @@
+package com.care.domain.car.service;
+
+import com.care.domain.car.controller.dto.request.CarRegisterRequest;
+import com.care.domain.car.controller.dto.response.CarRegisterResponse;
+import com.care.domain.car.entity.CarImage;
+import com.care.domain.car.entity.CarImage.Side;
+import com.care.domain.car.entity.CarModel;
+import com.care.domain.car.entity.OwnedCar;
+import com.care.domain.car.event.CarRegisteredEvent;
+import com.care.domain.car.repository.CarImageRepository;
+import com.care.domain.car.repository.CarModelRepository;
+import com.care.domain.car.repository.OwnedCarRepository;
+import com.care.domain.company.entity.Company;
+import com.care.domain.company.repository.CompanyRepository;
+import com.care.global.ipfs.PinataService;
+import com.care.global.s3.S3Service;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class CarService {
+
+    private final OwnedCarRepository ownedCarRepository;
+    private final CarImageRepository carImageRepository;
+    private final CompanyRepository companyRepository;
+    private final CarModelRepository carModelRepository;
+    private final S3Service s3Service;
+    private final PinataService pinataService;
+    private final ApplicationEventPublisher eventPublisher;
+
+    /**
+     * 차량 등록
+     * 1) side별 이미지 S3 + IPFS 업로드 ({modelName}/{carId}/{side}.jpg)
+     * 2) OwnedCar DB 저장 (PENDING) + CarImage 4개 저장
+     * 3) CarRegisteredEvent 발행 → 비동기로 NFT 민팅
+     */
+    @Transactional
+    public CarRegisterResponse registerCar(String companyId, CarRegisterRequest request) {
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회사입니다: " + companyId));
+
+        CarModel carModel = carModelRepository.findById(request.modelId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 차량 모델입니다: " + request.modelId()));
+
+        String carId = UUID.randomUUID().toString();
+        String modelFolder = carModel.getModelName().replace(" ", "-");
+
+        // side → MultipartFile 매핑
+        Map<Side, MultipartFile> sideImages = new LinkedHashMap<>();
+        sideImages.put(Side.FRONT, request.frontImage());
+        sideImages.put(Side.REAR,  request.rearImage());
+        sideImages.put(Side.LEFT,  request.leftImage());
+        sideImages.put(Side.RIGHT, request.rightImage());
+
+        // 1. OwnedCar 저장 (PENDING)
+        OwnedCar car = OwnedCar.create(carId, company, carModel, request.plateNumber());
+        ownedCarRepository.save(car);
+
+        // 2. side별 S3 + IPFS 업로드 → CarImage 저장
+        Map<Side, String> s3Urls  = new LinkedHashMap<>();
+        Map<String, String> ipfsCids = new LinkedHashMap<>();
+
+        for (Map.Entry<Side, MultipartFile> entry : sideImages.entrySet()) {
+            Side side = entry.getKey();
+            MultipartFile file = entry.getValue();
+
+            String s3Key = modelFolder + "/" + carId + "/" + side.name() + ".jpg";
+            String s3Url = s3Service.uploadToKey(file, s3Key);
+            log.info("[CarService] S3 업로드 완료 | side: {}, url: {}", side, s3Url);
+
+            String ipfsCid = pinataService.uploadImage(file, "car-" + carId + "-" + side.name());
+            log.info("[CarService] IPFS 업로드 완료 | side: {}, cid: {}", side, ipfsCid);
+
+            carImageRepository.save(CarImage.create(UUID.randomUUID().toString(), car, side, s3Url, ipfsCid));
+
+            s3Urls.put(side, s3Url);
+            ipfsCids.put(side.name(), ipfsCid);
+        }
+
+        log.info("[CarService] 차량 저장 완료 | carId: {}", carId);
+
+        // 3. 이벤트 발행 (트랜잭션 커밋 후 비동기 NFT 민팅)
+        eventPublisher.publishEvent(new CarRegisteredEvent(
+                carId,
+                company.getWalletAddress(),
+                car.getPlateNumber(),
+                carModel.getBrand(),
+                carModel.getModelName(),
+                carModel.getFuelType(),
+                ipfsCids
+        ));
+
+        return CarRegisterResponse.of(car, s3Urls);
+    }
+}

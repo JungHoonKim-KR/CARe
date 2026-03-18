@@ -1,4 +1,4 @@
-import { useState, useReducer } from 'react'
+import { useState, useReducer, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import careLogo from '../../assets/care_logo.png'
 import mapIcon from '../../assets/map_icon.png'
@@ -79,6 +79,19 @@ export default function HomePage() {
     }
   }
 
+  const [showDidAlert, setShowDidAlert] = useState(false)
+
+  useEffect(() => {
+    const alreadyShown = sessionStorage.getItem('did_alert_shown')
+    if (!didVerified && !alreadyShown) {
+      const t = setTimeout(() => {
+        setShowDidAlert(true)
+        sessionStorage.setItem('did_alert_shown', 'true')
+      }, 800)
+      return () => clearTimeout(t)
+    }
+  }, [])
+
   const [countrySheet, setCountrySheet] = useState(false)
   const [airportSheet, setAirportSheet] = useState(false)
   const [carTypeSheet, setCarTypeSheet] = useState(false)
@@ -137,6 +150,30 @@ export default function HomePage() {
 
   return (
     <div className="home-container">
+      {/* DID 미인증 알림 */}
+      {showDidAlert && (
+        <div className="did-alert-overlay" onClick={() => setShowDidAlert(false)}>
+          <div className="did-alert-box" onClick={(e) => e.stopPropagation()}>
+            <div className="did-alert-icon">🪪</div>
+            <p className="did-alert-title">개인정보 인증을 안 하셨네요!</p>
+            <p className="did-alert-desc">3분 안에 하실 수 있어요.<br />지금 바로 신원 인증 하러 가실래요?</p>
+            <div className="did-alert-btns">
+              <button
+                className="did-alert-confirm"
+                onClick={() => { setShowDidAlert(false); navigate('/did-auth') }}
+              >
+                하러가기
+              </button>
+              <button
+                className="did-alert-cancel"
+                onClick={() => setShowDidAlert(false)}
+              >
+                나중에
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* 헤더 */}
       <header className="home-header">
         <img src={careLogo} alt="CARe" className="home-logo" />
@@ -165,7 +202,7 @@ export default function HomePage() {
           <img src={carIcon} alt="차종" />
           <span>차종</span>
         </button>
-        <button className="category-item" onClick={() => navigate('/companies')}>
+        <button className="category-item">
           <img src={companyIcon} alt="업체" />
           <span>업체</span>
         </button>

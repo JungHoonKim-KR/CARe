@@ -1,32 +1,56 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { usePrivy, useWallets } from '@privy-io/react-auth'
+import { JsonRpcProvider, formatEther } from 'ethers'
 import cuteIcon2 from '../../assets/cute_icon2.png'
 import BottomNav from '../../components/BottomNav'
 import './WalletPage.css'
 
+const RPC_URL = 'https://rpc.ssafy-blockchain.com'
+
 export default function WalletPage() {
   const navigate = useNavigate()
-  const { authenticated: privyAuthenticated } = usePrivy()
-  const { wallets } = useWallets()
 
-  const balance = 2500
   const didVerified =
     localStorage.getItem('passport_verified') === 'true' &&
     localStorage.getItem('license_verified') === 'true'
 
-  const embeddedWallet = wallets.find((w) => w.walletClientType === 'privy')
-  const metamaskAddress = localStorage.getItem('metamask_address')
-  const walletConnected = (privyAuthenticated && embeddedWallet) || metamaskAddress
+  const [metamaskAddress, setMetamaskAddress] = useState(
+    () => localStorage.getItem('metamask_address') || null
+  )
+  const [balance, setBalance] = useState(null)
+  const [balanceLoading, setBalanceLoading] = useState(false)
+  const [showFullAddr, setShowFullAddr] = useState(false)
 
-  const handleTokenCardClick = () => {
-    if (!walletConnected) {
-      navigate('/wallet-connect')
+  useEffect(() => {
+    if (!metamaskAddress) { setBalance(null); return }
+    const fetchBalance = async () => {
+      setBalanceLoading(true)
+      try {
+        const provider = new JsonRpcProvider(RPC_URL)
+        const raw = await provider.getBalance(metamaskAddress)
+        setBalance(parseFloat(formatEther(raw)).toFixed(4))
+        console.log('[Wallet] 잔액 조회:', formatEther(raw))
+      } catch (e) {
+        console.error('[Wallet] 잔액 조회 실패:', e)
+        setBalance('오류')
+      } finally {
+        setBalanceLoading(false)
+      }
     }
+    fetchBalance()
+  }, [metamaskAddress])
+
+  const shortAddr = (addr) => addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : ''
+
+  const handleDisconnect = (e) => {
+    e.stopPropagation()
+    localStorage.removeItem('metamask_address')
+    setMetamaskAddress(null)
+    setBalance(null)
   }
 
   return (
     <div className="wallet-page">
-      {/* Header */}
       <div className="wallet-header">
         <button className="wallet-back-btn" onClick={() => navigate(-1)}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -56,7 +80,6 @@ export default function WalletPage() {
               {didVerified ? '인증완료 ✓' : '등록하기'}
             </button>
           </div>
-
           <div className="did-face-illust">
             <img src={cuteIcon2} alt="" className="did-cute-icon" />
           </div>
@@ -64,9 +87,9 @@ export default function WalletPage() {
 
         {/* Token card */}
         <div
-          className={`wallet-card wallet-token-card${!walletConnected ? ' token-card-unconnected' : ''}`}
-          onClick={handleTokenCardClick}
-          style={!walletConnected ? { cursor: 'pointer' } : {}}
+          className="wallet-card wallet-token-card"
+          onClick={() => { if (!metamaskAddress) navigate('/wallet-connect') }}
+          style={!metamaskAddress ? { cursor: 'pointer' } : {}}
         >
           <div className="token-circle-bg" />
 
@@ -79,23 +102,46 @@ export default function WalletPage() {
               </div>
               <span className="wallet-card-name token-name">잔여 토큰</span>
             </div>
-            {walletConnected ? (
-              <button className="wallet-pill-btn token-pill">충전하기</button>
+            {metamaskAddress ? (
+              <button className="wallet-pill-btn token-pill" onClick={(e) => e.stopPropagation()}>
+                충전하기
+              </button>
             ) : (
-              <span className="wallet-pill-btn token-connect-pill">지갑 연결하기 →</span>
+              <span className="wallet-pill-btn token-connect-pill">지갑 연결 →</span>
             )}
           </div>
 
           <div className="token-balance-wrap">
-            {walletConnected ? (
+            {metamaskAddress ? (
               <>
                 <p className="token-balance-label">보유 잔액</p>
-                <p className="token-balance-value">{balance.toLocaleString()} CARe</p>
+                {balanceLoading ? (
+                  <p className="token-balance-value token-balance-loading">조회 중...</p>
+                ) : (
+                  <p className="token-balance-value">
+                    {balance ?? '--'} <span className="token-balance-unit">ETH</span>
+                  </p>
+                )}
+                <div
+                  className="token-addr-wrap"
+                  onMouseEnter={() => setShowFullAddr(true)}
+                  onMouseLeave={() => setShowFullAddr(false)}
+                  onClick={(e) => { e.stopPropagation(); setShowFullAddr((v) => !v) }}
+                >
+                  <span className="token-addr-text">
+                    {showFullAddr ? metamaskAddress : shortAddr(metamaskAddress)}
+                  </span>
+                  {showFullAddr && (
+                    <button className="token-addr-disconnect" onClick={handleDisconnect}>
+                      해제
+                    </button>
+                  )}
+                </div>
               </>
             ) : (
               <>
-                <p className="token-balance-label">지갑이 연결되지 않았어요</p>
-                <p className="token-balance-value token-balance-empty">-- CARe</p>
+                <p className="token-balance-label">MetaMask를 연결해주세요</p>
+                <p className="token-balance-value token-balance-empty">-- ETH</p>
               </>
             )}
           </div>

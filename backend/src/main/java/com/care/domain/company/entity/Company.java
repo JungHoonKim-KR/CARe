@@ -63,4 +63,9 @@ public class Company extends BaseEntity {
         company.didVerified = false;
         return company;
     }
+
+    // DID 발급 시 사업자등록번호 확인용
+    public void updateBizVerified(String bizNo) {
+        this.bizNumber = bizNo;
+    }
 }

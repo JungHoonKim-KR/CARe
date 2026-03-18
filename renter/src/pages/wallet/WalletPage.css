@@ -243,3 +243,65 @@
 .token-balance-value.token-balance-empty {
   color: #aaa;
 }
+
+/* -- 토큰 카드 주소 표시 -- */
+.token-addr-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  cursor: pointer;
+  background: rgba(255,255,255,0.35);
+  border-radius: 20px;
+  padding: 4px 10px;
+  transition: background 0.15s;
+}
+
+.token-addr-wrap:hover {
+  background: rgba(255,255,255,0.55);
+}
+
+.token-addr-text {
+  font-size: 11px;
+  font-family: monospace;
+  color: #5C3D00;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  word-break: break-all;
+}
+
+.token-addr-disconnect {
+  background: rgba(200,50,50,0.15);
+  border: 1px solid rgba(200,50,50,0.3);
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #c83232;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* -- 미연결 상태 -- */
+.wallet-pill-btn.token-connect-pill {
+  background: rgba(247, 166, 51, 0.85);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.token-balance-value.token-balance-empty {
+  color: #aaa;
+}
+
+.token-balance-unit {
+  font-size: 16px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.token-balance-loading {
+  color: #999;
+  font-size: 20px;
+}

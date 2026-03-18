@@ -312,3 +312,72 @@
 .car-type-item .list-main {
   margin: 0;
 }
+
+/* ── DID 미인증 알림 모달 ── */
+.did-alert-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+
+.did-alert-box {
+  background: #fff;
+  border-radius: 24px;
+  padding: 32px 24px 24px;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+}
+
+.did-alert-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.did-alert-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #111;
+  margin: 0 0 8px;
+}
+
+.did-alert-desc {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.did-alert-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.did-alert-confirm {
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #F7A633;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.did-alert-cancel {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1.5px solid #e0e0e0;
+  background: #f5f5f5;
+  color: #888;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}

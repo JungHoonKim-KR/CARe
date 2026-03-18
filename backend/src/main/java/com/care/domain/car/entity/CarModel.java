@@ -23,4 +23,12 @@ public class CarModel extends BaseEntity {
     @Column(name = "fuel_type", length = 20, nullable = false)
     private String fuelType;
 
+    public static CarModel create(String modelId, String brand, String modelName, String fuelType) {
+        CarModel carModel = new CarModel();
+        carModel.modelId = modelId;
+        carModel.brand = brand;
+        carModel.modelName = modelName;
+        carModel.fuelType = fuelType;
+        return carModel;
+    }
 }

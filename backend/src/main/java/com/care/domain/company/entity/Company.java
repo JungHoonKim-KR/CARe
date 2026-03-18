@@ -68,4 +68,8 @@ public class Company extends BaseEntity {
     public void updateBizVerified(String bizNo) {
         this.bizNumber = bizNo;
     }
+
+    public void assignWallet(String walletAddress) {
+        this.walletAddress = walletAddress;
+    }
 }

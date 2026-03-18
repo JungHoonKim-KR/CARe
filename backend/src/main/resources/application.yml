@@ -52,9 +52,6 @@ jwt:
   access-token-expiration: 900000
   refresh-token-expiration: 604800000
 
-apick:
-  api-key: ${APICK_API_KEY:}
-
 blockchain:
   rpc-url: ${RPC_URL:https://rpc.ssafy-blockchain.com}
   private-key: ${PRIVATE_KEY:your-private-key-here}

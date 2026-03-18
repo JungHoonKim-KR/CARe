@@ -365,13 +365,13 @@
 }
 
 .mc-shoot-btn {
-  background: #333;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  background: #F7A633;
+  box-shadow: 0 4px 14px rgba(247, 166, 51, 0.35);
 }
 
 .mc-return-btn {
-  background: #2d9e5b;
-  box-shadow: 0 4px 14px rgba(45, 158, 91, 0.35);
+  background: #888;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
 
 /* ─── 하단 고정 - Smart Key 전용 ──────────────────────────────────── */
@@ -642,8 +642,8 @@
 }
 
 
-/* ─── 반납하기 버튼 ──────────────────────────────────── */
-.mc-return-btn {
+/* ─── 반납하기 버튼 (하단 bar 전용) ──────────────────────────────────── */
+.mc-return-bar-btn {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -658,7 +658,7 @@
   margin-bottom: 8px;
 }
 
-.mc-return-btn:active {
+.mc-return-bar-btn:active {
   transform: scale(0.98);
   opacity: 0.9;
 }

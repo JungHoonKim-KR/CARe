@@ -103,16 +103,16 @@ export default function DisputePage() {
           </p>
         </div>
 
-        <div style={{ height: 180 }} />
+        <div style={{ height: 160 }} />
       </div>
 
       {/* 하단 버튼 */}
       <div className="dp-footer">
-        <button className="dp-settle-btn" onClick={handleSettle}>
-          그냥 정산할게요
-        </button>
         <button className="dp-dispute-btn" onClick={handleDispute}>
-          이의 신청
+          이의 신청하기
+        </button>
+        <button className="dp-settle-btn" onClick={handleSettle}>
+          이의 없음 (정산 동의)
         </button>
       </div>
     </div>

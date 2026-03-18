@@ -57,18 +57,6 @@ export default function ResetPasswordPage() {
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">비밀번호 확인</label>
-            <input
-              className="form-input"
-              type="password"
-              name="confirmPassword"
-              placeholder="Value"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              autoComplete="new-password"
-            />
-          </div>
 
           {error && <p className="form-error">{error}</p>}
 

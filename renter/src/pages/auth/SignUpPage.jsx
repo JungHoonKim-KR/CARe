@@ -22,17 +22,13 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.email || !form.name || !form.password || !form.confirmPassword) {
+    if (!form.email || !form.name || !form.password) {
       setError('모든 항목을 입력해주세요.')
-      return
-    }
-    if (form.password !== form.confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.')
       return
     }
     setLoading(true)
     try {
-      console.log('[SignUp] 요청:', { email: form.email, name: form.name })
+      console.log('[SignUp] 요청:', { email: form.email, name: form.name, password: form.password })
       const data = await registerRenter({
         email: form.email,
         name: form.name,

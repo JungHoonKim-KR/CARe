@@ -15,6 +15,7 @@ export default function WalletConnectPage() {
       const wallet = new Wallet(key)
       console.log('[MetaMask] 연결된 주소:', wallet.address)
       localStorage.setItem('metamask_address', wallet.address)
+      sessionStorage.setItem('wallet_pk', key)
       navigate(-1)
     } catch {
       setPkError('유효하지 않은 개인키입니다.')

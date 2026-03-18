@@ -7,8 +7,8 @@ services:
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASS:}
-      MYSQL_DATABASE: ${DB_NAME:}
+      MYSQL_ROOT_PASSWORD: ${DB_PASS:-1234}
+      MYSQL_DATABASE: ${DB_NAME:-care}
     volumes:
       - mysql-data:/var/lib/mysql
     restart: unless-stopped

@@ -1,6 +1,7 @@
 package com.care.domain.car.service;
 
 import com.care.domain.car.controller.dto.request.CarRegisterRequest;
+import com.care.domain.car.controller.dto.response.CarImageResponse;
 import com.care.domain.car.controller.dto.response.CarRegisterResponse;
 import com.care.domain.car.entity.CarImage;
 import com.care.domain.car.entity.CarImage.Side;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -101,5 +103,22 @@ public class CarService {
         ));
 
         return CarRegisterResponse.of(car, s3Urls);
+    }
+
+    /**
+     * 특정 차량의 이미지 목록 조회 (S3 URL + IPFS CID)
+     */
+    @Transactional(readOnly = true)
+    public List<CarImageResponse> getCarImages(String companyId, String carId) {
+        OwnedCar car = ownedCarRepository.findById(carId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 차량입니다: " + carId));
+
+        if (!car.getCompany().getCompanyId().equals(companyId)) {
+            throw new IllegalArgumentException("해당 회사의 차량이 아닙니다.");
+        }
+
+        return carImageRepository.findByCarCarId(carId).stream()
+                .map(CarImageResponse::from)
+                .toList();
     }
 }

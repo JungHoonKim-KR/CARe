@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { usePrivy } from '@privy-io/react-auth'
+import { Wallet } from 'ethers'
 import careLogo from '../../assets/care_logo.png'
 import { registerRenter } from '../../api/auth'
 import './AuthForm.css'
 
 export default function SignUpPage() {
   const navigate = useNavigate()
-  const { login: privyLogin } = usePrivy()
 
   const [form, setForm] = useState({
     email: '',
@@ -30,19 +29,20 @@ export default function SignUpPage() {
     }
     setLoading(true)
     try {
-      console.log('[SignUp] 요청:', { email: form.email, name: form.name, password: form.password })
+      console.log('[SignUp] 요청:', { email: form.email, name: form.name })
       const data = await registerRenter({
         email: form.email,
         name: form.name,
         password: form.password,
       })
       console.log('[SignUp] 응답:', data)
-      // Privy 로그인 트리거 → 임베디드 지갑 자동 생성
-      try {
-        privyLogin()
-      } catch (privyErr) {
-        console.warn('[SignUp] Privy 로그인 실패:', privyErr)
-      }
+
+      // 임베디드 지갑 자동 생성
+      const wallet = Wallet.createRandom()
+      localStorage.setItem('embedded_wallet_address', wallet.address)
+      localStorage.setItem('embedded_wallet_key', wallet.privateKey)
+      console.log('[SignUp] 임베디드 지갑 생성:', wallet.address)
+
       navigate('/login')
     } catch (err) {
       console.error('[SignUp] 오류:', err.response?.status, err.response?.data)
@@ -59,7 +59,6 @@ export default function SignUpPage() {
         <img src={careLogo} alt="CARe" className="auth-logo" />
       </div>
 
-
       <div className="auth-card">
         <form onSubmit={handleSubmit} noValidate>
           <div className="form-group">
@@ -74,7 +73,7 @@ export default function SignUpPage() {
               autoComplete="email"
             />
           </div>
-          
+
           <div className="form-group">
             <label className="form-label">이름</label>
             <input
@@ -88,7 +87,7 @@ export default function SignUpPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">비밀번호</label>
+            <label className="form-label">비밀번호 (8자 이상)</label>
             <input
               className="form-input"
               type="password"
@@ -99,7 +98,6 @@ export default function SignUpPage() {
               autoComplete="new-password"
             />
           </div>
-
 
           {error && <p className="form-error">{error}</p>}
 

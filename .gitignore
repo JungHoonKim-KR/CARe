@@ -22,6 +22,9 @@ backend/.env
 .env.*
 **/.env.*
 
+# 로컬 블록체인 테스트 설정 (private key 포함)
+backend/src/test/resources/blockchain-local.properties
+
 # Python
 .venv/
 **/.venv/

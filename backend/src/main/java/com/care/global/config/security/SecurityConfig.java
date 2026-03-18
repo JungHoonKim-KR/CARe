@@ -67,7 +67,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtFilter(jwtUtil, redisTemplate),
+                .addFilterBefore(new JwtFilter(jwtUtil),
                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

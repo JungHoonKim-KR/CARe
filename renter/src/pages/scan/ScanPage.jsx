@@ -3,30 +3,39 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState } from 'react'
-import { useParams, useLocation } from 'react-router-dom'
-import { Scanner }     from './scanner.js'
-import { drawBoxes, clearOverlay } from './overlay.js'
-import { ZONES }       from './zones.js'
-import styles          from './ScanPage.module.css'
+import { useParams, useLocation }       from 'react-router-dom'
+import { Scanner }                      from './scanner.js'
+import { drawBoxes, clearOverlay }      from './overlay.js'
+import { ZONES, MOCK_HISTORY, MOCK_RESULTS } from './zones.js'
+import styles                           from './ScanPage.module.css'
 
 export default function ScanPage() {
   const { reservationId } = useParams()
   const location          = useLocation()
-  const logType           = location.state?.logType || 'BEFORE'  // BEFORE / AFTER
+  const logType           = location.state?.logType || 'BEFORE'
 
   const videoRef   = useRef(null)
   const canvasRef  = useRef(null)
   const scannerRef = useRef(null)
+  const wheelLRef  = useRef(null)
+  const wheelRRef  = useRef(null)
 
   const [zoneIndex,   setZoneIndex]   = useState(0)
-  const [countdown,   setCountdown]   = useState(0)
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [captures,    setCaptures]    = useState({})
   const [isDone,      setIsDone]      = useState(false)
+  const [matchStatus, setMatchStatus] = useState('detecting')
+  const [matchValue,  setMatchValue]  = useState(0)
+  const [showToast,   setShowToast]   = useState(false)
 
   const currentZone = ZONES[zoneIndex]
 
-  // ── 카메라 시작
+  useEffect(() => {
+    const link = document.createElement('link')
+    link.href  = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Pretendard:wght@300;400;500;600;700&display=swap'
+    link.rel   = 'stylesheet'
+    document.head.appendChild(link)
+  }, [])
+
   useEffect(() => {
     let stream    = null
     let cancelled = false
@@ -48,7 +57,6 @@ export default function ScanPage() {
         if (!cancelled) console.error('[ScanPage] 카메라 접근 실패', err)
       }
     }
-
     startCamera()
     return () => {
       cancelled = true
@@ -56,171 +64,304 @@ export default function ScanPage() {
     }
   }, [])
 
-  // ── Scanner 초기화
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
 
-    // reservationId + logType 넘김
+    setMatchStatus('detecting')
+    setMatchValue(0)
+    clearOverlay(canvasRef.current)
+
     const scanner = new Scanner(video, reservationId, logType)
     scannerRef.current = scanner
 
-    scanner.onCountdown = (n) => setCountdown(n)
+    scanner.onMatching = (progress) => {
+      setMatchValue(progress)
+      const circumference = 2 * Math.PI * 44
+      const dash = (progress / 100) * circumference
+      if (wheelLRef.current) {
+        const circle = wheelLRef.current.querySelector('circle')
+        if (circle) circle.style.strokeDasharray = `${dash} 999`
+      }
+      if (wheelRRef.current) {
+        const circle = wheelRRef.current.querySelector('circle')
+        if (circle) circle.style.strokeDasharray = `${dash} 999`
+      }
+    }
+    scanner.onPlateDetected = (plates) => {
+      // 번호판 bbox를 canvas에 그리기
+      const canvas = canvasRef.current
+      const video  = videoRef.current
+      if (!canvas || !video) return
+
+      const ctx = canvas.getContext('2d')
+      canvas.width  = video.videoWidth  || 1280
+      canvas.height = video.videoHeight || 720
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      plates.forEach(p => {
+        // 번호판 박스
+        ctx.strokeStyle = matchStatus === 'matched'
+          ? 'rgba(16,185,129,0.9)'   // 초록 — 매칭 완료
+          : 'rgba(79,70,229,0.8)'    // 보라 — 탐지 중
+        ctx.lineWidth   = 2
+        ctx.strokeRect(p.x, p.y, p.w, p.h)
+
+        // 라벨
+        ctx.fillStyle = ctx.strokeStyle
+        ctx.fillRect(p.x, p.y - 20, 80, 20)
+        ctx.fillStyle = '#fff'
+        ctx.font      = 'bold 11px sans-serif'
+        ctx.fillText(`번호판 ${Math.round(p.score * 100)}%`, p.x + 4, p.y - 5)
+      })
+    }
 
     scanner.onCapture = (zoneId, dataUrl, boxes) => {
-      setIsAnalyzing(false)
       setCaptures(prev => ({ ...prev, [zoneId]: { dataUrl, boxes } }))
-
+      setMatchStatus('matched')
       if (canvasRef.current && videoRef.current) {
         drawBoxes(canvasRef.current, videoRef.current, boxes)
       }
-
-      // 1.5초 후 다음 구역 자동 이동
-      setTimeout(() => {
-        const nextIndex = zoneIndex + 1
-        if (nextIndex >= ZONES.length) {
-          setIsDone(true)
-        } else {
-          setZoneIndex(nextIndex)
-          clearOverlay(canvasRef.current)
-        }
-      }, 1500)
+      if (boxes.length > 0) {
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 2000)
+      }
     }
 
+    scanner.startMatching()
     return () => { scannerRef.current = null }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoneIndex])
 
-  // ── 구역 바뀔 때 Scanner에 zone 세팅
   useEffect(() => {
     if (!scannerRef.current) return
     scannerRef.current.setZone(currentZone)
   }, [currentZone])
 
-  // ── 촬영 버튼
-  function handleCapture() {
-    if (!scannerRef.current || isAnalyzing) return
-    setIsAnalyzing(true)
-    scannerRef.current.lock()
+  function handleNext() {
+    if (zoneIndex < ZONES.length - 1) {
+      setZoneIndex(zoneIndex + 1)
+    } else {
+      setIsDone(true)
+    }
   }
 
-  // ── 재촬영 버튼
-  function handleRetake() {
-    if (!scannerRef.current) return
-    clearOverlay(canvasRef.current)
-    setCaptures(prev => {
-      const next = { ...prev }
-      delete next[currentZone.id]
-      return next
-    })
-    scannerRef.current.unlock()
-    scannerRef.current.setZone(currentZone)
+  function handleSkip() {
+    setCaptures(prev => ({
+      ...prev,
+      [currentZone.id]: { dataUrl: null, boxes: [] }
+    }))
+    handleNext()
   }
 
-  const currentCapture = captures[currentZone?.id]
+  const history      = MOCK_HISTORY[currentZone?.id] || []
+  const result       = MOCK_RESULTS[currentZone?.id] || { hasDefect: false, count: 0 }
+  const totalDefects = Object.values(captures).reduce((a, c) => a + (c.boxes?.length || 0), 0)
 
-  return (
-    <div className={styles.page}>
-
-      {/* 구역 진행 표시 */}
-      <div className={styles.progress}>
-        {ZONES.map((z, i) => (
-          <div
-            key={z.id}
-            className={[
-              styles.step,
-              i < zoneIndex                         ? styles.done      : '',
-              i === zoneIndex                       ? styles.active    : '',
-              captures[z.id]?.boxes?.length > 0    ? styles.hasDefect : '',
-            ].join(' ')}
-          >
-            <span className={styles.stepDot} />
-            <span className={styles.stepLabel}>{z.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {!isDone ? (
-        <>
-          {/* 현재 구역 안내 */}
-          <div className={styles.zoneTitle}>
-            {currentZone.label} 촬영
-          </div>
-
-          {/* 카메라 뷰 */}
-          <div className={styles.viewWrapper}>
-            <video ref={videoRef} className={styles.video} playsInline muted />
-            <canvas ref={canvasRef} className={styles.overlay} />
-
-            {countdown > 0 && (
-              <div className={styles.countdown}>{countdown}</div>
-            )}
-            {isAnalyzing && countdown === 0 && (
-              <div className={styles.analyzing}>분석 중...</div>
-            )}
-          </div>
-
-          {/* 버튼 */}
-          <div className={styles.actions}>
-            {!currentCapture ? (
-              <button
-                className={styles.captureBtn}
-                onClick={handleCapture}
-                disabled={isAnalyzing}
-              >
-                {isAnalyzing ? '분석 중...' : '촬영'}
-              </button>
-            ) : (
-              <button className={styles.retakeBtn} onClick={handleRetake}>
-                재촬영
-              </button>
-            )}
-          </div>
-
-          {/* 캡처 썸네일 + 결과 */}
-          {currentCapture && (
-            <div className={styles.result}>
-              <img
-                src={currentCapture.dataUrl}
-                alt={currentZone.label}
-                className={styles.thumbnail}
-              />
-              <p className={styles.resultText}>
-                {currentCapture.boxes?.length > 0
-                  ? `흠집 ${currentCapture.boxes.length}개 감지됨`
-                  : '흠집 없음'}
-              </p>
-            </div>
-          )}
-        </>
-      ) : (
-        /* 전체 완료 화면 */
+  if (isDone) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.header}>
+          <span className={styles.headerLogo}>CARCHECK</span>
+        </div>
         <div className={styles.summary}>
-          <h2>스캔 완료</h2>
+          <div className={styles.summaryHero}>
+            <div className={styles.summaryCheck}>✓</div>
+            <div className={styles.summaryHeroTitle}>스캔 완료</div>
+            <div className={styles.summaryHeroSub}>모든 구역이 안전하게 기록되었습니다</div>
+          </div>
+          <div className={styles.summaryStats}>
+            <div className={styles.statCard}>
+              <div className={styles.statLabel}>감지된 흠집</div>
+              <div className={`${styles.statValue} ${styles.statValueDefect}`}>{totalDefects}</div>
+            </div>
+            <div className={styles.statCard}>
+              <div className={styles.statLabel}>스캔 구역</div>
+              <div className={`${styles.statValue} ${styles.statValueSafe}`}>{ZONES.length}</div>
+            </div>
+          </div>
           <div className={styles.summaryGrid}>
             {ZONES.map(z => {
-              const cap = captures[z.id]
+              const cap       = captures[z.id]
+              const hasDefect = (cap?.boxes?.length || 0) > 0
               return (
-                <div key={z.id} className={styles.summaryCard}>
-                  <img src={cap?.dataUrl} alt={z.label} />
-                  <p>{z.label}</p>
-                  <p className={cap?.boxes?.length > 0 ? styles.defect : styles.clean}>
-                    {cap?.boxes?.length > 0
-                      ? `흠집 ${cap.boxes.length}개`
-                      : '이상 없음'}
-                  </p>
+                <div key={z.id} className={`${styles.summaryCard} ${hasDefect ? styles.summaryCardHasDefect : ''}`}>
+                  <div className={styles.summaryCardImg} />
+                  <div className={styles.summaryCardInfo}>
+                    <span className={styles.summaryCardZone}>{z.label}</span>
+                    <span className={`${styles.summaryCardStatus} ${hasDefect ? styles.summaryCardDefect : styles.summaryCardClean}`}>
+                      {hasDefect ? `흠집 ${cap.boxes.length}개` : '이상 없음'}
+                    </span>
+                  </div>
                 </div>
               )
             })}
           </div>
-          <button
-            className={styles.captureBtn}
-            onClick={() => console.log('최종 결과:', captures)}
-          >
+          <button className={styles.btnDone} onClick={() => console.log('완료:', captures)}>
             완료
           </button>
         </div>
-      )}
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.page}>
+
+      <div className={styles.header}>
+        <span className={styles.headerLogo}>CARCHECK</span>
+        <span className={styles.headerStep}>{zoneIndex + 1} / {ZONES.length} 구역</span>
+      </div>
+
+      <div className={styles.stepbar}>
+        {ZONES.map((z, i) => {
+          const cap = captures[z.id]
+          let cls   = ''
+          if (i < zoneIndex && cap) cls = (cap.boxes?.length > 0) ? styles.defect : styles.done
+          else if (i === zoneIndex) cls = styles.active
+          return (
+            <div key={z.id} className={`${styles.step} ${cls}`}>
+              <div className={styles.stepTrack} />
+              <div className={styles.stepLabel}>{z.label}</div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className={styles.zoneHeader}>
+        <div>
+          <div className={styles.zoneLabel}>촬영 구역</div>
+          <div className={styles.zoneTitle}>{currentZone.name}</div>
+        </div>
+        <div className={`${styles.statusBadge} ${styles[matchStatus]}`}>
+          <div className={styles.badgeDot} />
+          <span>{matchStatus === 'detecting' ? '인식 중...' : '인식 완료'}</span>
+        </div>
+      </div>
+
+      <div className={styles.viewWrap}>
+        <video ref={videoRef} className={styles.video} playsInline muted />
+        <canvas ref={canvasRef} className={styles.overlay} />
+        <div className={styles.scanLine} />
+
+        {currentZone.type === 'plate' && (
+          <div className={`${styles.guidePlate} ${styles[matchStatus]}`}>
+            <div className={styles.guidePlateInner}>
+              <div className={`${styles.plateCorner} ${styles.tl}`} />
+              <div className={`${styles.plateCorner} ${styles.tr}`} />
+              <div className={`${styles.plateCorner} ${styles.bl}`} />
+              <div className={`${styles.plateCorner} ${styles.br}`} />
+              <span className={styles.plateHint}>번호판</span>
+            </div>
+            <div className={styles.plateLabelText}>
+              {matchStatus === 'matched' ? '✓ 번호판 인식 완료' : '번호판을 이 영역에 맞춰주세요'}
+            </div>
+          </div>
+        )}
+
+        {currentZone.type === 'wheel' && (
+          <>
+            {currentZone.wheelSide === 'left' && (
+              <div className={`${styles.guideWheel} ${styles.left} ${styles[matchStatus]}`}>
+                <div className={styles.wheelCircle}>
+                  <div className={styles.wheelHub} />
+                </div>
+                <div className={styles.wheelProgress} ref={wheelLRef}>
+                  <svg viewBox="0 0 96 96">
+                    <circle cx="48" cy="48" r="44" />
+                  </svg>
+                </div>
+                <div className={styles.wheelLabelText}>
+                  {matchStatus === 'matched' ? '✓ 인식 완료' : currentZone.label}
+                </div>
+              </div>
+            )}
+            {currentZone.wheelSide === 'right' && (
+              <div className={`${styles.guideWheel} ${styles.right} ${styles[matchStatus]}`}>
+                <div className={styles.wheelCircle}>
+                  <div className={styles.wheelHub} />
+                </div>
+                <div className={styles.wheelProgress} ref={wheelRRef}>
+                  <svg viewBox="0 0 96 96">
+                    <circle cx="48" cy="48" r="44" />
+                  </svg>
+                </div>
+                <div className={styles.wheelLabelText}>
+                  {matchStatus === 'matched' ? '✓ 인식 완료' : currentZone.label}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        <div className={`${styles.saveToast} ${showToast ? styles.visible : ''}`}>
+          ✓ 흠집이 저장되었습니다
+        </div>
+
+        <div className={styles.liveBadge}>
+          <div className={styles.liveDot} />
+          <span className={styles.liveText}>LIVE</span>
+        </div>
+      </div>
+
+      <div className={styles.matchProgress}>
+        <div className={styles.matchFill} style={{ width: `${matchValue}%` }} />
+      </div>
+
+      <div className={styles.instruction}>
+        <div className={styles.instructionIcon}>{currentZone.icon}</div>
+        <div
+          className={styles.instructionText}
+          dangerouslySetInnerHTML={{
+            __html: matchStatus === 'matched'
+              ? result.hasDefect
+                ? `<strong style="color:#ef4444">흠집 ${result.count}개</strong>가 감지되어 저장되었습니다.<br>다음 구역으로 이동하거나 건너뛰세요.`
+                : `<strong style="color:#10b981">이상 없음</strong> — 깨끗한 상태입니다.<br>다음 구역으로 이동하세요.`
+              : currentZone.instruction
+          }}
+        />
+      </div>
+
+      <div className={styles.actions}>
+        <button className={styles.btnSkip} onClick={handleSkip}>건너뛰기</button>
+        <button className={styles.btnNext} onClick={handleNext}>
+          {zoneIndex < ZONES.length - 1 ? '다음 구역 →' : '스캔 완료 →'}
+        </button>
+      </div>
+
+      <div className={styles.historySection}>
+        <div className={styles.historyHeader}>
+          <span className={styles.historyTitle}>이 구역의 흠집 기록</span>
+          {history.length > 0
+            ? <span className={styles.historyCount}>{history.length}건</span>
+            : <span className={styles.historyCountNone}>기록 없음</span>
+          }
+        </div>
+        <div className={styles.historyScroll}>
+          {history.length === 0
+            ? <div className={styles.historyEmpty}>이 구역의 이전 흠집 기록이 없어요</div>
+            : history.map((h, i) => (
+                <div key={i} className={styles.historyCard}>
+                  <div className={styles.historyCardImg}>
+                    <div
+                      className={styles.defectMark}
+                      style={{
+                        left:   `${18 + i * 8}%`,
+                        top:    `${22 + i * 6}%`,
+                        width:  '26%',
+                        height: '28%',
+                      }}
+                    />
+                  </div>
+                  <div className={styles.historyCardInfo}>
+                    <div className={styles.historyCardDate}>{h.date}</div>
+                    <div className={styles.historyCardCount}>흠집 {h.count}개</div>
+                  </div>
+                </div>
+              ))
+          }
+        </div>
+      </div>
     </div>
   )
 }

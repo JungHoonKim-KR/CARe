@@ -8,11 +8,14 @@ import com.care.domain.car.entity.CarImage.Side;
 import com.care.domain.car.entity.CarModel;
 import com.care.domain.car.entity.OwnedCar;
 import com.care.domain.car.event.CarRegisteredEvent;
+import com.care.domain.car.exception.CarErrorCode;
 import com.care.domain.car.repository.CarImageRepository;
 import com.care.domain.car.repository.CarModelRepository;
 import com.care.domain.car.repository.OwnedCarRepository;
 import com.care.domain.company.entity.Company;
+import com.care.domain.company.exception.CompanyErrorCode;
 import com.care.domain.company.repository.CompanyRepository;
+import com.care.global.exception.BusinessException;
 import com.care.global.ipfs.PinataService;
 import com.care.global.s3.S3Service;
 import lombok.RequiredArgsConstructor;
@@ -49,10 +52,10 @@ public class CarService {
     @Transactional
     public CarRegisterResponse registerCar(String companyId, CarRegisterRequest request) {
         Company company = companyRepository.findById(companyId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회사입니다: " + companyId));
+                .orElseThrow(() -> new BusinessException(CompanyErrorCode.COMPANY_NOT_FOUND));
 
         CarModel carModel = carModelRepository.findById(request.modelId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 차량 모델입니다: " + request.modelId()));
+                .orElseThrow(() -> new BusinessException(CarErrorCode.CAR_MODEL_NOT_FOUND));
 
         String carId = UUID.randomUUID().toString();
         String modelFolder = carModel.getModelName().replace(" ", "-");
@@ -111,10 +114,10 @@ public class CarService {
     @Transactional(readOnly = true)
     public List<CarImageResponse> getCarImages(String companyId, String carId) {
         OwnedCar car = ownedCarRepository.findById(carId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 차량입니다: " + carId));
+                .orElseThrow(() -> new BusinessException(CarErrorCode.CAR_NOT_FOUND));
 
         if (!car.getCompany().getCompanyId().equals(companyId)) {
-            throw new IllegalArgumentException("해당 회사의 차량이 아닙니다.");
+            throw new BusinessException(CarErrorCode.CAR_NOT_OWNED_BY_COMPANY);
         }
 
         return carImageRepository.findByCarCarId(carId).stream()

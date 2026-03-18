@@ -22,4 +22,6 @@ public class RenterSignUpRequest {
     private String password;
 
     private String languageCode;
+
+    private String walletAddress; // Privy 연동 시 프론트에서 전달, 미연동 시 null
 }

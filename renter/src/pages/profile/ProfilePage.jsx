@@ -19,7 +19,7 @@ export default function ProfilePage() {
     <div className="profile-page">
       <div className="profile-header">
         <img src={faceIcon} alt="프로필" className="profile-avatar" />
-        <p className="profile-name">{t('profile.userName')}</p>
+        <p className="profile-name">{t('profile.name')}</p>
         <p className="profile-email">user@example.com</p>
       </div>
 

@@ -1,14 +1,28 @@
 import { useNavigate } from 'react-router-dom'
+import { usePrivy, useWallets } from '@privy-io/react-auth'
 import cuteIcon2 from '../../assets/cute_icon2.png'
 import BottomNav from '../../components/BottomNav'
 import './WalletPage.css'
 
 export default function WalletPage() {
   const navigate = useNavigate()
+  const { authenticated: privyAuthenticated } = usePrivy()
+  const { wallets } = useWallets()
+
   const balance = 2500
   const didVerified =
     localStorage.getItem('passport_verified') === 'true' &&
     localStorage.getItem('license_verified') === 'true'
+
+  const embeddedWallet = wallets.find((w) => w.walletClientType === 'privy')
+  const metamaskAddress = localStorage.getItem('metamask_address')
+  const walletConnected = (privyAuthenticated && embeddedWallet) || metamaskAddress
+
+  const handleTokenCardClick = () => {
+    if (!walletConnected) {
+      navigate('/wallet-connect')
+    }
+  }
 
   return (
     <div className="wallet-page">
@@ -49,7 +63,11 @@ export default function WalletPage() {
         </div>
 
         {/* Token card */}
-        <div className="wallet-card wallet-token-card">
+        <div
+          className={`wallet-card wallet-token-card${!walletConnected ? ' token-card-unconnected' : ''}`}
+          onClick={handleTokenCardClick}
+          style={!walletConnected ? { cursor: 'pointer' } : {}}
+        >
           <div className="token-circle-bg" />
 
           <div className="wallet-card-row">
@@ -61,12 +79,25 @@ export default function WalletPage() {
               </div>
               <span className="wallet-card-name token-name">잔여 토큰</span>
             </div>
-            <button className="wallet-pill-btn token-pill">충전하기</button>
+            {walletConnected ? (
+              <button className="wallet-pill-btn token-pill">충전하기</button>
+            ) : (
+              <span className="wallet-pill-btn token-connect-pill">지갑 연결하기 →</span>
+            )}
           </div>
 
           <div className="token-balance-wrap">
-            <p className="token-balance-label">보유 잔액</p>
-            <p className="token-balance-value">{balance.toLocaleString()} CARe</p>
+            {walletConnected ? (
+              <>
+                <p className="token-balance-label">보유 잔액</p>
+                <p className="token-balance-value">{balance.toLocaleString()} CARe</p>
+              </>
+            ) : (
+              <>
+                <p className="token-balance-label">지갑이 연결되지 않았어요</p>
+                <p className="token-balance-value token-balance-empty">-- CARe</p>
+              </>
+            )}
           </div>
         </div>
 

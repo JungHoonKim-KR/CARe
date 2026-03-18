@@ -1,7 +1,9 @@
 import React from 'react'
 import './ReservationTable.css'
+import { useNavigate } from 'react-router-dom'
 
 export default function ReservationTable({ reservations }) {
+  const navigate = useNavigate()
   const getStatusBadge = (status) => {
     const statusMap = {
       '이용중': 'badge-blue',
@@ -12,6 +14,9 @@ export default function ReservationTable({ reservations }) {
     return statusMap[status] || 'badge-gray'
   }
 
+  // const handleItemClick = (reservationId) => {
+  //   navigate(`/reservations/${reservationId}`)
+  // }
   return (
     <div className="reservation-table-container">
       <table className="reservation-table">
@@ -27,7 +32,9 @@ export default function ReservationTable({ reservations }) {
         </thead>
         <tbody>
           {reservations.map((reservation) => (
-            <tr key={reservation.id}>
+            <tr key={reservation.id}
+              // onClick={() => handleItemClick(reservation.id)}
+            >
               <td>
                 <div className="cell-with-icon">
                   <div className="cell-content">

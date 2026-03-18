@@ -225,3 +225,21 @@
   margin: 0;
   letter-spacing: -1px;
 }
+
+/* -- 토큰 카드 미연결 상태 -- */
+.token-card-unconnected {
+  opacity: 0.85;
+}
+
+.wallet-pill-btn.token-connect-pill {
+  background: rgba(247, 166, 51, 0.85);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.token-balance-value.token-balance-empty {
+  color: #aaa;
+}

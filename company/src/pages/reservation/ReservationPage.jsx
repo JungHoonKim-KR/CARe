@@ -12,6 +12,14 @@ export default function ReservationPage() {
     { id: 'dispute', label: '분쟁', count: 1 },
   ]
 
+
+  // 백엔드 연동 시
+  // const [reservations, setReservations] = useState([])
+  // useEffect(() => {
+  //   fetchAllReservations()
+  // }, [activeTab])
+
+
   const allReservations = [
     {
       id: 1,

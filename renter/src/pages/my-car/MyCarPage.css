@@ -301,16 +301,89 @@
   padding: 20px 0;
 }
 
-/* 스마트키 */
-.mc-smartkey-bar {
+/* ─── 차량 외관 촬영 카드 (스크롤 영역) ──────────────────────────────────── */
+.mc-action-card {
+  background: white;
+  margin: 8px 0 0;
+  padding: 18px 20px 20px;
+}
+
+.mc-action-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #aaa;
+  margin: 0 0 12px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.mc-action-row {
+  display: flex;
+  gap: 10px;
+}
+
+.mc-action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  border: none;
+  border-radius: 16px;
+  padding: 16px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.1s, opacity 0.1s;
+}
+
+.mc-action-btn:active {
+  transform: scale(0.97);
+  opacity: 0.88;
+}
+
+.mc-action-btn-icon {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mc-action-btn-label {
+  font-size: 14px;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+}
+
+.mc-action-btn-sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1;
+}
+
+.mc-shoot-btn {
+  background: #333;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+.mc-return-btn {
+  background: #2d9e5b;
+  box-shadow: 0 4px 14px rgba(45, 158, 91, 0.35);
+}
+
+/* ─── 하단 고정 - Smart Key 전용 ──────────────────────────────────── */
+.mc-action-bar {
   position: fixed;
-  bottom: 88px;
+  bottom: 80px;
   left: 16px;
   right: 16px;
   z-index: 100;
 }
 
-.mc-smartkey-inner {
+.mc-smartkey-btn {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -318,19 +391,22 @@
   border-radius: 18px;
   padding: 14px 16px;
   box-shadow: 0 4px 20px rgba(247, 166, 51, 0.45);
-  transition: background 0.2s, box-shadow 0.2s;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.1s;
 }
 
-.mc-smartkey-bar.active .mc-smartkey-inner {
-  background: #2d9e5b;
-  box-shadow: 0 4px 20px rgba(45, 158, 91, 0.4);
+.mc-smartkey-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
 }
 
 .mc-smartkey-icon-wrap {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   background: rgba(255, 255, 255, 0.22);
-  border-radius: 12px;
+  border-radius: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -343,24 +419,7 @@
   font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.2px;
-}
-
-.mc-smartkey-toggle {
-  background: rgba(255, 255, 255, 0.22);
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.15s;
-}
-
-.mc-smartkey-toggle:active {
-  background: rgba(255, 255, 255, 0.38);
+  text-align: left;
 }
 
 /* 대여 일정 카드 */
@@ -582,6 +641,144 @@
   font-family: inherit;
 }
 
+
+/* ─── 반납하기 버튼 ──────────────────────────────────── */
+.mc-return-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #2d9e5b;
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 16px rgba(45, 158, 91, 0.35);
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.1s;
+  margin-bottom: 8px;
+}
+
+.mc-return-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.mc-return-icon-wrap {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mc-return-label {
+  flex: 1;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-align: left;
+}
+
+/* ─── 분쟁 알림 모달 ──────────────────────────────────── */
+.mc-dispute-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: mc-overlay-in 0.2s ease;
+}
+
+.mc-dispute-modal {
+  background: white;
+  border-radius: 24px;
+  padding: 32px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 320px;
+  animation: mc-modal-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes mc-modal-in {
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.mc-dispute-modal-icon {
+  width: 76px;
+  height: 76px;
+  background: #FF4D4F;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 28px rgba(255, 77, 79, 0.4);
+}
+
+.mc-dispute-modal-icon span {
+  color: white;
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.mc-dispute-modal-text {
+  font-size: 15px;
+  color: #333;
+  text-align: center;
+  line-height: 1.7;
+  margin: 0;
+  font-weight: 500;
+}
+
+.mc-dispute-modal-btns {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.mc-dispute-modal-confirm {
+  flex: 1;
+  background: #FFE8E8;
+  color: #FF4D4F;
+  border: none;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.mc-dispute-modal-confirm:active { background: #FFD0D0; }
+
+.mc-dispute-modal-close {
+  flex: 1;
+  background: #f5f5f5;
+  color: #888;
+  border: none;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.mc-dispute-modal-close:active { background: #ebebeb; }
 
 /* ── 일정 카드 내 진행 바 ──────────────── */
 .mc-schedule-progress-wrap {

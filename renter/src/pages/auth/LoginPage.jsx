@@ -26,11 +26,17 @@ export default function LoginPage() {
     }
     setLoading(true)
     try {
+      console.log('[Login] 요청:', { email: form.email })
       const data = await loginRenter(form.email, form.password)
-      const token = data.accessToken || data.token || data.data?.accessToken
-      login(token, data.user || data.data)
+      console.log('[Login] 응답:', data)
+      const accessToken  = data.accessToken  || data.data?.accessToken
+      const refreshToken = data.refreshToken || data.data?.refreshToken
+      const userData     = data.user         || data.data?.user || null
+      console.log('[Login] accessToken:', accessToken)
+      login(accessToken, refreshToken, userData)
       navigate('/home')
     } catch (err) {
+      console.error('[Login] 오류:', err.response?.status, err.response?.data)
       const msg = err.response?.data?.message || '로그인에 실패했습니다. 다시 시도해주세요.'
       setError(msg)
     } finally {

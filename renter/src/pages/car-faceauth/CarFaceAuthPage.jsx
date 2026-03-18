@@ -124,9 +124,12 @@ export default function CarFaceAuthPage() {
       .catch((e) => { setFailMsg(e.message || '인증 중 오류가 발생했어요.'); setStep('fail') })
   }, [livenessComplete]) // eslint-disable-line
 
-  // ── 성공 후 2초 → 스마트키 페이지 ──────────────────────────
+  // ── 성공 후 2초 → 차량 외관 촬영 페이지 ──────────────────────────
   useEffect(() => {
     if (step !== 'success') return
+    if (reservation?.reservationId) {
+      localStorage.setItem(`faceAuthDone_${reservation.reservationId}`, 'true')
+    }
     const t = setTimeout(() => navigate('/car-crack', { state: { reservation } }), 2000)
     return () => clearTimeout(t)
   }, [step, navigate, reservation])

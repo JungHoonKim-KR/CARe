@@ -110,10 +110,10 @@ export default function CarReturnPage() {
           <img src={carIconCute} alt="차량" className="cr-car-icon" />
         </div>
         <div className="cr-intro-text">
-          <h1 className="cr-intro-title">반납 전 차량 외관을<br/>4방향 촬영해주세요</h1>
+          <h1 className="cr-intro-title">반납 전 차량 외관을<br/>촬영해주세요</h1>
           <p className="cr-intro-desc">
             촬영 사진은 블록체인에 저장되며<br/>
-            임대인에게 반납 알림이 전송돼요
+            업체에게 반납 알림이 전송돼요
           </p>
         </div>
         <div className="cr-intro-notice">
@@ -208,8 +208,7 @@ export default function CarReturnPage() {
         <div className="cr-cam-header">
           <button className="cr-cam-back" onClick={() => { stopCamera(); setStep('select') }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2"
-                strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
           <div>

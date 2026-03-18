@@ -33,16 +33,17 @@
 }
 
 .cr-icon-ring {
-  width: 120px;
-  height: 120px;
-  background: #E8F5E9;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
+  border: 3px solid #F7A633;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #fffdf8;
 }
 
-.cr-car-icon { width: 80px; object-fit: contain; }
+.cr-car-icon { width: 130px; object-fit: contain; }
 
 .cr-intro-text {
   display: flex;
@@ -51,7 +52,7 @@
 }
 
 .cr-intro-title {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 900;
   color: #111;
   letter-spacing: -0.5px;
@@ -60,7 +61,7 @@
 }
 
 .cr-intro-desc {
-  font-size: 15px;
+  font-size: 16px;
   color: #888;
   line-height: 1.7;
   margin: 0;
@@ -84,24 +85,22 @@
 .cr-select-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 20px 16px 12px;
-  background: white;
+  gap: 12px;
+  padding: 56px 20px 24px;
 }
 
 .cr-back-inline {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
+  padding: 4px;
   flex-shrink: 0;
 }
-.cr-back-inline:active { background: #f5f5f5; }
+.cr-back-inline:active { opacity: 0.6; }
 
 .cr-select-title {
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 900;
   color: #111;
   margin: 0;
   letter-spacing: -0.3px;
@@ -122,7 +121,7 @@
   background: #e5e5e5;
   transition: background 0.2s;
 }
-.cr-progress-dot.done { background: #2d9e5b; }
+.cr-progress-dot.done { background: #F7A633; }
 
 .cr-progress-text {
   margin-left: auto;
@@ -136,52 +135,54 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  padding: 0 16px;
-  flex: 1;
+  padding: 0 20px;
 }
 
 .cr-panel {
-  background: #f8f8f8;
-  border: 2px solid transparent;
+  background: white;
+  border: 1.5px solid #eee;
   border-radius: 18px;
   padding: 20px 12px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
-  transition: all 0.18s;
+  transition: border-color 0.2s, box-shadow 0.2s;
   font-family: inherit;
 }
 
 .cr-panel:active { transform: scale(0.97); }
 
 .cr-panel.done {
-  background: #F0FFF4;
-  border-color: #2d9e5b;
+  border-color: #F7A633;
+  background: #fffcf5;
+  box-shadow: 0 2px 12px rgba(247, 166, 51, 0.12);
 }
 
 .cr-panel-icon-wrap {
   position: relative;
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #f5f5f5;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .cr-panel-icon {
   width: 56px;
   height: auto;
   object-fit: contain;
-  opacity: 0.7;
 }
 
 .cr-panel.done .cr-panel-icon { opacity: 1; }
 
 .cr-rotate-180 { transform: rotate(180deg); }
-.cr-side { width: 52px; }
-.cr-flip { transform: scaleX(-1); }
+.cr-side { transform: rotate(-15deg); width: 68px; }
+.cr-flip { transform: rotate(-15deg) scaleX(-1); width: 68px; }
 
 .cr-panel-check {
   position: absolute;
@@ -189,68 +190,71 @@
   right: -4px;
   width: 22px;
   height: 22px;
-  background: #2d9e5b;
+  background: #F7A633;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 6px rgba(45, 158, 91, 0.4);
+  box-shadow: 0 2px 6px rgba(247, 166, 51, 0.4);
 }
 
 .cr-panel-label {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  color: #333;
+  color: #222;
   margin: 0;
 }
 
 .cr-panel-badge {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 20px;
-  background: #e5e5e5;
-  color: #999;
+  background: #FFF3E0;
+  color: #F7A633;
   transition: all 0.18s;
 }
 
 .cr-panel-badge.done {
-  background: #D4EDDA;
+  background: #E8F5E9;
   color: #2d9e5b;
 }
 
 /* ─── 하단 ─────────────────────────────────── */
 .cr-footer {
+  margin-top: auto;
   padding: 16px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .cr-primary-btn {
   width: 100%;
-  background: #2d9e5b;
+  background: #F7A633;
   color: white;
   border: none;
   border-radius: 16px;
   padding: 18px;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
   transition: opacity 0.15s;
-  box-shadow: 0 4px 16px rgba(45, 158, 91, 0.35);
 }
 
 .cr-primary-btn:active { opacity: 0.85; }
 .cr-primary-btn.disabled {
-  background: #d0d0d0;
-  box-shadow: none;
-  cursor: not-allowed;
+  background: #ddd;
+  color: #aaa;
+  cursor: default;
 }
 
 .cr-hint {
   text-align: center;
   font-size: 13px;
   color: #bbb;
-  margin: 10px 0 0;
+  margin: 0;
 }
 
 /* ─── 카메라 ─────────────────────────────────── */
@@ -263,9 +267,9 @@
 }
 
 .cr-cam-header {
-  padding: 48px 16px 16px;
+  padding: 56px 20px 20px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   background: rgba(0, 0, 0, 0.55);
   position: absolute;
@@ -277,30 +281,36 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px;
+  padding: 4px;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .cr-cam-title {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
   color: white;
-  margin: 0;
+  margin: 0 0 4px;
 }
 
 .cr-cam-sub {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.7);
-  margin: 2px 0 0;
+  color: #F7A633;
+  margin: 0;
+  font-weight: 600;
 }
 
 .cr-cam-area {
   flex: 1;
   position: relative;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cr-cam-video {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -308,40 +318,44 @@
 
 .cr-cam-guide {
   position: absolute;
-  inset: 80px 20px 100px;
-  border: 2px solid rgba(45, 158, 91, 0.7);
-  border-radius: 14px;
-  pointer-events: none;
+  width: 88%;
+  height: 56%;
+  border: 2px solid #F7A633;
+  border-radius: 16px;
+  box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.5);
+  z-index: 5;
 }
 
 .cr-cam-error {
-  color: white;
-  text-align: center;
-  padding: 60px 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  font-size: 15px;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  z-index: 10;
 }
 
 .cr-cam-error button {
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.4);
+  background: #F7A633;
   color: white;
-  border-radius: 12px;
-  padding: 10px 24px;
-  font-size: 15px;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+  font-family: inherit;
 }
 
 .cr-cam-footer {
-  padding: 24px;
+  padding: 20px 0 52px;
   display: flex;
   justify-content: center;
   background: rgba(0, 0, 0, 0.55);
   position: absolute;
   bottom: 0; left: 0; right: 0;
+  z-index: 10;
 }
 
 .cr-shutter-btn {
@@ -352,24 +366,25 @@
 }
 
 .cr-shutter-ring {
-  width: 76px;
-  height: 76px;
-  border: 3px solid white;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
+  border: 3px solid white;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .cr-shutter-inner {
-  width: 62px;
-  height: 62px;
-  background: white;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  transition: transform 0.12s;
+  background: white;
+  transition: transform 0.1s;
 }
 
 .cr-shutter-btn:active .cr-shutter-inner { transform: scale(0.88); }
+.cr-shutter-btn:disabled .cr-shutter-inner { opacity: 0.5; }
 
 /* ─── 로딩 ─────────────────────────────────── */
 .cr-loading-page {
@@ -388,7 +403,7 @@
   width: 52px;
   height: 52px;
   border: 4px solid #f0f0f0;
-  border-top-color: #2d9e5b;
+  border-top-color: #F7A633;
   border-radius: 50%;
   animation: cr-spin 0.8s linear infinite;
 }
@@ -425,12 +440,12 @@
 .cr-done-icon {
   width: 88px;
   height: 88px;
-  background: #2d9e5b;
+  background: #F7A633;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 32px rgba(45, 158, 91, 0.35);
+  box-shadow: 0 8px 32px rgba(247, 166, 51, 0.35);
   margin-bottom: 4px;
 }
 
@@ -487,28 +502,28 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #EDF2FF;
-  border: 1px solid #C5D6FF;
+  background: #FFF8ED;
+  border: 1px solid #FFE4A0;
   border-radius: 14px;
   padding: 14px 18px;
   font-size: 14px;
-  color: #5B8DEF;
+  color: #F7A633;
   font-weight: 600;
   width: 100%;
 }
 
 .cr-done-btn {
   width: 100%;
-  background: #2d9e5b;
+  background: #F7A633;
   color: white;
   border: none;
   border-radius: 16px;
   padding: 18px;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 4px 16px rgba(45, 158, 91, 0.35);
+  box-shadow: 0 4px 16px rgba(247, 166, 51, 0.35);
   transition: opacity 0.15s;
 }
 

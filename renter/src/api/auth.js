@@ -2,23 +2,86 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 })
 
-// JWT 토큰 자동 첨부
+// ── 요청 인터셉터: 액세스 토큰 자동 첨부 ──────────────────────
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
 
-export const loginRenter = async (email, password) => {
-  const response = await api.post('/api/auth/renter/login', { email, password })
-  return response.data
+// ── 응답 인터셉터: 401 → 토큰 갱신 후 재시도 ──────────────────
+let isRefreshing = false
+let failedQueue = []
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((p) => (error ? p.reject(error) : p.resolve(token)))
+  failedQueue = []
 }
+
+api.interceptors.response.use(
+  (res) => res,
+  async (error) => {
+    const original = error.config
+    if (error.response?.status === 401 && !original._retry) {
+      const refreshToken = localStorage.getItem('refreshToken')
+      if (!refreshToken) return Promise.reject(error)
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        })
+          .then((token) => {
+            original.headers.Authorization = `Bearer ${token}`
+            return api(original)
+          })
+          .catch((e) => Promise.reject(e))
+      }
+
+      original._retry = true
+      isRefreshing = true
+
+      try {
+        const { data } = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/auth/refresh`,
+          { refreshToken },
+        )
+        const newAccess = data.accessToken || data.data?.accessToken
+        localStorage.setItem('accessToken', newAccess)
+        api.defaults.headers.common.Authorization = `Bearer ${newAccess}`
+        processQueue(null, newAccess)
+        original.headers.Authorization = `Bearer ${newAccess}`
+        return api(original)
+      } catch (refreshError) {
+        processQueue(refreshError, null)
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('refreshToken')
+        window.location.href = '/login'
+        return Promise.reject(refreshError)
+      } finally {
+        isRefreshing = false
+      }
+    }
+    return Promise.reject(error)
+  },
+)
+
+// ── 임차인(renter) 회원가입 ───────────────────────────────────
+export const registerRenter = (payload) =>
+  api.post('/api/auth/renter/register', payload).then((r) => r.data)
+
+// ── 임차인(renter) 로그인 ─────────────────────────────────────
+export const loginRenter = (email, password) =>
+  api.post('/api/auth/renter/login', { email, password }).then((r) => r.data)
+
+// ── 로그아웃 ──────────────────────────────────────────────────
+export const logoutApi = () =>
+  api.post('/api/auth/logout').then((r) => r.data)
+
+// ── 토큰 갱신 (수동 호출용) ───────────────────────────────────
+export const refreshTokenApi = (refreshToken) =>
+  api.post('/api/auth/refresh', { refreshToken }).then((r) => r.data)
 
 export default api

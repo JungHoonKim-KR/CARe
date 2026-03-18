@@ -355,17 +355,33 @@ export default function CarCrackPage() {
 
         <div className="cp-footer">
           <button
-            className="cp-primary-btn"
+            className="cp-primary-btn cp-smartkey-btn"
             onClick={() => {
-              // 외관 촬영 완료 기록 (reservationId 기준)
               if (reservation?.reservationId) {
                 localStorage.setItem(`crackDone_${reservation.reservationId}`, 'true')
               }
               navigate('/car-smartkey', { state: { reservation } })
             }}
           >
-            확인하러 가기
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="white" style={{ flexShrink: 0 }}>
+              <path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+            </svg>
+            스마트키 열기
           </button>
+          <div className="cp-result-sub-row">
+            <button
+              className="cp-sub-btn"
+              onClick={() => navigate('/damage-history', { state: { reservation } })}
+            >
+              흠집 내역 확인
+            </button>
+            <button
+              className="cp-sub-btn"
+              onClick={() => navigate('/my-car')}
+            >
+              닫기
+            </button>
+          </div>
         </div>
       </div>
     )

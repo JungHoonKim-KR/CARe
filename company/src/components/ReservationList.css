@@ -3,84 +3,82 @@
   max-width: none;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
 }
 
 .reservation-item {
-  display: grid;
-  grid-template-columns: 2fr 1.5fr 1fr 1fr;
-  gap: 16px;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 24px 20px;
   background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-bottom: 1px solid var(--border);
   transition: all 0.2s;
+  cursor: pointer;
+}
+
+.reservation-item:first-child {
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+}
+
+.reservation-item:last-child {
+  border-bottom: none;
+  border-bottom-left-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
 }
 
 .reservation-item:hover {
-  box-shadow: var(--shadow-sm);
-  border-color: var(--primary);
+  background: #fafafa;
 }
 
-.reservation-car {
+.reservation-left {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.car-icon {
-  font-size: 32px;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--primary-light);
-  border-radius: var(--radius-sm);
-}
-
-.car-info {
+  gap: 16px;
   flex: 1;
 }
 
+
+.car-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .car-name {
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 4px;
 }
 
-.customer-name {
+.customer-date {
   font-size: 13px;
   color: var(--text-muted);
 }
 
-.reservation-date {
-  font-size: 13px;
-  color: var(--text-muted);
+.reservation-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .reservation-amount {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--text);
-  text-align: right;
+  margin-right: 8px;
 }
 
-.reservation-status {
-  display: flex;
-  justify-content: flex-end;
-}
-
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
   .reservation-item {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 12px;
   }
 
-  .reservation-amount,
-  .reservation-status {
-    justify-content: flex-start;
+  .reservation-right {
+    width: 100%;
+    justify-content: space-between;
   }
 }

@@ -6,6 +6,14 @@ export default function ReservationDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams()
 
+
+  // 백엔드 연동 시
+  // const { id } = useParams()
+  // useEffect(() => {
+  //   fetchReservationDetail(id)
+  // }, [id])
+
+
   const carData = {
     name: '현대 아반떼',
     plateNumber: '12가 3456',

@@ -33,7 +33,9 @@ export default function LoginPage() {
       const refreshToken = data.refreshToken || data.data?.refreshToken
       const userData     = data.user         || data.data?.user || null
       console.log('[Login] accessToken:', accessToken)
-      login(accessToken, refreshToken, userData)
+      // 백엔드 응답에 user 없으면 이메일을 직접 저장
+      const userInfo = userData || { email: form.email }
+      login(accessToken, refreshToken, userInfo)
       navigate('/home')
     } catch (err) {
       console.error('[Login] 오류:', err.response?.status, err.response?.data)
@@ -66,7 +68,7 @@ export default function LoginPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">비밀번호</label>
+            <label className="form-label">비밀번호 (8자 이상)</label>
             <input
               className="form-input"
               type="password"

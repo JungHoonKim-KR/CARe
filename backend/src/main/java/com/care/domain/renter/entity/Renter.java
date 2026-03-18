@@ -35,13 +35,14 @@ public class Renter extends BaseEntity {
     @Column(name = "language_code", length = 10)
     private String languageCode;
 
-    public static Renter of(String userId, String name, String email, String passwordHash, String languageCode) {
+    public static Renter of(String userId, String name, String email, String passwordHash, String languageCode, String walletAddress) {
         Renter renter = new Renter();
         renter.userId = userId;
         renter.name = name;
         renter.email = email;
         renter.passwordHash = passwordHash;
         renter.languageCode = languageCode;
+        renter.walletAddress = walletAddress;
         renter.didVerified = false;
         return renter;
     }

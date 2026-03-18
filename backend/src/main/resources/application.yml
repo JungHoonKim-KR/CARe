@@ -31,8 +31,8 @@ spring:
       on-profile: local
   datasource:
     url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-    username: ${DB_USER}
-    password: ${DB_PASS}
+    username: ${DB_USER:root}
+    password: ${DB_PASS:1234}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -51,20 +51,6 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-expiration: 900000
   refresh-token-expiration: 604800000
-
-pinata:
-  api-key: ${PINATA_API_KEY:}
-  api-secret: ${PINATA_API_SECRET:}
-  jwt: ${PINATA_JWT:}
-
-aws:
-  s3:
-    access-key: ${AWS_ACCESS_KEY_ID:}
-    secret-key: ${AWS_SECRET_ACCESS_KEY:}
-    region: ${AWS_REGION:ap-northeast-2}
-    bucket: ${S3_BUCKET_NAME:}
-  cloudfront:
-    domain: ${CLOUDFRONT_DOMAIN:}
 
 blockchain:
   rpc-url: ${RPC_URL:https://rpc.ssafy-blockchain.com}

@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { usePrivy } from '@privy-io/react-auth'
 import careLogo from '../../assets/care_logo.png'
 import { registerRenter } from '../../api/auth'
 import './AuthForm.css'
 
 export default function SignUpPage() {
   const navigate = useNavigate()
+  const { login: privyLogin } = usePrivy()
 
   const [form, setForm] = useState({
     email: '',
@@ -22,23 +24,25 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.email || !form.name || !form.password || !form.confirmPassword) {
+    if (!form.email || !form.name || !form.password) {
       setError('모든 항목을 입력해주세요.')
-      return
-    }
-    if (form.password !== form.confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.')
       return
     }
     setLoading(true)
     try {
-      console.log('[SignUp] 요청:', { email: form.email, name: form.name })
+      console.log('[SignUp] 요청:', { email: form.email, name: form.name, password: form.password })
       const data = await registerRenter({
         email: form.email,
         name: form.name,
         password: form.password,
       })
       console.log('[SignUp] 응답:', data)
+      // Privy 로그인 트리거 → 임베디드 지갑 자동 생성
+      try {
+        privyLogin()
+      } catch (privyErr) {
+        console.warn('[SignUp] Privy 로그인 실패:', privyErr)
+      }
       navigate('/login')
     } catch (err) {
       console.error('[SignUp] 오류:', err.response?.status, err.response?.data)

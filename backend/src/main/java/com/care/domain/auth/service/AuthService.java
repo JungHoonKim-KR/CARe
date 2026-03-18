@@ -40,7 +40,8 @@ public class AuthService {
                 request.getName(),
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
-                request.getLanguageCode()
+                request.getLanguageCode(),
+                request.getWalletAddress()
         );
         renterRepository.save(renter);
     }
@@ -56,7 +57,8 @@ public class AuthService {
                 request.getName(),
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
-                request.getLanguageCode()
+                request.getLanguageCode(),
+                request.getWalletAddress()
         );
         companyRepository.save(company);
     }

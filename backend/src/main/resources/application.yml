@@ -61,3 +61,12 @@ blockchain:
     did-registry: ${DID_REGISTRY_ADDRESS:}
     mock-usdc: ${MOCK_USDC_ADDRESS:}
     rental: ${RENTAL_CONTRACT_ADDRESS:}
+ai:
+  server:
+    url: ${AI_SERVER_URL:http://localhost:8000}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs

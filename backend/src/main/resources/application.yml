@@ -52,23 +52,6 @@ jwt:
   access-token-expiration: 900000
   refresh-token-expiration: 604800000
 
-apick:
-  api-key: ${APICK_API_KEY:}
-
-pinata:
-  api-key: ${PINATA_API_KEY:}
-  api-secret: ${PINATA_API_SECRET:}
-  jwt: ${PINATA_JWT:}
-
-aws:
-  s3:
-    access-key: ${AWS_ACCESS_KEY_ID:}
-    secret-key: ${AWS_SECRET_ACCESS_KEY:}
-    region: ${AWS_REGION:ap-northeast-2}
-    bucket: ${S3_BUCKET_NAME:}
-  cloudfront:
-    domain: ${CLOUDFRONT_DOMAIN:}
-
 blockchain:
   rpc-url: ${RPC_URL:https://rpc.ssafy-blockchain.com}
   private-key: ${PRIVATE_KEY:your-private-key-here}

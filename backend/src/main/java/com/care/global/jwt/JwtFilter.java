@@ -32,18 +32,6 @@ public class JwtFilter extends OncePerRequestFilter {
             String jti = jwtUtil.getJti(token);
             Boolean isBlacklisted = redisTemplate.hasKey("blacklist:" + jti);
 
-            if (Boolean.FALSE.equals(isBlacklisted)) {
-                String userId = jwtUtil.getUserId(token);
-                String role = jwtUtil.parseClaims(token).get("role", String.class);
-
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userId,
-                                null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + role))
-                        );
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
         }
 
         filterChain.doFilter(request, response);

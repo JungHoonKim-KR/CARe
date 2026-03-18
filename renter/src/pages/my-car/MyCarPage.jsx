@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import carIcon from '../../assets/car_icon.png'
 import BottomNav from '../../components/BottomNav'
-import { getMyReservations, getCarScratches } from '../../api/reservation'
+import { getMyReservations } from '../../api/reservation'
 import './MyCarPage.css'
 
 const MOCK_RESERVATION = {
@@ -22,12 +22,6 @@ const MOCK_RESERVATION = {
   pickupLocation: '인천국제공항',
 }
 
-const MOCK_SCRATCHES = [
-  { scratchId: 1, reportedAt: '2025.01.15', description: '앞 범퍼 스크래치', location: 'FRONT', status: 'PENDING' },
-  { scratchId: 2, reportedAt: '2025.01.15', description: '앞 범퍼 스크래치', location: 'FRONT', status: 'PENDING' },
-  { scratchId: 3, reportedAt: '2025.01.15', description: '앞 범퍼 스크래치', location: 'FRONT', status: 'RESOLVED' },
-]
-
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
 function formatDateLabel(dateStr) {
@@ -35,7 +29,6 @@ function formatDateLabel(dateStr) {
   const d = new Date(dateStr)
   return { month: d.getMonth() + 1, day: d.getDate(), weekday: WEEKDAYS[d.getDay()] }
 }
-
 
 function getPickupStatus(reservation) {
   if (!reservation?.startDate || !reservation?.endDate) return null
@@ -53,51 +46,22 @@ function getPickupStatus(reservation) {
   const elapsedRental = Math.round((today - start) / msPerDay)
 
   if (daysToStart > 0) {
-    // 픽업 전
-    return {
-      type: 'before',
-      label: `픽업 D-${daysToStart}`,
-      sub: `${reservation.startDate.replace(/-/g, '.')} 픽업 예정`,
-      color: '#F7A633',
-      progress: 0,
-    }
+    return { type: 'before', label: `픽업 D-${daysToStart}`, color: '#F7A633', progress: 0 }
   } else if (daysToStart === 0) {
-    // 픽업 당일
-    return {
-      type: 'today',
-      label: '오늘 픽업 가능!',
-      sub: '픽업 장소로 이동해주세요',
-      color: '#4CAF50',
-      progress: 0,
-    }
+    return { type: 'today', label: '오늘 픽업 가능!', color: '#4CAF50', progress: 0 }
   } else if (daysToEnd > 0) {
-    // 대여 중
     const progress = totalRental > 0 ? Math.min(elapsedRental / totalRental, 1) : 0
-    return {
-      type: 'active',
-      label: `반납 D-${daysToEnd}`,
-      sub: `${reservation.endDate.replace(/-/g, '.')} 반납 예정`,
-      color: '#5B8DEF',
-      progress,
-    }
+    return { type: 'active', label: `반납 D-${daysToEnd}`, color: '#5B8DEF', progress }
   } else {
-    // 반납일 당일 or 이후
-    return {
-      type: 'return',
-      label: '반납일',
-      sub: '오늘 차량을 반납해주세요',
-      color: '#888',
-      progress: 1,
-    }
+    return { type: 'return', label: '반납일', color: '#FF4D4F', progress: 1 }
   }
 }
 
 export default function MyCarPage() {
   const navigate = useNavigate()
   const [reservation, setReservation] = useState(null)
-  const [scratches, setScratches] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showCrackAlert, setShowCrackAlert] = useState(false)
+  const [showDisputeModal, setShowDisputeModal] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -108,18 +72,15 @@ export default function MyCarPage() {
           : data?.data?.find?.((r) => r.status === 'ACTIVE') || data?.data?.[0] || data
         if (active) {
           setReservation(active)
-          try {
-            const scratchData = await getCarScratches(active.reservationId)
-            setScratches(Array.isArray(scratchData) ? scratchData : scratchData?.data || [])
-          } catch {
-            setScratches(MOCK_SCRATCHES)
-          }
+          const pending = localStorage.getItem(`disputePending_${active.reservationId}`) === 'true'
+          if (pending) setShowDisputeModal(true)
         } else {
           setReservation(null)
         }
       } catch {
         setReservation(MOCK_RESERVATION)
-        setScratches(MOCK_SCRATCHES)
+        const pending = localStorage.getItem(`disputePending_${MOCK_RESERVATION.reservationId}`) === 'true'
+        if (pending) setShowDisputeModal(true)
       } finally {
         setLoading(false)
       }
@@ -155,7 +116,6 @@ export default function MyCarPage() {
     )
   }
 
-  const pendingCount = scratches.filter((s) => s.status === 'PENDING').length
   const crackDone = reservation
     ? localStorage.getItem(`crackDone_${reservation.reservationId}`) === 'true'
     : false
@@ -234,7 +194,7 @@ export default function MyCarPage() {
               <p className="mc-schedule-time">{reservation.endTime || '--:--'}</p>
             </div>
           </div>
-          {/* 진행 바 + D-day */}
+
           {pickupStatus && (
             <div className="mc-schedule-progress-wrap">
               <div className="mc-schedule-bar-bg">
@@ -261,54 +221,50 @@ export default function MyCarPage() {
           </div>
         </div>
 
-        {/* 차량 흠집 내역 */}
-        <div className="mc-scratch-section">
-          <div className="mc-scratch-header">
-            <div className="mc-scratch-title-row">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.5 15h-1v-6h1v6zm0-8h-1V7h1v2z" fill="#888"/>
-              </svg>
-              <span className="mc-scratch-title">차량 흠집 내역</span>
-              {pendingCount > 0 && (
-                <span className="mc-scratch-badge">{pendingCount}</span>
-              )}
-            </div>
+        {/* 차량 외관 촬영 카드 */}
+        <div className="mc-action-card">
+          <p className="mc-action-card-title">차량 외관 촬영</p>
+          <div className="mc-action-row">
             <button
-              className="mc-scratch-more"
-              onClick={() => navigate('/damage-history', { state: { reservation, scratches } })}
+              className="mc-action-btn mc-shoot-btn"
+              onClick={() => navigate('/car-crack', { state: { reservation } })}
             >
-              상세 보기 →
+              <div className="mc-action-btn-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"
+                    stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+                  <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <span className="mc-action-btn-label">픽업 전 촬영</span>
+              <span className="mc-action-btn-sub">탑승 전 외관 기록</span>
+            </button>
+            <button
+              className="mc-action-btn mc-return-btn"
+              onClick={() => navigate('/car-return', { state: { reservation } })}
+            >
+              <div className="mc-action-btn-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 14l-4-4 4-4" stroke="currentColor" strokeWidth="2"
+                    strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M5 10h11a4 4 0 010 8h-1" stroke="currentColor" strokeWidth="2"
+                    strokeLinecap="round"/>
+                </svg>
+              </div>
+              <span className="mc-action-btn-label">반납 전 촬영</span>
+              <span className="mc-action-btn-sub">반납 후 알림 전송</span>
             </button>
           </div>
-
-          {scratches.length === 0 ? (
-            <div className="mc-scratch-empty">발견된 흠집이 없습니다.</div>
-          ) : (
-            <div className="mc-scratch-list">
-              {scratches.slice(0, 3).map((s) => (
-                <div key={s.scratchId} className="mc-scratch-item">
-                  <span className="mc-scratch-date">{s.reportedAt}</span>
-                  <span className="mc-scratch-desc">{s.description}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
-        <div style={{ height: 140 }} />
+        <div style={{ height: 130 }} />
       </div>
 
-      {/* 스마트키 바 - 클릭 시 얼굴 인증으로 이동 */}
-      <div className="mc-smartkey-bar">
+      {/* 하단 고정 - Smart Key */}
+      <div className="mc-action-bar">
         <button
-          className={`mc-smartkey-inner${!crackDone ? ' locked' : ''}`}
-          onClick={() => {
-            if (!crackDone) {
-              setShowCrackAlert(true)
-            } else {
-              navigate('/car-faceauth', { state: { reservation } })
-            }
-          }}
+          className="mc-smartkey-btn"
+          onClick={() => navigate('/car-faceauth', { state: { reservation } })}
         >
           <div className="mc-smartkey-icon-wrap">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
@@ -316,40 +272,42 @@ export default function MyCarPage() {
             </svg>
           </div>
           <span className="mc-smartkey-label">Smart Key</span>
-          {!crackDone && <span className="mc-smartkey-lock-badge">외관 촬영 필요</span>}
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M9 18l6-6-6-6" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M9 18l6-6-6-6" stroke="white" strokeWidth="2.2"
+              strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
       </div>
 
-      {/* 외관 촬영 필요 알림 모달 */}
-      {showCrackAlert && (
-        <div className="mc-alert-overlay" onClick={() => setShowCrackAlert(false)}>
-          <div className="mc-alert-sheet" onClick={e => e.stopPropagation()}>
-            <div className="mc-alert-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-                  stroke="#F7A633" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+      {/* 분쟁 알림 모달 */}
+      {showDisputeModal && (
+        <div className="mc-dispute-overlay" onClick={() => setShowDisputeModal(false)}>
+          <div className="mc-dispute-modal" onClick={e => e.stopPropagation()}>
+            <div className="mc-dispute-modal-icon">
+              <span>!</span>
             </div>
-            <h3 className="mc-alert-title">외관 촬영이 필요해요</h3>
-            <p className="mc-alert-desc">
-              스마트키 발급 전, 차량 외관 4방향 촬영을 먼저 완료해주세요.
-              <br/>촬영 기록은 블록체인에 안전하게 저장돼요.
+            <p className="mc-dispute-modal-text">
+              {(reservation?.endDate || '').replace(/-/g, '-')} 반납하신<br/>
+              차량에 대해서 업체에서<br/>
+              금액을 청구했어요.
             </p>
-            <button
-              className="mc-alert-btn"
-              onClick={() => {
-                setShowCrackAlert(false)
-                navigate('/car-crack', { state: { reservation } })
-              }}
-            >
-              📷 외관 촬영하러 가기
-            </button>
-            <button className="mc-alert-cancel" onClick={() => setShowCrackAlert(false)}>
-              닫기
-            </button>
+            <div className="mc-dispute-modal-btns">
+              <button
+                className="mc-dispute-modal-confirm"
+                onClick={() => {
+                  setShowDisputeModal(false)
+                  navigate('/dispute', { state: { reservation } })
+                }}
+              >
+                확인하기
+              </button>
+              <button
+                className="mc-dispute-modal-close"
+                onClick={() => setShowDisputeModal(false)}
+              >
+                닫기
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -19,11 +19,13 @@ public class RenterController {
     private final DocumentService documentService;
     private final RenterService renterService;
 
+    // 프로필 조회 api
     @GetMapping
     public ResponseEntity<RenterProfileResponse> getProfile(@AuthenticationPrincipal String userId) {
         return ResponseEntity.ok(renterService.getProfile(userId));
     }
 
+    // 서류 검증 api
     @PostMapping("/documents")
     public ResponseEntity<DocumentVerifyResponse> verifyDocument(
             @AuthenticationPrincipal String userId,

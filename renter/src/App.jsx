@@ -36,7 +36,7 @@ function App() {
         <Routes>
           <Route path="/" element={<SplashPage />} />
           <Route path="/landing" element={<LandingPage />} />
-          <Route path="/scan" element={<ScanPage />} />
+          <Route path="/scan/:reservationId" element={<ScanPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />

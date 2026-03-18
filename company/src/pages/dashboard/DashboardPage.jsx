@@ -26,6 +26,14 @@ export default function DashboardPage() {
     },
   ]
 
+  // 백엔드 연동 시
+  // const [recentReservations, setRecentReservations] = useState([])
+  // const [loading, setLoading] = useState(true)
+
+  // useEffect(() => {
+  //   fetchRecentReservations()
+  // }, [])
+
   const recentReservations = [
     {
       id: 1,

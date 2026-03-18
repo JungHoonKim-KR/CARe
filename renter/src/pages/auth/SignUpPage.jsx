@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import careLogo from '../../assets/care_logo.png'
+import { registerRenter } from '../../api/auth'
 import './AuthForm.css'
 
 export default function SignUpPage() {
@@ -8,9 +9,8 @@ export default function SignUpPage() {
 
   const [form, setForm] = useState({
     email: '',
-    nickname: '',
+    name: '',
     password: '',
-    confirmPassword: '',
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -22,7 +22,7 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.email || !form.nickname || !form.password || !form.confirmPassword) {
+    if (!form.email || !form.name || !form.password || !form.confirmPassword) {
       setError('모든 항목을 입력해주세요.')
       return
     }
@@ -32,9 +32,16 @@ export default function SignUpPage() {
     }
     setLoading(true)
     try {
-      // TODO: 회원가입 API 연결
+      console.log('[SignUp] 요청:', { email: form.email, name: form.name })
+      const data = await registerRenter({
+        email: form.email,
+        name: form.name,
+        password: form.password,
+      })
+      console.log('[SignUp] 응답:', data)
       navigate('/login')
     } catch (err) {
+      console.error('[SignUp] 오류:', err.response?.status, err.response?.data)
       const msg = err.response?.data?.message || '회원가입에 실패했습니다.'
       setError(msg)
     } finally {
@@ -47,6 +54,7 @@ export default function SignUpPage() {
       <div className="auth-logo-section">
         <img src={careLogo} alt="CARe" className="auth-logo" />
       </div>
+
 
       <div className="auth-card">
         <form onSubmit={handleSubmit} noValidate>
@@ -62,15 +70,15 @@ export default function SignUpPage() {
               autoComplete="email"
             />
           </div>
-
+          
           <div className="form-group">
-            <label className="form-label">닉네임</label>
+            <label className="form-label">이름</label>
             <input
               className="form-input"
               type="text"
-              name="nickname"
+              name="name"
               placeholder="Value"
-              value={form.nickname}
+              value={form.name}
               onChange={handleChange}
             />
           </div>
@@ -88,18 +96,6 @@ export default function SignUpPage() {
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">비밀번호 확인</label>
-            <input
-              className="form-input"
-              type="password"
-              name="confirmPassword"
-              placeholder="Value"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              autoComplete="new-password"
-            />
-          </div>
 
           {error && <p className="form-error">{error}</p>}
 

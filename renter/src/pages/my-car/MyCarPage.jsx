@@ -116,9 +116,13 @@ export default function MyCarPage() {
     )
   }
 
-  const crackDone = reservation
+  const crackDone    = reservation
     ? localStorage.getItem(`crackDone_${reservation.reservationId}`) === 'true'
     : false
+  const faceAuthDone = reservation
+    ? localStorage.getItem(`faceAuthDone_${reservation.reservationId}`) === 'true'
+    : false
+  const pickupReady  = faceAuthDone && crackDone
   const pickupStatus = getPickupStatus(reservation)
   const startLabel = formatDateLabel(reservation.startDate)
   const endLabel = formatDateLabel(reservation.endDate)
@@ -263,8 +267,11 @@ export default function MyCarPage() {
       {/* 하단 고정 - Smart Key */}
       <div className="mc-action-bar">
         <button
-          className="mc-smartkey-btn"
-          onClick={() => navigate('/car-faceauth', { state: { reservation } })}
+          className={`mc-smartkey-inner${pickupReady ? '' : ' locked'}`}
+          onClick={() => navigate(
+            pickupReady ? '/car-smartkey' : '/car-faceauth',
+            { state: { reservation } }
+          )}
         >
           <div className="mc-smartkey-icon-wrap">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
@@ -272,10 +279,17 @@ export default function MyCarPage() {
             </svg>
           </div>
           <span className="mc-smartkey-label">Smart Key</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M9 18l6-6-6-6" stroke="white" strokeWidth="2.2"
-              strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          {pickupReady
+            ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M9 18l6-6-6-6" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            ) : (
+              <span className="mc-smartkey-lock-badge">
+                {faceAuthDone ? '외관 촬영 필요' : '얼굴 인증 필요'}
+              </span>
+            )
+          }
         </button>
       </div>
 

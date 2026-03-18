@@ -14,7 +14,9 @@ spring:
   application:
     name: care
   config:
-    import: optional:file:.env
+    import:
+      - optional:file:.env
+      - optional:file:.env.local
 
 logging:
   level:
@@ -30,7 +32,7 @@ spring:
     activate:
       on-profile: local
   datasource:
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:care}
     username: ${DB_USER:root}
     password: ${DB_PASS:1234}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -48,7 +50,7 @@ spring:
       port: ${REDIS_PORT:6379}
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:}
   access-token-expiration: 900000
   refresh-token-expiration: 604800000
 

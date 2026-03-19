@@ -2,7 +2,9 @@ package com.care.domain.car.service;
 
 import com.care.domain.car.controller.dto.request.CarRegisterRequest;
 import com.care.domain.car.controller.dto.response.CarImageResponse;
+import com.care.domain.car.controller.dto.response.CarListResponse;
 import com.care.domain.car.controller.dto.response.CarRegisterResponse;
+import com.care.domain.car.controller.dto.response.RenterCarResponse;
 import com.care.domain.car.entity.CarImage;
 import com.care.domain.car.entity.CarImage.Side;
 import com.care.domain.car.entity.CarModel;
@@ -72,7 +74,7 @@ public class CarService {
         ownedCarRepository.save(car);
 
         // 2. side별 S3 + IPFS 업로드 → CarImage 저장
-        Map<Side, String> s3Urls  = new LinkedHashMap<>();
+        Map<Side, String> s3Urls = new LinkedHashMap<>();
         Map<String, String> ipfsCids = new LinkedHashMap<>();
 
         for (Map.Entry<Side, MultipartFile> entry : sideImages.entrySet()) {
@@ -106,6 +108,38 @@ public class CarService {
         ));
 
         return CarRegisterResponse.of(car, s3Urls);
+    }
+
+    /**
+     * 렌터 차량 목록 조회 (브랜드, 공항 필터)
+     */
+    @Transactional(readOnly = true)
+    public List<RenterCarResponse> getRenterCarList(String brand, String airportCode) {
+        return ownedCarRepository.findActiveCarsByFilter(brand, airportCode).stream()
+                .map(car -> {
+                    String frontImageUrl = carImageRepository
+                            .findByCarCarIdAndSide(car.getCarId(), Side.FRONT)
+                            .map(CarImage::getS3Url)
+                            .orElse(null);
+                    return RenterCarResponse.of(car, frontImageUrl);
+                })
+                .toList();
+    }
+
+    /**
+     * 회사 차량 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public List<CarListResponse> getCarList(String companyId) {
+        return ownedCarRepository.findByCompanyCompanyId(companyId).stream()
+                .map(car -> {
+                    String frontImageUrl = carImageRepository
+                            .findByCarCarIdAndSide(car.getCarId(), Side.FRONT)
+                            .map(CarImage::getS3Url)
+                            .orElse(null);
+                    return CarListResponse.of(car, frontImageUrl);
+                })
+                .toList();
     }
 
     /**

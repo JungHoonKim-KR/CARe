@@ -28,69 +28,7 @@ public class PinataService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
-     * 파일을 IPFS에 업로드하고 CID 반환
-     * @param file      업로드할 파일
-     * @param folder    폴더 경로 (예: "cars/car-001")
-     * @return 디렉토리 CID (folder/filename 형태로 접근 가능)
-     */
-    public String upload(MultipartFile file, String folder) {
-        String boundary = UUID.randomUUID().toString();
-        String fileName = file.getOriginalFilename();
-        String filePath = folder + "/" + fileName;
-        String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
-
-        try {
-            byte[] fileBytes = file.getBytes();
-
-            // file part
-            String filePart = "--" + boundary + "\r\n"
-                    + "Content-Disposition: form-data; name=\"file\"; filename=\"" + filePath + "\"\r\n"
-                    + "Content-Type: " + contentType + "\r\n\r\n";
-
-            // pinataOptions part (wrapWithDirectory: true → 폴더 구조 생성)
-            String optionsPart = "\r\n--" + boundary + "\r\n"
-                    + "Content-Disposition: form-data; name=\"pinataOptions\"\r\n"
-                    + "Content-Type: application/json\r\n\r\n"
-                    + "{\"wrapWithDirectory\":true}";
-
-            // pinataMetadata part
-            String metaPart = "\r\n--" + boundary + "\r\n"
-                    + "Content-Disposition: form-data; name=\"pinataMetadata\"\r\n"
-                    + "Content-Type: application/json\r\n\r\n"
-                    + "{\"name\":\"" + folder + "\"}"
-                    + "\r\n--" + boundary + "--\r\n";
-
-            byte[] startBytes = filePart.getBytes();
-            byte[] endBytes = (optionsPart + metaPart).getBytes();
-            byte[] body = new byte[startBytes.length + fileBytes.length + endBytes.length];
-            System.arraycopy(startBytes, 0, body, 0, startBytes.length);
-            System.arraycopy(fileBytes, 0, body, startBytes.length, fileBytes.length);
-            System.arraycopy(endBytes, 0, body, startBytes.length + fileBytes.length, endBytes.length);
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(PINATA_URL))
-                    .header("Authorization", "Bearer " + jwt)
-                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
-                    .POST(HttpRequest.BodyPublishers.ofByteArray(body))
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() != 200) {
-                throw new RuntimeException("Pinata 업로드 실패 [" + response.statusCode() + "]: " + response.body());
-            }
-
-            JsonNode json = objectMapper.readTree(response.body());
-            return json.get("IpfsHash").asText();
-
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException("IPFS 업로드 실패: " + filePath, e);
-        }
-    }
-
-    /**
-     * 이미지 파일을 IPFS에 직접 업로드하고 파일 CID 반환 (wrapWithDirectory: false)
-     * NFT 메타데이터의 image 필드에 사용
+     * 이미지 파일을 IPFS에 업로드하고 파일 CID 반환
      */
     public String uploadImage(MultipartFile file, String name) {
         String boundary = UUID.randomUUID().toString();
@@ -135,22 +73,6 @@ public class PinataService {
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException("IPFS 이미지 업로드 실패", e);
         }
-    }
-
-    /**
-     * CID로 게이트웨이 URL 반환
-     * @param cid       디렉토리 CID
-     * @param fileName  파일명
-     */
-    public String toUrl(String cid, String fileName) {
-        return GATEWAY_URL + cid + "/" + fileName;
-    }
-
-    /**
-     * CID만으로 게이트웨이 URL 반환 (단일 파일 CID)
-     */
-    public String toUrl(String cid) {
-        return GATEWAY_URL + cid;
     }
 
     /**

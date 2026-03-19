@@ -41,6 +41,9 @@ public class Company extends BaseEntity {
     @Column(name = "city", length = 50)
     private String city;
 
+    @Column(name = "airport_code", length = 10, nullable = false)
+    private String airportCode;
+
     @Column(name = "airport_id", length = 50)
     private String airportId;
 

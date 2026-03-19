@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import renterIcon from '../../assets/renter_icon.png'
 import { verifyFace } from '../../api/faceVerify'
+import { issueSmartKey } from '../../api/reservation'
 import './CarFaceAuthPage.css'
 
 // 라이브니스 단계 정의
@@ -124,15 +125,23 @@ export default function CarFaceAuthPage() {
       .catch((e) => { setFailMsg(e.message || '인증 중 오류가 발생했어요.'); setStep('fail') })
   }, [livenessComplete]) // eslint-disable-line
 
-  // ── 성공 후 2초 → 차량 외관 촬영 페이지 ──────────────────────────
+  // ── 성공 후 localStorage 저장 ─────────────────────────────────
   useEffect(() => {
     if (step !== 'success') return
     if (reservation?.reservationId) {
       localStorage.setItem(`faceAuthDone_${reservation.reservationId}`, 'true')
     }
-    const t = setTimeout(() => navigate('/car-crack', { state: { reservation } }), 2000)
-    return () => clearTimeout(t)
-  }, [step, navigate, reservation])
+  }, [step, reservation])
+
+  const handleIssueSmartKey = async () => {
+    const rid = reservation?.reservationId
+    try {
+      if (rid) await issueSmartKey(rid)
+    } catch (e) {
+      console.error('스마트키 발급 오류:', e)
+    }
+    navigate('/car-smartkey', { state: { reservation } })
+  }
 
   const handleLicenseCapture = () => {
     const video = videoRef.current
@@ -353,12 +362,12 @@ export default function CarFaceAuthPage() {
           </svg>
         </div>
         <h2 className="cfa-step-title">얼굴 인증이<br/>완료되었습니다</h2>
-        <p className="cfa-success-sub">스마트키를 발급받고 있어요...</p>
+        <p className="cfa-success-sub">본인 확인이 완료되었어요</p>
       </div>
-      <div className="cfa-dots">
-        <span className="cfa-dot" />
-        <span className="cfa-dot" />
-        <span className="cfa-dot active" />
+      <div className="cfa-footer">
+        <button className="cfa-primary-btn" onClick={handleIssueSmartKey}>
+          스마트키 발급받기
+        </button>
       </div>
     </div>
   )

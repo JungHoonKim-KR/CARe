@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import ReservationPage from './pages/reservation/ReservationPage'
 import ReservationDetailPage from './pages/reservation-detail/ReservationDetailPage'
+import CarDetailPage from './pages/car-detail/CarDetailPage'
 import CarManagementPage from './pages/car-management/CarManagementPage'
 import './App.css'
 
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/cars" element={<CarManagementPage />} />
           <Route path="/reservations" element={<ReservationPage />} />
           <Route path="/reservations/:id" element={<ReservationDetailPage />} />
+          <Route path="/cars/:id" element={<CarDetailPage />} />
           {/* 추가 라우트는 여기에 */}
           <Route path="/profile" element={<div className="placeholder-page">내 정보 페이지</div>} />
           <Route path="/settings" element={<div className="placeholder-page">설정 페이지</div>} />

@@ -6,222 +6,198 @@ export default function ReservationDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams()
 
-
-  // 백엔드 연동 시
-  // const { id } = useParams()
-  // useEffect(() => {
-  //   fetchReservationDetail(id)
-  // }, [id])
-
-
-  const carData = {
-    name: '현대 아반떼',
+  // Mock data - replace with API call
+  const reservationData = {
+    carName: '현대 쏘나타',
+    carType: 'SUV · 2024년식',
     plateNumber: '12가 3456',
-    type: '세단',
-    year: '2024년식',
-    seats: '5인승',
-    fuelType: '가솔린',
-    location: '서울 강남구 테헤란로 123',
-    status: '대여가능',
-    dailyRate: '50,000원',
-    deposit: '100,000원',
-    description: '깨끗하게 관리된 차량입니다. 블루핸즈, 네비게이션 장착.',
-    image: 'https://via.placeholder.com/300x200',
-  }
-
-  const nftInfo = {
-    tokenId: '0x1234 ... 5678',
-    issueDate: '2026.01.15',
-  }
-
-  const defectLogs = [
-    {
-      id: 1,
-      location: '앞 범퍼 좌측',
-      type: '스크래치',
-      date: '2026.01.15',
+    status: '분쟁중',
+    pickup: {
+      date: '2026.02.25 11:00',
+      location: '서울 강남구 테헤란로 123',
     },
-    {
-      id: 2,
-      location: '뒷 휠 우측',
-      type: '',
-      date: '',
+    dropoff: {
+      date: '2026.02.28 11:00',
+      location: '서울 강남구 테헤란로 123',
     },
-  ]
-
-  const operationStats = {
-    totalReservations: 12,
-    totalRevenue: '1,500,000원',
-    avgRating: '4.8 / 5.0',
-  }
-
-  const recentReservations = [
-    {
-      id: 1,
-      name: '김철수',
-      period: '2026.03.05 - 2026.03.08',
-      amount: '150,000원',
-      status: '이용중',
+    renter: {
+      name: '최지호',
+      country: '대한민국',
+      phone: '+82-10-1234-5678',
     },
-    {
-      id: 2,
-      name: '이영희',
-      period: '2026.02.20 - 2026.02.23',
-      amount: '150,000원',
-      status: '반납완료',
+    payment: {
+      rentalFee: 240000,
+      insurance: 30000,
+      deposit: 100000,
+      total: 370000,
     },
-    {
-      id: 3,
-      name: '박민수',
-      period: '2026.02.10 - 2026.02.12',
-      amount: '100,000원',
-      status: '반납완료',
+    defects: {
+      pickup: 2,
+      dropoff: 4,
+      newDefects: 2,
     },
-  ]
-
-  const handleDelete = () => {
-    if (window.confirm('정말 삭제하시겠습니까?')) {
-      console.log('Delete car:', id)
-      navigate('/cars')
-    }
+    dispute: {
+      reason: '반납 시 새로운 스크래치 발견',
+      claimAmount: 150000,
+    },
   }
 
   return (
     <div className="reservation-detail-page">
-      <div className="page-header-bar">
+      <div className="page-header">
         <button className="back-button" onClick={() => navigate(-1)}>
           ←
         </button>
-        <h1 className="page-title">차량 상세</h1>
-        <div className="header-actions">
-          <button className="btn-secondary">수정</button>
-          <button className="btn-danger" onClick={handleDelete}>
-            삭제
-          </button>
-        </div>
+        <h1 className="page-title">예약 상세</h1>
+        <span className={`status-badge ${reservationData.status === '분쟁중' ? 'dispute' : ''}`}>
+          ⚠️ {reservationData.status}
+        </span>
       </div>
 
+      <h2 className="car-title">{reservationData.carName}</h2>
+
       <div className="detail-content">
-        <div className="main-column">
-          <div className="card car-info-card">
-            <div className="car-header">
-              <div className="car-image">
-                <img src={carData.image} alt={carData.name} />
-              </div>
-              <div className="car-basic-info">
-                <div className="car-title-row">
-                  <h2 className="car-name">{carData.name}</h2>
-                  <span className="status-badge">{carData.status}</span>
-                </div>
-                <p className="car-plate">{carData.plateNumber}</p>
-                <div className="car-specs">
-                  <div className="spec-item">
-                    <span className="spec-label">세단</span>
-                    <span className="spec-value">{carData.type}</span>
-                  </div>
-                  <div className="spec-item">
-                    <span className="spec-value">{carData.year}</span>
-                  </div>
-                  <div className="spec-item">
-                    <span className="spec-value">{carData.seats}</span>
-                  </div>
-                </div>
-                <div className="car-location">
-                  <span className="spec-label">기름칸</span>
-                  <span className="spec-value">{carData.fuelType}</span>
-                </div>
-                <div className="car-location">
-                  <span className="location-value">{carData.location}</span>
-                </div>
-              </div>
+        <div className="left-column">
+          {/* 차량 정보 */}
+          <div className="info-card">
+            <h3 className="card-title">
+              <span className="icon">🚗</span> 차량 정보
+            </h3>
+            <div className="info-row">
+              <span className="info-label">차량명</span>
+              <span className="info-value">{reservationData.carName}</span>
             </div>
-
-            <div className="pricing-section">
-              <div className="price-item">
-                <span className="price-label">일일 대여료</span>
-                <span className="price-value">{carData.dailyRate}</span>
-              </div>
-              <div className="price-item">
-                <span className="price-label">보증금</span>
-                <span className="price-value">{carData.deposit}</span>
-              </div>
+            <div className="info-row">
+              <span className="info-label">차종</span>
+              <span className="info-value">{reservationData.carType}</span>
             </div>
-
-            <div className="description-section">
-              <h3 className="section-subtitle">차량 설명</h3>
-              <p className="description-text">{carData.description}</p>
+            <div className="info-row">
+              <span className="info-label">차량번호</span>
+              <span className="info-value">{reservationData.plateNumber}</span>
             </div>
           </div>
 
-          <div className="card nft-info-card">
-            <h3 className="card-title">NFT 정보</h3>
-            <div className="nft-info-row">
-              <span className="nft-label">Token ID</span>
-              <span className="nft-value">{nftInfo.tokenId}</span>
+          {/* 대여 일정 */}
+          <div className="info-card">
+            <h3 className="card-title">
+              <span className="icon">📅</span> 대여 일정
+            </h3>
+            <div className="schedule-item">
+              <div className="schedule-label">픽업</div>
+              <div className="schedule-content">
+                <div className="schedule-date">{reservationData.pickup.date}</div>
+                <div className="schedule-location">📍 {reservationData.pickup.location}</div>
+              </div>
             </div>
-            <div className="nft-info-row">
-              <span className="nft-label">발행일</span>
-              <span className="nft-value">{nftInfo.issueDate}</span>
+            <div className="schedule-divider"></div>
+            <div className="schedule-item">
+              <div className="schedule-label">반납</div>
+              <div className="schedule-content">
+                <div className="schedule-date">{reservationData.dropoff.date}</div>
+                <div className="schedule-location">📍 {reservationData.dropoff.location}</div>
+              </div>
             </div>
           </div>
 
-          <div className="card defect-log-card">
-            <h3 className="card-title">초기 결함 로그 (AI 탐지)</h3>
-            <div className="defect-list">
-              {defectLogs.map((log) => (
-                <div key={log.id} className="defect-item">
-                  <div className="defect-info">
-                    <span className="defect-location">{log.location}</span>
-                    {log.type && <span className="defect-type">{log.type}</span>}
-                    {log.date && <span className="defect-date">탐지일: {log.date}</span>}
-                  </div>
+          {/* 이용 상태 */}
+          <div className="info-card">
+            <h3 className="card-title">
+              <span className="icon">📋</span> 이용 상태
+            </h3>
+            <div className="usage-status">
+              <div className="status-item">
+                <div className="status-header">
+                  <span className="status-check">✓ 픽업</span>
+                  <button className="view-photos-btn">📷 사진 보기</button>
                 </div>
-              ))}
+                <div className="status-detail">기존 결함: {reservationData.defects.pickup}건 (AI 탐지)</div>
+              </div>
+              <div className="status-item">
+                <div className="status-header">
+                  <span className="status-check">✓ 반납</span>
+                  <button className="view-photos-btn">📷 사진 보기</button>
+                </div>
+                <div className="status-detail">결함: {reservationData.defects.dropoff}건 (AI 탐지)</div>
+              </div>
             </div>
+            {reservationData.defects.newDefects > 0 && (
+              <div className="defect-alert">
+                ⚠️ 새로운 결함 {reservationData.defects.newDefects}건 발견
+              </div>
+            )}
           </div>
+
+          {/* 분쟁 정보 */}
+          {reservationData.dispute && (
+            <div className="info-card dispute-card">
+              <h3 className="card-title dispute-title">
+                <span className="icon">⚠️</span> 분쟁 정보
+              </h3>
+              <div className="dispute-content">
+                <div className="dispute-row">
+                  <span className="dispute-label">분쟁 사유</span>
+                  <span className="dispute-reason">{reservationData.dispute.reason}</span>
+                </div>
+                <div className="dispute-row">
+                  <span className="dispute-label">청구 금액</span>
+                  <span className="dispute-amount">{reservationData.dispute.claimAmount.toLocaleString()}원</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="sidebar-column">
-          <div className="card stats-card">
-            <h3 className="card-title">운영 통계</h3>
-            <div className="stat-row">
-              <span className="stat-label">총 예약 수</span>
-              <span className="stat-value">{operationStats.totalReservations}건</span>
+        <div className="right-column">
+          {/* 대여자 정보 */}
+          <div className="info-card">
+            <h3 className="card-title">
+              <span className="icon">👤</span> 대여자 정보
+            </h3>
+            <div className="info-row">
+              <span className="info-label">이름</span>
+              <span className="info-value">{reservationData.renter.name}</span>
             </div>
-            <div className="stat-row">
-              <span className="stat-label">총 수익</span>
-              <span className="stat-value">{operationStats.totalRevenue}</span>
+            <div className="info-row">
+              <span className="info-label">국가</span>
+              <span className="info-value">{reservationData.renter.country}</span>
             </div>
-            <div className="stat-row">
-              <span className="stat-label">평균 평점</span>
-              <span className="stat-value">{operationStats.avgRating}</span>
+            <div className="info-row">
+              <span className="info-label">연락처</span>
+              <span className="info-value">{reservationData.renter.phone}</span>
             </div>
           </div>
 
-          <div className="card recent-reservations-card">
-            <div className="card-header-row">
-              <h3 className="card-title">최근 예약</h3>
-              <button className="view-all-btn">전체보기</button>
+          {/* 결제 정보 */}
+          <div className="info-card payment-card">
+            <h3 className="card-title">
+              <span className="icon">💳</span> 결제 정보
+            </h3>
+            <div className="payment-row">
+              <span className="payment-label">대여료</span>
+              <span className="payment-value">{reservationData.payment.rentalFee.toLocaleString()}원</span>
             </div>
-            <div className="reservations-list">
-              {recentReservations.map((reservation) => (
-                <div key={reservation.id} className="reservation-item">
-                  <div className="reservation-header">
-                    <span className="renter-name">{reservation.name}</span>
-                    <span
-                      className={`status-tag ${
-                        reservation.status === '이용중' ? 'ongoing' : 'completed'
-                      }`}
-                    >
-                      {reservation.status}
-                    </span>
-                  </div>
-                  <div className="reservation-period">{reservation.period}</div>
-                  <div className="reservation-amount">{reservation.amount}</div>
-                </div>
-              ))}
+            <div className="payment-row">
+              <span className="payment-label">보험료</span>
+              <span className="payment-value">{reservationData.payment.insurance.toLocaleString()}원</span>
+            </div>
+            <div className="payment-row">
+              <span className="payment-label">보증금</span>
+              <span className="payment-value">{reservationData.payment.deposit.toLocaleString()}원</span>
+            </div>
+            <div className="payment-divider"></div>
+            <div className="payment-row total-row">
+              <span className="payment-label">총 결제 금액</span>
+              <span className="payment-total">{reservationData.payment.total.toLocaleString()}원</span>
             </div>
           </div>
+
+          {/* 액션 버튼 */}
+          <button className="settle-button">
+            ⚠️ 정산 요청
+          </button>
+          <button className="chat-button">
+            💬 대여자와 채팅
+          </button>
         </div>
       </div>
     </div>

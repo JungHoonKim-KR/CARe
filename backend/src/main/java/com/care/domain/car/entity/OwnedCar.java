@@ -11,7 +11,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OwnedCar extends BaseEntity {
 
-    public enum Status { PENDING, ACTIVE }
+    public enum Status { PENDING, ACTIVE, FAILED }
 
     @Id
     @Column(name = "car_id", length = 100)
@@ -48,5 +48,9 @@ public class OwnedCar extends BaseEntity {
     public void activate(String nftTokenId) {
         this.nftTokenId = nftTokenId;
         this.status = Status.ACTIVE;
+    }
+
+    public void fail() {
+        this.status = Status.FAILED;
     }
 }

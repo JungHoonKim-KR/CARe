@@ -58,6 +58,10 @@ public class CarEventListener {
 
         } catch (Exception e) {
             log.error("[CarEvent] NFT 민팅 실패 | carId: {}", event.carId(), e);
+            ownedCarRepository.findById(event.carId()).ifPresent(car -> {
+                car.fail();
+                ownedCarRepository.save(car);
+            });
         }
     }
 

@@ -84,4 +84,20 @@ export const logoutApi = () =>
 export const refreshTokenApi = (refreshToken) =>
   api.post('/api/auth/refresh', { refreshToken }).then((r) => r.data)
 
+// ── 임차인 프로필 조회 ────────────────────────────────────────
+export const getRenterProfile = () =>
+  api.get('/api/renters/me').then((r) => r.data)
+
+// 임차인 면허증/여권 등록 및 검증
+export const renterLicense = () =>
+  api.post('/api/renters/me/documents').then((r) => r.data)
+
+// 임차인 DID 등록 및 블록체인 신원 인증
+export const renterDID = () =>
+  api.post('/api/renters/me/did').then((r) => r.data)
+
+// 임차인 언어 선택 설정
+export const renterLanguage = () =>
+  api.put('/api/renters/me/language').then((r) => r.data)
+
 export default api

@@ -14,14 +14,13 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/companies/{companyId}/cars")
-public class CarController {
+public class CompanyCarController {
 
     private final CarService carService;
 
     /**
      * POST /companies/{companyId}/cars
      * 차량 등록 및 NFT 발급 (비동기)
-     * multipart/form-data: modelId, plateNumber, frontImage, rearImage, leftImage, rightImage
      */
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<CarRegisterResponse> registerCar(
@@ -34,8 +33,7 @@ public class CarController {
             @RequestPart MultipartFile rightImage
     ) {
         CarRegisterRequest request = new CarRegisterRequest(modelId, plateNumber, frontImage, rearImage, leftImage, rightImage);
-        CarRegisterResponse response = carService.registerCar(companyId, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(carService.registerCar(companyId, request));
     }
 
     /**

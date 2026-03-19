@@ -1,458 +1,342 @@
 .reservation-detail-page {
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  padding: 32px 40px;
-  background: var(--bg);
-  box-sizing: border-box;
+  padding: 40px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
 }
 
-.page-header-bar {
+.page-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 32px;
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
 .back-button {
-  width: 40px;
-  height: 40px;
+  background: none;
   border: none;
-  background: transparent;
   font-size: 24px;
-  color: var(--text);
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.2s;
+  padding: 8px 12px;
+  color: #333;
+  border-radius: 8px;
+  transition: background-color 0.2s;
 }
 
 .back-button:hover {
-  opacity: 0.7;
+  background-color: #e9ecef;
 }
 
-.page-header-bar .page-title {
-  flex: 1;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.btn-secondary {
-  padding: 10px 20px;
-  border: 1px solid var(--border);
-  background: white;
-  color: var(--text);
-  font-size: 14px;
+.page-title {
+  font-size: 24px;
   font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-secondary:hover {
-  background: var(--bg);
-}
-
-.btn-danger {
-  padding: 10px 20px;
-  border: none;
-  background: #ef4444;
-  color: white;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-danger:hover {
-  background: #dc2626;
-}
-
-.detail-content {
-  display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 24px;
-}
-
-.main-column {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.sidebar-column {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.card {
-  background: white;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  padding: 24px;
-}
-
-.card-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0 0 20px 0;
-}
-
-/* Car Info Card */
-.car-info-card {
-  padding: 32px;
-}
-
-.car-header {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 32px;
-}
-
-.car-image {
-  width: 300px;
-  height: 200px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #f5f5f5;
-  flex-shrink: 0;
-}
-
-.car-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.car-basic-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.car-title-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.car-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text);
+  color: #212529;
   margin: 0;
 }
 
 .status-badge {
-  padding: 6px 12px;
-  background: #f0f9ff;
-  color: #0284c7;
-  font-size: 13px;
-  font-weight: 600;
-  border-radius: 6px;
-}
-
-.car-plate {
-  font-size: 16px;
-  color: var(--text-muted);
-  margin: 0;
-}
-
-.car-specs {
-  display: flex;
-  gap: 16px;
-  padding-top: 8px;
-}
-
-.spec-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  margin-left: auto;
+  padding: 8px 16px;
+  border-radius: 20px;
   font-size: 14px;
-}
-
-.spec-label {
-  color: var(--text-muted);
-}
-
-.spec-value {
-  color: var(--text);
   font-weight: 500;
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
 }
 
-.car-location {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
+.status-badge.dispute {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
 }
 
-.location-value {
-  color: var(--text);
+.car-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #212529;
+  margin: 0 0 30px 0;
 }
 
-.pricing-section {
+.detail-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 400px;
   gap: 24px;
-  padding: 24px 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
 }
 
-.price-item {
+.left-column,
+.right-column {
   display: flex;
   flex-direction: column;
+  gap: 20px;
+}
+
+.info-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #212529;
+  margin: 0 0 20px 0;
+  display: flex;
+  align-items: center;
   gap: 8px;
 }
 
-.price-label {
-  font-size: 14px;
-  color: var(--text-muted);
-}
-
-.price-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.description-section {
-  padding-top: 24px;
-}
-
-.section-subtitle {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text);
-  margin: 0 0 12px 0;
-}
-
-.description-text {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text-muted);
-  margin: 0;
-}
-
-/* NFT Info Card */
-.nft-info-card {
-  padding: 24px;
-}
-
-.nft-info-row {
+.info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 12px 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #f1f3f5;
 }
 
-.nft-info-row:last-child {
+.info-row:last-child {
   border-bottom: none;
+  padding-bottom: 0;
 }
 
-.nft-label {
+.info-label {
   font-size: 14px;
-  color: var(--text-muted);
+  color: #6c757d;
+  font-weight: 500;
 }
 
-.nft-value {
+.info-value {
   font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
+  color: #212529;
+  font-weight: 500;
 }
 
-/* Defect Log Card */
-.defect-log-card {
-  padding: 24px;
-}
-
-.defect-list {
+/* 대여 일정 */
+.schedule-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
 }
 
-.defect-item {
-  padding: 16px;
-  background: #fef2f2;
-  border-radius: 8px;
-  border: 1px solid #fecaca;
-}
-
-.defect-info {
+.schedule-item {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.defect-location {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.defect-type {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.defect-date {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-/* Stats Card */
-.stats-card {
-  padding: 24px;
-}
-
-.stat-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  gap: 20px;
   padding: 16px 0;
-  border-bottom: 1px solid var(--border);
 }
 
-.stat-row:last-child {
-  border-bottom: none;
-}
-
-.stat-label {
+.schedule-label {
   font-size: 14px;
-  color: var(--text-muted);
-}
-
-.stat-value {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-/* Recent Reservations Card */
-.recent-reservations-card {
-  padding: 24px;
-}
-
-.card-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.view-all-btn {
-  font-size: 13px;
+  color: #6c757d;
   font-weight: 600;
-  color: var(--primary);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: color 0.2s;
+  min-width: 50px;
 }
 
-.view-all-btn:hover {
-  color: var(--primary-dark);
+.schedule-details {
+  flex: 1;
 }
 
-.reservations-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.reservation-item {
-  padding: 16px;
-  background: var(--bg);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
-
-.reservation-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.schedule-date {
+  font-size: 16px;
+  color: #212529;
+  font-weight: 600;
   margin-bottom: 8px;
 }
 
-.renter-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
+.schedule-location {
+  font-size: 14px;
+  color: #6c757d;
 }
 
-.status-tag {
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 4px;
+.schedule-divider {
+  height: 1px;
+  background-color: #e9ecef;
+  margin: 0;
 }
 
-.status-tag.ongoing {
-  background: #fef3c7;
-  color: #d97706;
+/* 이용 상태 */
+.usage-status {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.status-tag.completed {
-  background: #dcfce7;
-  color: #16a34a;
+.status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.reservation-period {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-bottom: 6px;
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.reservation-amount {
+.status-check {
   font-size: 14px;
   font-weight: 600;
-  color: var(--text);
+  color: #212529;
 }
 
+.view-photos-btn {
+  background: none;
+  border: 1px solid #dee2e6;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-photos-btn:hover {
+  background-color: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.status-detail {
+  font-size: 13px;
+  color: #6c757d;
+  padding-left: 20px;
+}
+
+.defect-alert {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #856404;
+  font-weight: 500;
+}
+
+/* 분쟁 정보 */
+.dispute-card {
+  border: 2px solid #f5c6cb;
+}
+
+.dispute-title {
+  color: #721c24;
+}
+
+.dispute-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dispute-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dispute-label {
+  font-size: 13px;
+  color: #6c757d;
+  font-weight: 600;
+}
+
+.dispute-reason {
+  font-size: 14px;
+  color: #212529;
+}
+
+.dispute-amount {
+  font-size: 18px;
+  color: #dc3545;
+  font-weight: 700;
+}
+
+/* 결제 정보 */
+.payment-card {
+  background: white;
+}
+
+.payment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+}
+
+.payment-label {
+  font-size: 14px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.payment-value {
+  font-size: 14px;
+  color: #212529;
+  font-weight: 500;
+}
+
+.payment-divider {
+  height: 1px;
+  background-color: #e9ecef;
+  margin: 12px 0;
+}
+
+.total-row {
+  padding-top: 16px;
+}
+
+.total-row .payment-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.payment-total {
+  font-size: 20px;
+  color: #212529;
+  font-weight: 700;
+}
+
+/* 액션 버튼 */
+.settle-button,
+.chat-button {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.settle-button {
+  background-color: #dc3545;
+  color: white;
+  margin-bottom: 12px;
+}
+
+.settle-button:hover {
+  background-color: #c82333;
+}
+
+.chat-button {
+  background-color: white;
+  color: #495057;
+  border: 1px solid #dee2e6;
+}
+
+.chat-button:hover {
+  background-color: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+/* 반응형 */
 @media (max-width: 1200px) {
   .detail-content {
     grid-template-columns: 1fr;
   }
 
-  .sidebar-column {
-    grid-template-columns: 1fr 1fr;
-    display: grid;
-  }
-}
-
-@media (max-width: 768px) {
-  .reservation-detail-page {
-    padding: 20px;
-  }
-
-  .car-header {
-    flex-direction: column;
-  }
-
-  .car-image {
-    width: 100%;
-  }
-
-  .pricing-section {
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar-column {
-    grid-template-columns: 1fr;
+  .right-column {
+    max-width: 100%;
   }
 }

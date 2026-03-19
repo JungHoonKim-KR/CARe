@@ -19,11 +19,13 @@ public class CompanyController {
 
     private final CompanyService companyService;
 
+    // 프로필 조회 api
     @GetMapping
     public ResponseEntity<CompanyProfileResponse> getProfile(@AuthenticationPrincipal String companyId) {
         return ResponseEntity.ok(companyService.getProfile(companyId));
     }
 
+    // 서류 검증 api
     @PostMapping("/biz-verify")
     public ResponseEntity<BizVerifyResponse> verifyBusiness(
             @AuthenticationPrincipal String companyId,

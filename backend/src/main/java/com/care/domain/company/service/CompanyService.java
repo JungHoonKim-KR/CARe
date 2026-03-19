@@ -26,6 +26,13 @@ public class CompanyService {
         return new CompanyProfileResponse(company);
     }
 
+    @Transactional(readOnly = true)
+    public CompanyProfileResponse getProfile(String companyId) {
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 업체입니다."));
+        return new CompanyProfileResponse(company);
+    }
+
     @Transactional
     public BizVerifyResponse verifyBusiness(String companyId, BizVerifyRequest request) {
         Company company = companyRepository.findById(companyId)

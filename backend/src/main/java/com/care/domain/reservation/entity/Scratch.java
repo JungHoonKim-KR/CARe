@@ -52,4 +52,12 @@ public class Scratch extends BaseEntity {
     @Column(name = "is_disputed", nullable = false)
     private boolean isDisputed;
 
+    public void markDisputed() {
+        this.isDisputed = true;
+    }
+
+    public void clearDisputed() {
+        this.isDisputed = false;
+    }
+
 }

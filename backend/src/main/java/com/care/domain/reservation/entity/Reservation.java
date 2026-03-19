@@ -48,4 +48,12 @@ public class Reservation extends BaseEntity {
     public enum DepositStatus {
         SAFE, LOCKED, DEDUCTED
     }
+    // DepositStatus enum 아래에 추가
+    public void updateStatusToInUse() {
+        this.status = "IN_USE";
+    }
+
+    public void updateStatusToAfterScan() {
+        this.status = "AFTER_SCAN";
+    }
 }

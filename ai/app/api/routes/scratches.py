@@ -1,61 +1,58 @@
-from pathlib import Path
-import tempfile
+import cv2
+import numpy as np
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from ultralytics import YOLO
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+router = APIRouter(prefix="/scratches") # 🌟 이렇게 수정!
 
-from app.schemas.scratch import ScratchComparisonResponse, DetectResponse
-from app.services.scratch_comparison_service import compare_scratches
-from app.services.detect_service import detect_and_upload
+# 🌟 서버가 켜질 때 AI 모델을 딱 한 번만 불러와서 대기시킵니다.
+MODEL_PATH = "app/models/scratches/best.pt"
+try:
+    model = YOLO(MODEL_PATH)
+    print("🟢 AI 모델(best.pt) 로딩 완료! 출격 준비 끝!")
+except Exception as e:
+    print(f"🔴 AI 모델 로딩 실패 (경로를 확인해주세요): {e}")
 
-router = APIRouter(prefix="/scratches", tags=["scratches"])
-
-
-# 기존 유사도 비교 — 그대로 유지
-@router.post("/compare", response_model=ScratchComparisonResponse)
-async def compare_scratch_images(
-        reference_image: UploadFile = File(...),
-        target_image:    UploadFile = File(...),
-) -> ScratchComparisonResponse:
-    ref_suffix    = Path(reference_image.filename or "ref.jpg").suffix    or ".jpg"
-    target_suffix = Path(target_image.filename    or "target.jpg").suffix or ".jpg"
-
-    with tempfile.NamedTemporaryFile(delete=False, suffix=ref_suffix) as ref_tmp:
-        ref_tmp.write(await reference_image.read())
-        ref_path = Path(ref_tmp.name)
-
-    with tempfile.NamedTemporaryFile(delete=False, suffix=target_suffix) as target_tmp:
-        target_tmp.write(await target_image.read())
-        target_path = Path(target_tmp.name)
-
+@router.websocket("/ws/detect")
+async def websocket_detect(websocket: WebSocket):
+    await websocket.accept()
     try:
-        similarity, diff_score = compare_scratches(ref_path, target_path)
-        return ScratchComparisonResponse(similarity=similarity, diff_score=diff_score)
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    finally:
-        for p in (ref_path, target_path):
-            if p.exists():
-                p.unlink()
+        while True:
+            # 1. 프론트엔드(React)에서 0.2초마다 보낸 사진(Bytes) 수신
+            frame_bytes = await websocket.receive_bytes()
 
+            # 2. Bytes 데이터를 AI가 읽을 수 있는 이미지(NumPy 배열)로 변환
+            nparr = np.frombuffer(frame_bytes, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-# 신규 흠집 탐지
-@router.post("/detect", response_model=DetectResponse)
-async def detect_scratch_image(
-        image:    UploadFile = File(...),
-        zone:     str        = Form("front"),    # front / rear / front-left 등
-        log_type: str        = Form("BEFORE"),   # BEFORE / AFTER
-) -> DetectResponse:
-    suffix = Path(image.filename or "image.jpg").suffix or ".jpg"
+            if img is not None:
+                # 3. AI 모델 추론 시작! (conf=0.25는 "25% 이상 확신하면 흠집으로 인정해라"라는 뜻)
+                # 흠집을 너무 못 찾으면 0.1로 내리고, 너무 잡다한 걸 다 잡으면 0.5로 올리면 됩니다.
+                results = model.predict(source=img, conf=0.25, verbose=False)
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        tmp.write(await image.read())
-        tmp_path = Path(tmp.name)
+                real_boxes = []
 
-    try:
-        result = await detect_and_upload(tmp_path, zone, log_type)
-        return DetectResponse(**result)
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    finally:
-        if tmp_path.exists():
-            tmp_path.unlink()
+                # 4. AI가 찾은 흠집들을 리액트가 그리기 편한 모양(x, y, 폭, 높이)으로 계산
+                for r in results:
+                    for box in r.boxes:
+                        x1, y1, x2, y2 = box.xyxy[0].tolist() # 양끝 좌표
+                        label_idx = int(box.cls[0])           # 클래스 번호
+                        label_name = model.names[label_idx]   # 클래스 이름 (예: scratch)
+
+                        real_boxes.append({
+                            "x": int(x1),
+                            "y": int(y1),
+                            "w": int(x2 - x1), # 폭 (오른쪽 - 왼쪽)
+                            "h": int(y2 - y1), # 높이 (아래 - 위)
+                            "label": label_name
+                        })
+
+                # 5. 계산된 진짜 좌표를 프론트엔드로 슝! 🚀
+                await websocket.send_json({"boxes": real_boxes})
+            else:
+                await websocket.send_json({"boxes": []})
+
+    except WebSocketDisconnect:
+        print("🟡 프론트엔드와 연결이 끊어졌습니다.")
+    except Exception as e:
+        print(f"🔴 통신 중 에러: {e}")

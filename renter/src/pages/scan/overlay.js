@@ -49,3 +49,32 @@ export function clearOverlay(canvasEl) {
   const ctx = canvasEl.getContext('2d')
   ctx.clearRect(0, 0, canvasEl.width, canvasEl.height)
 }
+
+// 기존 drawBoxes, clearOverlay 함수는 그대로 두시고, 맨 아래에 추가하세요!
+
+export function drawARBoxes(canvasEl, videoEl, boxes) {
+  if (!canvasEl || !videoEl) return;
+  const ctx = canvasEl.getContext('2d')
+  canvasEl.width  = videoEl.videoWidth  || 1280
+  canvasEl.height = videoEl.videoHeight || 720
+  ctx.clearRect(0, 0, canvasEl.width, canvasEl.height)
+
+  for (const box of boxes) {
+    const { x, y, w, h, label } = box
+
+    // 🌟 AR 전용 스타일 (시야를 덜 가리도록 반투명 노란색 적용)
+    ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)' // 옐로우
+    ctx.lineWidth   = 3
+    ctx.strokeRect(x, y, w, h)
+
+    const tag = label || '흠집 탐지 중'
+    ctx.font = 'bold 12px Pretendard, sans-serif'
+    const textW = ctx.measureText(tag).width
+
+    ctx.fillStyle = 'rgba(250, 204, 21, 0.8)'
+    ctx.fillRect(x, y - 22, textW + 10, 22)
+
+    ctx.fillStyle = '#000000'
+    ctx.fillText(tag, x + 5, y - 6)
+  }
+}

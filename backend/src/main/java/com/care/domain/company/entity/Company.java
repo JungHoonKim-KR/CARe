@@ -72,4 +72,6 @@ public class Company extends BaseEntity {
     public void assignWallet(String walletAddress) {
         this.walletAddress = walletAddress;
     }
+
+    public void updateDid(String didUri) { this.didUri = didUri; }
 }

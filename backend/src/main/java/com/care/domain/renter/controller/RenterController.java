@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/renters/me")
 @RequiredArgsConstructor
@@ -22,6 +24,12 @@ public class RenterController {
     @GetMapping
     public ResponseEntity<RenterProfileResponse> getProfile(@AuthenticationPrincipal String userId) {
         return ResponseEntity.ok(renterService.getProfile(userId));
+    }
+
+    @PostMapping("/did")
+    public ResponseEntity<Map<String, String>> registerDid(@AuthenticationPrincipal String userId) throws Exception {
+        String didUri = renterService.registerDid(userId);
+        return ResponseEntity.ok(Map.of("didUri", didUri));
     }
 
     @PostMapping("/documents")

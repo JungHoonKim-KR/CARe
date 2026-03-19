@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "main": "Accueil",
+    "myCar": "Ma Voiture",
+    "profile": "Profil"
+  },
+  "profile": {
+    "title": "Profil",
+    "account": "Compte",
+    "settings": "Paramètres",
+    "support": "Assistance",
+    "editInfo": "Modifier le profil",
+    "reservations": "Réservations",
+    "languageSettings": "Langue",
+    "notifications": "Notifications",
+    "customerSupport": "Service client",
+    "logout": "Se déconnecter",
+    "wallet": "Mon Portefeuille",
+    "viewAll": "Voir tout",
+    "availableBalance": "Solde disponible",
+    "cardHint": "Appuyez pour retourner",
+    "userName": "Utilisateur"
+  },
+  "language": {
+    "pageTitle": "Choisir la langue",
+    "settingsTitle": "Paramètres de langue",
+    "current": "Langue actuelle",
+    "confirm": "Confirmer",
+    "save": "Enregistrer"
+  },
+  "home": {
+    "search": "Rechercher",
+    "pickupCountry": "Pays de prise en charge",
+    "pickupLocation": "Lieu de prise en charge",
+    "pickupDate": "Date de prise en charge",
+    "returnDate": "Date de retour",
+    "time": "Heure",
+    "carType": "Type de véhicule",
+    "showAll": "Voir tous les véhicules disponibles",
+    "country": "Pays",
+    "carKind": "Type de voiture",
+    "company": "Société"
+  },
+  "common": {
+    "signIn": "Connexion",
+    "signUp": "Inscription",
+    "back": "Retour",
+    "loading": "Chargement..."
+  }
+}

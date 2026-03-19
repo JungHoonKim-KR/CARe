@@ -1,0 +1,84 @@
+.reservation-list {
+  width: 100%;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.reservation-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 20px;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.reservation-item:first-child {
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+}
+
+.reservation-item:last-child {
+  border-bottom: none;
+  border-bottom-left-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+}
+
+.reservation-item:hover {
+  background: #fafafa;
+}
+
+.reservation-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+
+.car-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.car-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.customer-date {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.reservation-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.reservation-amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-right: 8px;
+}
+
+@media (max-width: 768px) {
+  .reservation-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .reservation-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

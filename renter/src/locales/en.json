@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "main": "Main",
+    "myCar": "My Car",
+    "profile": "Profile"
+  },
+  "profile": {
+    "title": "Profile",
+    "account": "Account",
+    "settings": "Settings",
+    "support": "Support",
+    "editInfo": "Edit Profile",
+    "reservations": "Reservations",
+    "languageSettings": "Language",
+    "notifications": "Notifications",
+    "customerSupport": "Customer Support",
+    "logout": "Log out",
+    "wallet": "My Wallet",
+    "viewAll": "View All",
+    "availableBalance": "Available Balance",
+    "cardHint": "Tap to flip",
+    "userName": "User"
+  },
+  "language": {
+    "pageTitle": "Select Language",
+    "settingsTitle": "Language Settings",
+    "current": "Current Language",
+    "confirm": "Confirm",
+    "save": "Save"
+  },
+  "home": {
+    "search": "Search",
+    "pickupCountry": "Pickup Country",
+    "pickupLocation": "Pickup Location",
+    "pickupDate": "Pickup Date",
+    "returnDate": "Return Date",
+    "time": "Time",
+    "carType": "Car Type",
+    "showAll": "Show all available cars",
+    "country": "Country",
+    "carKind": "Car Type",
+    "company": "Company"
+  },
+  "common": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "back": "Back",
+    "loading": "Loading..."
+  }
+}

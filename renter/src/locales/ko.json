@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "main": "메인",
+    "myCar": "내 차량",
+    "profile": "프로필"
+  },
+  "profile": {
+    "title": "프로필",
+    "account": "계정",
+    "settings": "설정",
+    "support": "지원",
+    "editInfo": "내 정보 수정",
+    "reservations": "예약 내역",
+    "languageSettings": "언어 설정",
+    "notifications": "알림 설정",
+    "customerSupport": "고객센터",
+    "logout": "로그아웃",
+    "wallet": "내 지갑",
+    "viewAll": "전체보기",
+    "availableBalance": "사용 가능 잔액",
+    "cardHint": "탭해서 뒤집어 보세요",
+    "userName": "사용자"
+  },
+  "language": {
+    "pageTitle": "언어를 선택하세요",
+    "settingsTitle": "언어 설정",
+    "current": "현재 언어",
+    "confirm": "선택하기",
+    "save": "저장하기"
+  },
+  "home": {
+    "search": "검색",
+    "pickupCountry": "픽업 국가명",
+    "pickupLocation": "픽업 위치",
+    "pickupDate": "픽업 날짜",
+    "returnDate": "반납 날짜",
+    "time": "시간",
+    "carType": "차량 종류",
+    "showAll": "가능한 모든 차를 보고 싶어요",
+    "country": "국가",
+    "carKind": "차종",
+    "company": "업체"
+  },
+  "common": {
+    "signIn": "로그인",
+    "signUp": "회원가입",
+    "back": "뒤로",
+    "loading": "로딩 중..."
+  }
+}

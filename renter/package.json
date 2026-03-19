@@ -1,7 +1,7 @@
 {
-  "name": "user-app",
+  "name": "care-user-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,9 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
+    "@privy-io/react-auth": "^3.17.0",
     "axios": "^1.13.6",
+    "ethers": "^6.16.0",
+    "i18next": "^25.8.18",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-i18next": "^16.5.8",
     "react-router-dom": "^7.13.1"
   },
   "devDependencies": {
@@ -24,6 +29,12 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vite-plugin-pwa": "^0.21.0"
+  },
+  "overrides": {
+    "vite-plugin-pwa": {
+      "vite": "$vite"
+    }
   }
 }

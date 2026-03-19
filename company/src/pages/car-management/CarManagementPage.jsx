@@ -15,7 +15,7 @@ export default function CarManagementPage() {
   ]
 
   const handleItemClick = (carId) => {
-    navigate(`/reservations/${carId}`)
+    navigate(`/cars/${carId}`)
   }
 
   const allCars = [

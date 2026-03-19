@@ -61,7 +61,6 @@ export default function AIReportPage() {
 
       <div className="report-header">
         <div className="car-info">
-          <span className="car-icon">🚗</span>
           <div className="car-details">
             <div className="car-plate-row">
               <h2 className="car-plate">{reportData.carPlate}</h2>

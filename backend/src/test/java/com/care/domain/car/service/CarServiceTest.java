@@ -5,12 +5,15 @@ import com.care.domain.car.controller.dto.response.CarRegisterResponse;
 import com.care.domain.car.entity.CarImage.Side;
 import com.care.domain.car.entity.CarModel;
 import com.care.domain.car.entity.OwnedCar;
+import com.care.domain.car.exception.CarErrorCode;
 import com.care.domain.car.repository.CarImageRepository;
 import com.care.domain.car.repository.CarModelRepository;
 import com.care.domain.car.repository.OwnedCarRepository;
 import com.care.domain.company.entity.Company;
+import com.care.domain.company.exception.CompanyErrorCode;
 import com.care.domain.company.repository.CompanyRepository;
 import com.care.global.blockchain.CarNftService;
+import com.care.global.exception.BusinessException;
 import com.care.global.ipfs.PinataService;
 import com.care.global.s3.S3Service;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,21 +85,23 @@ class CarServiceTest {
     }
 
     @Test
-    void 존재하지_않는_companyId로_등록하면_예외가_발생한다() {
+    void 존재하지_않는_companyId로_등록하면_COMPANY_NOT_FOUND() {
         CarRegisterRequest request = makeRequest(MODEL_ID, "12가3456");
 
         assertThatThrownBy(() -> carService.registerCar("없는-회사-id", request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("존재하지 않는 회사");
+                .isInstanceOf(BusinessException.class)
+                .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                        .isEqualTo(CompanyErrorCode.COMPANY_NOT_FOUND));
     }
 
     @Test
-    void 존재하지_않는_modelId로_등록하면_예외가_발생한다() {
+    void 존재하지_않는_modelId로_등록하면_CAR_MODEL_NOT_FOUND() {
         CarRegisterRequest request = makeRequest("없는-모델-id", "12가3456");
 
         assertThatThrownBy(() -> carService.registerCar(COMPANY_ID, request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("존재하지 않는 차량 모델");
+                .isInstanceOf(BusinessException.class)
+                .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                        .isEqualTo(CarErrorCode.CAR_MODEL_NOT_FOUND));
     }
 
     private CarRegisterRequest makeRequest(String modelId, String plateNumber) {

@@ -27,6 +27,7 @@ async def verify_face(
 
     try:
         verified, distance, threshold = verify_faces(id_path, selfie_path)
+        print(f"[FaceVerify] verified={verified}, distance={distance:.4f}, threshold={threshold:.4f}")
         return FaceVerifyResponse(verified=verified, distance=distance, threshold=threshold)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

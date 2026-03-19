@@ -88,6 +88,12 @@ public class ScanService {
             scratches.add(scratchRepository.save(scratch));
         }
 
+        if (logType.equals("BEFORE")) {
+            reservation.updateStatusToInUse();
+        } else {
+            reservation.updateStatusToAfterScan();
+        }
+
         log.info("[Scan] 흠집 {}개 저장 - reservationId: {}, zone: {}",
                 scratches.size(), reservationId, zone);
         return ScanResponseDto.fromList(scratches);

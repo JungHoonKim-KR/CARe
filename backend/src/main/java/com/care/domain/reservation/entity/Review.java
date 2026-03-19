@@ -29,4 +29,13 @@ public class Review extends BaseEntity {
     @Column(name = "content", columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    public static Review create(String reviewId, Reservation reservation, OwnedCar ownedCar, int rating, String content) {
+        Review review = new Review();
+        review.reviewId = reviewId;
+        review.reservation = reservation;
+        review.ownedCar = ownedCar;
+        review.rating = rating;
+        review.content = content;
+        return review;
+    }
 }

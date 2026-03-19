@@ -6,6 +6,7 @@ import ReservationPage from './pages/reservation/ReservationPage'
 import ReservationDetailPage from './pages/reservation-detail/ReservationDetailPage'
 import AIReportPage from './pages/ai-report/AIReportPage'
 import CarManagementPage from './pages/car-management/CarManagementPage'
+import CarDetailPage from './pages/car-detail/CarDetailPage'
 import './App.css'
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/cars" element={<CarManagementPage />} />
+          <Route path="/cars/:id" element={<CarDetailPage />} />
           <Route path="/reservations" element={<ReservationPage />} />
           <Route path="/reservations/:id" element={<ReservationDetailPage />} />
           <Route path="/ai-report/:id" element={<AIReportPage />} />
@@ -28,4 +30,3 @@ export default function App() {
       </main>
     </div>
   )
-}

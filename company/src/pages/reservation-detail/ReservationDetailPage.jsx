@@ -49,9 +49,11 @@ export default function ReservationDetailPage() {
           ←
         </button>
         <h1 className="page-title">예약 상세</h1>
-        <span className={`status-badge ${reservationData.status === '분쟁중' ? 'dispute' : ''}`}>
-          ⚠️ {reservationData.status}
-        </span>
+        {reservationData.status && (
+          <span className={`status-badge ${reservationData.status === '분쟁중' ? 'dispute' : ''}`}>
+            ⚠️ {reservationData.status}
+          </span>
+        )}
       </div>
 
       <h2 className="car-title">{reservationData.carName}</h2>
@@ -60,8 +62,7 @@ export default function ReservationDetailPage() {
         <div className="left-column">
           {/* 차량 정보 */}
           <div className="info-card">
-            <h3 className="card-title">
-              <span className="icon">🚗</span> 차량 정보
+            <h3 className="card-title"> 차량 정보
             </h3>
             <div className="info-row">
               <span className="info-label">차량명</span>
@@ -79,43 +80,41 @@ export default function ReservationDetailPage() {
 
           {/* 대여 일정 */}
           <div className="info-card">
-            <h3 className="card-title">
-              <span className="icon">📅</span> 대여 일정
-            </h3>
-            <div className="schedule-item">
-              <div className="schedule-label">픽업</div>
-              <div className="schedule-content">
-                <div className="schedule-date">{reservationData.pickup.date}</div>
-                <div className="schedule-location">📍 {reservationData.pickup.location}</div>
+            <h3 className="card-title">대여 일정</h3>
+            <div className="schedule-section">
+              <div className="schedule-item">
+                <span className="schedule-label">픽업</span>
+                <div className="schedule-details">
+                  <div className="schedule-date">{reservationData.pickup.date}</div>
+                  <div className="schedule-location">{reservationData.pickup.location}</div>
+                </div>
               </div>
-            </div>
-            <div className="schedule-divider"></div>
-            <div className="schedule-item">
-              <div className="schedule-label">반납</div>
-              <div className="schedule-content">
-                <div className="schedule-date">{reservationData.dropoff.date}</div>
-                <div className="schedule-location">📍 {reservationData.dropoff.location}</div>
+              <div className="schedule-divider"></div>
+              <div className="schedule-item">
+                <span className="schedule-label">반납</span>
+                <div className="schedule-details">
+                  <div className="schedule-date">{reservationData.dropoff.date}</div>
+                  <div className="schedule-location">{reservationData.dropoff.location}</div>
+                </div>
               </div>
             </div>
           </div>
 
           {/* 이용 상태 */}
           <div className="info-card">
-            <h3 className="card-title">
-              <span className="icon">📋</span> 이용 상태
-            </h3>
+            <h3 className="card-title">이용 상태</h3>
             <div className="usage-status">
               <div className="status-item">
                 <div className="status-header">
                   <span className="status-check">✓ 픽업</span>
-                  <button className="view-photos-btn">📷 사진 보기</button>
+                  <button className="view-photos-btn">사진 보기</button>
                 </div>
                 <div className="status-detail">기존 결함: {reservationData.defects.pickup}건 (AI 탐지)</div>
               </div>
               <div className="status-item">
                 <div className="status-header">
                   <span className="status-check">✓ 반납</span>
-                  <button className="view-photos-btn">📷 사진 보기</button>
+                  <button className="view-photos-btn">사진 보기</button>
                 </div>
                 <div className="status-detail">결함: {reservationData.defects.dropoff}건 (AI 탐지)</div>
               </div>
@@ -150,8 +149,7 @@ export default function ReservationDetailPage() {
         <div className="right-column">
           {/* 대여자 정보 */}
           <div className="info-card">
-            <h3 className="card-title">
-              <span className="icon">👤</span> 대여자 정보
+            <h3 className="card-title">대여자 정보
             </h3>
             <div className="info-row">
               <span className="info-label">이름</span>
@@ -169,8 +167,7 @@ export default function ReservationDetailPage() {
 
           {/* 결제 정보 */}
           <div className="info-card payment-card">
-            <h3 className="card-title">
-              <span className="icon">💳</span> 결제 정보
+            <h3 className="card-title">결제 정보
             </h3>
             <div className="payment-row">
               <span className="payment-label">대여료</span>
@@ -196,7 +193,7 @@ export default function ReservationDetailPage() {
             ⚠️ 정산 요청
           </button>
           <button className="chat-button">
-            💬 대여자와 채팅
+            대여자와 채팅
           </button>
         </div>
       </div>

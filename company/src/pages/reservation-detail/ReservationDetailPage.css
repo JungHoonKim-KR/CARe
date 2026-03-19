@@ -87,10 +87,6 @@
   gap: 8px;
 }
 
-.card-title .icon {
-  font-size: 20px;
-}
-
 .info-row {
   display: flex;
   justify-content: space-between;
@@ -117,6 +113,12 @@
 }
 
 /* 대여 일정 */
+.schedule-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
 .schedule-item {
   display: flex;
   gap: 20px;
@@ -130,7 +132,7 @@
   min-width: 50px;
 }
 
-.schedule-content {
+.schedule-details {
   flex: 1;
 }
 

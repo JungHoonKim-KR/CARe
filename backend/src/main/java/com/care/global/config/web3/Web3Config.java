@@ -12,7 +12,7 @@ import org.web3j.tx.gas.DefaultGasProvider;
 
 @Configuration
 public class Web3Config {
-
+    // RPC URL로 Web3j 연결
     @Value("${blockchain.rpc-url}")
     private String rpcUrl;
 
@@ -24,6 +24,7 @@ public class Web3Config {
         return Web3j.build(new HttpService(rpcUrl));
     }
 
+    // PrivateKey로 Credential 생성
     @Lazy
     @Bean
     public Credentials credentials() {

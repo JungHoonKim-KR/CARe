@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import './ReservationDetailPage.css'
+import './CarDetailPage.css'
 
 export default function ReservationDetailPage() {
   const navigate = useNavigate()

@@ -27,6 +27,7 @@ public class DocumentService {
         Renter renter = renterRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
+        // 서류 타입(여권/면허증)에 따라 구분
         boolean verified = switch (request.getDocType()) {
             case PASSPORT -> apickVerifyClient.verifyPassport(
                     request.getPassportName(),

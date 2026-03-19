@@ -10,11 +10,10 @@ export async function verifyFace(passportDataUrl, selfieDataUrl) {
   const token = localStorage.getItem('accessToken') || ''
 
   const formData = new FormData()
-  formData.append('passport_image', dataUrlToBlob(passportDataUrl), 'passport.jpg')
-  formData.append('selfie_image', dataUrlToBlob(selfieDataUrl), 'selfie.jpg')
-  formData.append('token', token)
+  formData.append('id_photo', dataUrlToBlob(passportDataUrl), 'passport.jpg')
+  formData.append('selfie', dataUrlToBlob(selfieDataUrl), 'selfie.jpg')
 
-  const res = await fetch(`${AI_BASE_URL}/face-verify`, {
+  const res = await fetch(`${AI_BASE_URL}/api/v1/face/verify`, {
     method: 'POST',
     body: formData,
   })

@@ -15,4 +15,6 @@ public interface ScratchRepository extends JpaRepository<Scratch, String> {
 
     // ownedCar.carId 로 탐색
     List<Scratch> findByOwnedCar_CarId(String carId);
+
+    List<Scratch> findByOwnedCar_CarIdAndReservation_ReservationId(String carId, String reservationId);
 }

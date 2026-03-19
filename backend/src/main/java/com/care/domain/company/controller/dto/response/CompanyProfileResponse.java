@@ -15,7 +15,6 @@ public class CompanyProfileResponse {
     private final boolean didVerified;
     private final String countryCode;
     private final String city;
-    private final String airportId;
     private final String detailAddress;
     private final String languageCode;
 
@@ -29,7 +28,6 @@ public class CompanyProfileResponse {
         this.didVerified = company.isDidVerified();
         this.countryCode = company.getCountryCode();
         this.city = company.getCity();
-        this.airportId = company.getAirportId();
         this.detailAddress = company.getDetailAddress();
         this.languageCode = company.getLanguageCode();
     }

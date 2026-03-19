@@ -30,18 +30,19 @@ export default function SignUpPage() {
     setLoading(true)
     try {
       console.log('[SignUp] 요청:', { email: form.email, name: form.name })
-      const data = await registerRenter({
-        email: form.email,
-        name: form.name,
-        password: form.password,
-      })
-      console.log('[SignUp] 응답:', data)
-
       // 임베디드 지갑 자동 생성
       const wallet = Wallet.createRandom()
       localStorage.setItem('embedded_wallet_address', wallet.address)
       localStorage.setItem('embedded_wallet_key', wallet.privateKey)
       console.log('[SignUp] 임베디드 지갑 생성:', wallet.address)
+
+      const data = await registerRenter({
+        email: form.email,
+        name: form.name,
+        password: form.password,
+        walletAddress: wallet.address,
+      })
+      console.log('[SignUp] 응답:', data)
 
       navigate('/login')
     } catch (err) {

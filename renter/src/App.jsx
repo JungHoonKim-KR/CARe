@@ -15,6 +15,8 @@ import CarDetailPage from './pages/car-detail/CarDetailPage'
 import PaymentPage from './pages/payment/PaymentPage'
 import BookingCompletePage from './pages/booking-complete/BookingCompletePage'
 import WalletPage from './pages/wallet/WalletPage'
+import ChargePage from './pages/wallet/ChargePage'
+import TokenHistoryPage from './pages/wallet/TokenHistoryPage'
 import WalletConnectPage from './pages/wallet-connect/WalletConnectPage'
 import DIDAuthPage from './pages/did-auth/DIDAuthPage'
 import DIDPassportGuidePage from './pages/did-auth/DIDPassportGuidePage'
@@ -51,6 +53,8 @@ function App() {
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/booking-complete" element={<BookingCompletePage />} />
           <Route path="/wallet" element={<WalletPage />} />
+          <Route path="/wallet/token" element={<TokenHistoryPage />} />
+          <Route path="/wallet/charge" element={<ChargePage />} />
           <Route path="/wallet-connect" element={<WalletConnectPage />} />
           <Route path="/did-auth" element={<DIDAuthPage />} />
           <Route path="/did-guide" element={<DIDPassportGuidePage />} />

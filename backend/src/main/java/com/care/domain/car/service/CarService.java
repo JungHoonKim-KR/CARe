@@ -24,6 +24,7 @@ import com.care.domain.company.exception.CompanyErrorCode;
 import com.care.domain.company.repository.CompanyRepository;
 import com.care.domain.reservation.entity.Reservation;
 import com.care.domain.reservation.entity.Review;
+import com.care.domain.reservation.exception.ReservationErrorCode;
 import com.care.domain.reservation.repository.ReservationRepository;
 import com.care.domain.reservation.repository.ReviewRepository;
 import com.care.domain.scan.repository.ScratchRepository;
@@ -195,7 +196,7 @@ public class CarService {
         OwnedCar car = ownedCarRepository.findById(carId)
                 .orElseThrow(() -> new BusinessException(CarErrorCode.CAR_NOT_FOUND));
         Reservation reservation = reservationRepository.findByReservationId(request.reservationId())
-                .orElseThrow(() -> new BusinessException(CarErrorCode.RESERVATION_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ReservationErrorCode.RESERVATION_NOT_FOUND));
         Review review = Review.create(UUID.randomUUID().toString(), reservation, car, request.rating(), request.content());
         reviewRepository.save(review);
         return CarReviewResponse.from(review);

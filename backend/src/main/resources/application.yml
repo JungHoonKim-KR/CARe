@@ -4,11 +4,12 @@
 server:
   servlet:
     context-path: ${CONTEXT_PATH:/api}
-  multipart:
-    max-file-size: 20MB
-    max-request-size: 20MB
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
   profiles:
     active: local
   application:
@@ -83,6 +84,7 @@ blockchain:
     did-registry: ${DID_REGISTRY_ADDRESS:}
     mock-usdc: ${MOCK_USDC_ADDRESS:}
     rental: ${RENTAL_CONTRACT_ADDRESS:}
+
 ai:
   server:
     url: ${AI_SERVER_URL:http://localhost:8000}

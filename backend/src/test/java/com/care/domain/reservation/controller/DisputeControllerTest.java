@@ -21,7 +21,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -67,7 +69,8 @@ class DisputeControllerTest {
         mockMvc.perform(post("/reservations/{reservationId}/disputes", "reservation-1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "http://localhost/reservations/reservation-1/disputes/dispute-1"))
                 .andExpect(jsonPath("$.disputeId").value("dispute-1"))
                 .andExpect(jsonPath("$.reservationId").value("reservation-1"))
                 .andExpect(jsonPath("$.targetLogId").value("after-log-1"))
@@ -117,7 +120,31 @@ class DisputeControllerTest {
     }
 
     @Test
-    void 분쟁_방어_API_성공() throws Exception {
+        void 분쟁_방어_API_PATCH_성공() throws Exception {
+        DisputeDefenseResponse response = new DisputeDefenseResponse(
+                "dispute-1",
+                "reservation-1",
+                "before-log-1",
+                "DEFENDED",
+                LocalDateTime.now()
+        );
+
+        given(disputeService.defendDispute(nullable(String.class), anyString(), anyString(), any()))
+                .willReturn(response);
+
+        String body = objectMapper.writeValueAsString(new DefenseBody("before-log-1"));
+
+        mockMvc.perform(patch("/reservations/{reservationId}/disputes/{disputeId}/defense", "reservation-1", "dispute-1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.disputeId").value("dispute-1"))
+                .andExpect(jsonPath("$.defenseLogId").value("before-log-1"))
+                .andExpect(jsonPath("$.status").value("DEFENDED"));
+    }
+
+    @Test
+    void 분쟁_방어_API_POST_하위호환_성공() throws Exception {
         DisputeDefenseResponse response = new DisputeDefenseResponse(
                 "dispute-1",
                 "reservation-1",

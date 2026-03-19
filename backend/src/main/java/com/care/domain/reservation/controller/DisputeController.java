@@ -10,7 +10,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,7 +28,13 @@ public class DisputeController {
 			@PathVariable String reservationId,
 			@Valid @RequestBody DisputeCreateRequest request
 	) {
-		return ResponseEntity.ok(disputeService.createDispute(userId, reservationId, request));
+		DisputeCreateResponse response = disputeService.createDispute(userId, reservationId, request);
+		URI location = ServletUriComponentsBuilder
+				.fromCurrentRequest()
+				.path("/{disputeId}")
+				.buildAndExpand(response.disputeId())
+				.toUri();
+		return ResponseEntity.created(location).body(response);
 	}
 
 	@GetMapping("/{disputeId}")
@@ -37,7 +46,7 @@ public class DisputeController {
 		return ResponseEntity.ok(disputeService.getDisputeDetail(userId, reservationId, disputeId));
 	}
 
-	@PostMapping("/{disputeId}/defense")
+	@RequestMapping(value = "/{disputeId}/defense", method = {RequestMethod.PATCH, RequestMethod.POST})
 	public ResponseEntity<DisputeDefenseResponse> defendDispute(
 			@AuthenticationPrincipal String userId,
 			@PathVariable String reservationId,

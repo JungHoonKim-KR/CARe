@@ -11,4 +11,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, String
     Optional<Reservation> findByReservationId(String reservationId);
 
     List<Reservation> findByRenterUserId(String renterId);
+
+    List<Reservation> findByOwnedCarCompanyCompanyId(String companyId);
 }

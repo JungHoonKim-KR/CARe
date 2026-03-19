@@ -4,6 +4,8 @@ import com.care.domain.car.controller.dto.request.CarReviewRequest;
 import com.care.domain.car.controller.dto.response.CarReviewResponse;
 import com.care.domain.car.controller.dto.response.CarSummaryResponse;
 import com.care.domain.car.service.CarService;
+import com.care.domain.reservation.controller.dto.response.ReservationSummaryResponse;
+import com.care.domain.reservation.service.ReservationService;
 import com.care.domain.renter.controller.dto.request.DocumentVerifyRequest;
 import com.care.domain.renter.controller.dto.request.TokenChargeRequest;
 import com.care.domain.renter.controller.dto.response.DocumentVerifyResponse;
@@ -30,6 +32,7 @@ public class RenterController {
     private final RenterService renterService;
     private final RenterTokenService renterTokenService;
     private final CarService carService;
+    private final ReservationService reservationService;
 
     // 프로필 조회 api
     @GetMapping
@@ -81,6 +84,15 @@ public class RenterController {
             @Valid @RequestBody CarReviewRequest request
     ) {
         return ResponseEntity.ok(carService.createReview(carId, request));
+    }
+
+    /**
+     * GET /renters/me/reservations
+     * 렌터 예약 목록 조회
+     */
+    @GetMapping("/reservations")
+    public ResponseEntity<List<ReservationSummaryResponse>> getMyReservations(@AuthenticationPrincipal String userId) {
+        return ResponseEntity.ok(reservationService.getRenterReservations(userId));
     }
 
     /**

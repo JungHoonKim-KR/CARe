@@ -10,8 +10,7 @@ export default function CarSmartKeyPage() {
 
   const rid = reservation?.reservationId
   const faceAuthDone = rid ? localStorage.getItem(`faceAuthDone_${rid}`) === 'true' : false
-  const crackDone    = rid ? localStorage.getItem(`crackDone_${rid}`)    === 'true' : false
-  const pickupReady  = faceAuthDone && crackDone
+  const pickupReady  = faceAuthDone
 
   const [locked, setLocked] = useState(!pickupReady)
 
@@ -69,48 +68,13 @@ export default function CarSmartKeyPage() {
         )}
       </div>
 
-      {/* 픽업 조건 안내 배너 */}
+      {/* 얼굴 인증 필요 안내 */}
       {!pickupReady && (
         <div className="sk-prereq-banner">
-          <div className="sk-prereq-steps">
-            <div className={`sk-prereq-step${faceAuthDone ? ' done' : ''}`}>
-              <div className="sk-prereq-dot">
-                {faceAuthDone
-                  ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  : <span>1</span>}
-              </div>
-              <span>얼굴 인증</span>
-            </div>
-            <div className="sk-prereq-line" />
-            <div className={`sk-prereq-step${crackDone ? ' done' : ''}`}>
-              <div className="sk-prereq-dot">
-                {crackDone
-                  ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  : <span>2</span>}
-              </div>
-              <span>외관 촬영</span>
-            </div>
-            <div className="sk-prereq-line" />
-            <div className="sk-prereq-step">
-              <div className="sk-prereq-dot lock">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2z"/></svg>
-              </div>
-              <span>스마트키</span>
-            </div>
-          </div>
-          <p className="sk-prereq-desc">
-            {!faceAuthDone ? '얼굴 인증을 완료해주세요' : '차량 외관 촬영을 완료해주세요'}
-          </p>
-          {!faceAuthDone && (
-            <button className="sk-prereq-btn" onClick={() => navigate('/car-faceauth', { state: { reservation } })}>
-              얼굴 인증하러 가기
-            </button>
-          )}
-          {faceAuthDone && !crackDone && (
-            <button className="sk-prereq-btn" onClick={() => navigate('/car-crack', { state: { reservation } })}>
-              외관 촬영하러 가기
-            </button>
-          )}
+          <p className="sk-prereq-desc">얼굴 인증을 완료해주세요</p>
+          <button className="sk-prereq-btn" onClick={() => navigate('/car-faceauth', { state: { reservation } })}>
+            얼굴 인증하러 가기
+          </button>
         </div>
       )}
 

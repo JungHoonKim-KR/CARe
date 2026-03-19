@@ -46,4 +46,9 @@ public class Renter extends BaseEntity {
         renter.didVerified = false;
         return renter;
     }
+
+    public void updateDid(String didUri) {
+        this.didUri = didUri;
+        this.didVerified = true;
+    }
 }

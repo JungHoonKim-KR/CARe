@@ -31,6 +31,12 @@ public class RenterController {
         return ResponseEntity.ok(renterService.getProfile(userId));
     }
 
+    @PostMapping("/did")
+    public ResponseEntity<Map<String, String>> registerDid(@AuthenticationPrincipal String userId) throws Exception {
+        String didUri = renterService.registerDid(userId);
+        return ResponseEntity.ok(Map.of("didUri", didUri));
+    }
+
     // 서류 검증 api
     @PostMapping("/documents")
     public ResponseEntity<DocumentVerifyResponse> verifyDocument(

@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useLocation }       from 'react-router-dom'
 import { Scanner }                      from './scanner.js'
-import { drawBoxes, clearOverlay }      from './overlay.js'
+import { drawBoxes, clearOverlay, drawARBoxes } from './overlay.js'
 import { ZONES, MOCK_HISTORY, MOCK_RESULTS } from './zones.js'
 import styles                           from './ScanPage.module.css'
 
@@ -19,6 +19,8 @@ export default function ScanPage() {
   const scannerRef = useRef(null)
   const wheelLRef  = useRef(null)
   const wheelRRef  = useRef(null)
+  const arCanvasRef = useRef(null) // 🌟 추가된 부분: 실시간 AR 네모 전용 도화지
+    const wsRef      = useRef(null) // 🌟 추가된 부분: 웹소켓 객체 저장용
 
   const [zoneIndex,   setZoneIndex]   = useState(0)
   const [captures,    setCaptures]    = useState({})
@@ -28,6 +30,65 @@ export default function ScanPage() {
   const [showToast,   setShowToast]   = useState(false)
 
   const currentZone = ZONES[zoneIndex]
+
+  const matchStatusRef = useRef(matchStatus)
+    useEffect(() => {
+      matchStatusRef.current = matchStatus
+    }, [matchStatus])
+// ─────────────────────────────────────────────────────────────
+  // 🌟 [신규] FastAPI 웹소켓 연결 및 실시간 프레임 전송 로직
+  // ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    // 1. 웹소켓 연결 (FastAPI 주소 확인)
+    wsRef.current = new WebSocket('ws://localhost:8000/api/v1/scratches/ws/detect')
+
+    wsRef.current.onopen = () => console.log('🟢 [WS] AR 웹소켓 연결 성공!')
+
+    // 2. FastAPI에서 흠집 좌표가 날아올 때
+    wsRef.current.onmessage = (event) => {
+      // 이미 스캔(촬영)이 완료된 상태면 AR 네모를 그리지 않음
+      if (matchStatusRef.current === 'matched') {
+        clearOverlay(arCanvasRef.current)
+        return
+      }
+
+      const data = JSON.parse(event.data)
+      console.log('📬 [WS] 서버에서 넘어온 데이터:', data)
+
+      if (data.boxes && arCanvasRef.current && videoRef.current) {
+          console.log('🎨 [WS] AR 박스 그리기 실행! 박스 좌표:', data.boxes)
+        drawARBoxes(arCanvasRef.current, videoRef.current, data.boxes)
+      }
+    }
+
+    // 3. 0.2초(200ms)마다 프론트 카메라 화면을 캡처해서 웹소켓으로 쏘기
+    const interval = setInterval(() => {
+      if (matchStatusRef.current === 'matched') return
+
+      const video = videoRef.current
+      const ws = wsRef.current
+
+      if (!video || !ws || ws.readyState !== WebSocket.OPEN) return
+
+      // 원본 비율을 유지하되 압축해서 전송 (빠른 통신을 위해)
+      const tempCanvas = document.createElement('canvas')
+      tempCanvas.width = video.videoWidth || 1280
+      tempCanvas.height = video.videoHeight || 720
+      const tempCtx = tempCanvas.getContext('2d')
+      tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height)
+
+      // Blob으로 변환하여 웹소켓 전송 (0.5는 화질 50%를 의미 - 속도 최적화)
+      tempCanvas.toBlob((blob) => {
+        if (blob) ws.send(blob)
+      }, 'image/jpeg', 0.5)
+    }, 200)
+
+    // 컴포넌트 언마운트 시 정리
+    return () => {
+      clearInterval(interval)
+      if (wsRef.current) wsRef.current.close()
+    }
+  }, [])
 
   useEffect(() => {
     const link = document.createElement('link')
@@ -71,6 +132,7 @@ export default function ScanPage() {
     setMatchStatus('detecting')
     setMatchValue(0)
     clearOverlay(canvasRef.current)
+    clearOverlay(arCanvasRef.current)
 
     const scanner = new Scanner(video, reservationId, logType)
     scannerRef.current = scanner
@@ -117,21 +179,24 @@ export default function ScanPage() {
     }
 
     scanner.onCapture = (zoneId, dataUrl, boxes) => {
-      setCaptures(prev => ({ ...prev, [zoneId]: { dataUrl, boxes } }))
-      setMatchStatus('matched')
-      if (canvasRef.current && videoRef.current) {
-        drawBoxes(canvasRef.current, videoRef.current, boxes)
-      }
-      if (boxes.length > 0) {
-        setShowToast(true)
-        setTimeout(() => setShowToast(false), 2000)
-      }
-    }
+          setCaptures(prev => ({ ...prev, [zoneId]: { dataUrl, boxes } }))
+          setMatchStatus('matched')
 
-    scanner.startMatching()
-    return () => { scannerRef.current = null }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoneIndex])
+          if (canvasRef.current && videoRef.current) {
+            drawBoxes(canvasRef.current, videoRef.current, boxes) // 스프링부트가 확정한 빨간 네모 그리기
+            clearOverlay(arCanvasRef.current) // 🌟 추가: 확정되었으니 실시간 노란 AR 네모는 지움!
+          }
+
+          if (boxes.length > 0) {
+            setShowToast(true)
+            setTimeout(() => setShowToast(false), 2000)
+          }
+        }
+
+        scanner.startMatching()
+        return () => { scannerRef.current = null }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [zoneIndex])
 
   useEffect(() => {
     if (!scannerRef.current) return
@@ -241,8 +306,10 @@ export default function ScanPage() {
 
       <div className={styles.viewWrap}>
         <video ref={videoRef} className={styles.video} playsInline muted />
-        <canvas ref={canvasRef} className={styles.overlay} />
-        <div className={styles.scanLine} />
+        <canvas ref={arCanvasRef} className={styles.overlay} style={{ zIndex: 1 }} />
+                <canvas ref={canvasRef} className={styles.overlay} style={{ zIndex: 2 }} />
+
+                <div className={styles.scanLine} />
 
         {currentZone.type === 'plate' && (
           <div className={`${styles.guidePlate} ${styles[matchStatus]}`}>

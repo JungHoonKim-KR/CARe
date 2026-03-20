@@ -4,6 +4,7 @@
 server:
   servlet:
     context-path: ${CONTEXT_PATH:/api}
+  forward-headers-strategy: framework
 
 spring:
   servlet:

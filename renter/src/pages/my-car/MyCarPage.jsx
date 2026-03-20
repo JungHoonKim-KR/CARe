@@ -78,9 +78,7 @@ export default function MyCarPage() {
           setReservation(null)
         }
       } catch {
-        setReservation(MOCK_RESERVATION)
-        const pending = localStorage.getItem(`disputePending_${MOCK_RESERVATION.reservationId}`) === 'true'
-        if (pending) setShowDisputeModal(true)
+        setReservation(null)
       } finally {
         setLoading(false)
       }

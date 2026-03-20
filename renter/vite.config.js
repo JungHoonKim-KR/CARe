@@ -11,7 +11,6 @@ export default defineConfig({
       manifest: {
         name: 'CARe',
         short_name: 'CARe',
-        description: '당신의 No.1 해외 렌터카 중개 플랫폼',
         theme_color: '#F7A633',
         background_color: '#F7A633',
         display: 'standalone',

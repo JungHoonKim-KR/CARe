@@ -229,7 +229,7 @@ export default function MyCarPage() {
           <div className="mc-action-row">
             <button
               className="mc-action-btn mc-shoot-btn"
-              onClick={() => navigate('/car-crack', { state: { reservation } })}
+              onClick={() => navigate(`/scan/${reservation.reservationId}`, { state: { logType: 'BEFORE' } })}
             >
               <div className="mc-action-btn-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -243,7 +243,7 @@ export default function MyCarPage() {
             </button>
             <button
               className="mc-action-btn mc-return-btn"
-              onClick={() => navigate('/car-return', { state: { reservation } })}
+              onClick={() => navigate(`/scan/${reservation.reservationId}`, { state: { logType: 'AFTER' } })}
             >
               <div className="mc-action-btn-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

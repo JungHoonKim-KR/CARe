@@ -18,7 +18,6 @@ export default function DisputePage() {
     carNumber: '12가 3456',
     carModel: '2023년식',
     renterName: '김철수',
-    renterPhone: '010-1234-5678',
     renterEmail: 'kimcs@example.com',
     issueType: '차량 파손',
     status: 'pending',
@@ -122,10 +121,6 @@ export default function DisputePage() {
                 <div className="info-item">
                   <span className="label">이름</span>
                   <span className="value">{dispute.renterName}</span>
-                </div>
-                <div className="info-item">
-                  <span className="label">전화번호</span>
-                  <span className="value">{dispute.renterPhone}</span>
                 </div>
                 <div className="info-item full-width">
                   <span className="label">이메일</span>

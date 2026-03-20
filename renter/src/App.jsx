@@ -4,6 +4,7 @@ import SplashPage from './pages/splash/SplashPage'
 import LandingPage from './pages/landing/LandingPage'
 import LoginPage from './pages/auth/LoginPage'
 import SignUpPage from './pages/auth/SignUpPage'
+import SignUpLanguagePage from './pages/auth/SignUpLanguagePage'
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
 import ResetPasswordPage from './pages/auth/ResetPasswordPage'
 import LanguageSelectPage from './pages/language/LanguageSelectPage'
@@ -43,6 +44,7 @@ function App() {
           <Route path="/scan/:reservationId" element={<ScanPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/signup/language" element={<SignUpLanguagePage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/language" element={<LanguageSelectPage />} />

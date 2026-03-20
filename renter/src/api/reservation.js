@@ -2,13 +2,13 @@ import api from './auth'
 
 // 내 예약 목록 조회
 export const getMyReservations = async () => {
-  const response = await api.get('/api/renter/reservations')
+  const response = await api.get('/api/renters/me/reservations')
   return response.data
 }
 
 // 예약 상세 조회
 export const getReservationDetail = async (reservationId) => {
-  const response = await api.get(`/api/renter/reservations/${reservationId}`)
+  const response = await api.get(`/api/reservations/${reservationId}`)
   return response.data
 }
 

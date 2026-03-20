@@ -2,6 +2,7 @@ import React from 'react' // build trigger
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import LoginPage from './pages/login/LoginPage'
+import SignUpPage from './pages/signup/SignUpPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import ReservationPage from './pages/reservation/ReservationPage'
 import ReservationDetailPage from './pages/reservation-detail/ReservationDetailPage'
@@ -15,6 +16,7 @@ export default function App() {
     <Routes>
       {/* Login Route - No Sidebar */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<SignUpPage />} />
 
       {/* Main App Routes - With Sidebar */}
       <Route path="*" element={

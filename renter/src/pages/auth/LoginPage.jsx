@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import careLogo from '../../assets/care_logo.png'
-import { loginRenter } from '../../api/auth'
+import { loginRenter, getRenterProfile } from '../../api/auth'
 import { useAuth } from '../../context/AuthContext'
+import i18n from '../../i18n'
 import './AuthForm.css'
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
+  const { t } = useTranslation()
 
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
@@ -21,25 +24,33 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.email || !form.password) {
-      setError('이메일과 비밀번호를 입력해주세요.')
+      setError(t('auth.emailPasswordRequired'))
       return
     }
     setLoading(true)
     try {
-      console.log('[Login] 요청:', { email: form.email })
       const data = await loginRenter(form.email, form.password)
-      console.log('[Login] 응답:', data)
       const accessToken  = data.accessToken  || data.data?.accessToken
       const refreshToken = data.refreshToken || data.data?.refreshToken
       const userData     = data.user         || data.data?.user || null
-      console.log('[Login] accessToken:', accessToken)
-      // 백엔드 응답에 user 없으면 이메일을 직접 저장
       const userInfo = userData || { email: form.email }
       login(accessToken, refreshToken, userInfo)
+
+      // 백엔드에서 언어 설정 로드
+      try {
+        const profile = await getRenterProfile()
+        const lang = profile?.languageCode || profile?.data?.languageCode
+        if (lang) {
+          localStorage.setItem('language', lang)
+          i18n.changeLanguage(lang)
+        }
+      } catch {
+        // 언어 로드 실패 시 무시
+      }
+
       navigate('/home')
     } catch (err) {
-      console.error('[Login] 오류:', err.response?.status, err.response?.data)
-      const msg = err.response?.data?.message || '로그인에 실패했습니다. 다시 시도해주세요.'
+      const msg = err.response?.data?.message || t('auth.loginFailed')
       setError(msg)
     } finally {
       setLoading(false)
@@ -55,12 +66,12 @@ export default function LoginPage() {
       <div className="auth-card">
         <form onSubmit={handleSubmit} noValidate>
           <div className="form-group">
-            <label className="form-label">이메일</label>
+            <label className="form-label">{t('auth.email')}</label>
             <input
               className="form-input"
               type="email"
               name="email"
-              placeholder="Value"
+              placeholder={t('auth.emailPlaceholder')}
               value={form.email}
               onChange={handleChange}
               autoComplete="email"
@@ -68,12 +79,12 @@ export default function LoginPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">비밀번호 (8자 이상)</label>
+            <label className="form-label">{t('auth.password')}</label>
             <input
               className="form-input"
               type="password"
               name="password"
-              placeholder="Value"
+              placeholder={t('auth.passwordPlaceholder')}
               value={form.password}
               onChange={handleChange}
               autoComplete="current-password"
@@ -87,12 +98,12 @@ export default function LoginPage() {
             className="btn btn-primary form-submit"
             disabled={loading}
           >
-            {loading ? '로그인 중...' : 'Sign In'}
+            {loading ? t('auth.signingIn') : t('common.signIn')}
           </button>
         </form>
 
         <Link to="/forgot-password" className="auth-link">
-          비밀번호를 잊어버리셨나요?
+          {t('auth.forgotPassword')}
         </Link>
       </div>
     </div>

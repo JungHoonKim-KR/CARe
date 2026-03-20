@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import './DIDCardPage.css'
 
@@ -6,115 +7,146 @@ export default function DIDCardPage() {
   const { state } = useLocation()
 
   const name = state?.name || '-'
-  const docType = state?.docType || 'PASSPORT'
   const expiryDate = state?.expiryDate || ''
-  const docId = state?.docId || ''
+  const docId = state?.docId || 'did:care:renter:verified'
+
+  const [copied, setCopied] = useState(false)
+  const [revealed, setRevealed] = useState(false)
+  const [showTooltip, setShowTooltip] = useState(false)
+
+  const shortDid = docId.length > 20
+    ? `${docId.slice(0, 12)}...${docId.slice(-8)}`
+    : docId
 
   const formattedExpiry = expiryDate.length === 8
     ? `${expiryDate.slice(0, 4)}.${expiryDate.slice(4, 6)}.${expiryDate.slice(6, 8)}`
     : expiryDate
 
+  useEffect(() => {
+    const timer = setTimeout(() => setRevealed(true), 100)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const copyDID = () => {
+    try {
+      const ta = document.createElement('textarea')
+      ta.value = docId
+      ta.style.position = 'absolute'
+      ta.style.left = '-9999px'
+      document.body.appendChild(ta)
+      ta.focus()
+      ta.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(ta)
+      if (ok) {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      }
+    } catch (e) {}
+  }
+
   return (
-    <div className="did-card-page">
-      <div className="did-card-header">
-        <button className="did-card-back-btn" onClick={() => navigate('/did-auth')}>
-          <svg width="10" height="18" viewBox="0 0 10 18" fill="none">
-            <path d="M9 1L1 9L9 17" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <div className="dcp-page">
+
+      {/* 헤더 */}
+      <div className="dcp-header">
+        <button className="dcp-back-btn" onClick={() => navigate('/did-auth')}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="#111" />
           </svg>
         </button>
-        <span className="did-card-header-title">DID 신원 증명</span>
-        <span className="did-card-manage" onClick={() => navigate('/did-auth')}>관리</span>
+        <span className="dcp-header-title">DID 신원 증명</span>
       </div>
 
-      <div className="did-card-wrap">
-        <div className="did-card">
+      {/* 카드 영역 */}
+      <div className="dcp-body">
+        <div className={`dcp-card ${revealed ? 'revealed' : ''}`}>
 
-          <div className="did-card-top-row">
-            <div className="did-card-brand">
+          {/* 브랜드 + 도트 */}
+          <div className="dcp-card-top">
+            <div className="dcp-brand">
               <span>TRUST</span>
               <span>E-SIGN</span>
             </div>
-            <div className="did-card-dots">
-              {Array.from({ length: 16 }).map((_, i) => (
-                <span key={i} className="did-card-dot" />
+            <div className="dcp-dots">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <div key={i} className={`dcp-dot${i === 4 ? ' accent' : ''}`} />
               ))}
             </div>
           </div>
 
-          <div className="did-card-shield-wrap">
-            <div className="did-card-shield-bg">
-              <svg width="72" height="84" viewBox="0 0 52 60" fill="none">
-                <path
-                  d="M26 2L4 11V28C4 41.25 13.5 53.5 26 57C38.5 53.5 48 41.25 48 28V11L26 2Z"
-                  fill="rgba(255,255,255,0.15)"
-                  stroke="white"
-                  strokeWidth="2.5"
-                />
-                <path
-                  d="M16 30L22 36L36 22"
-                  stroke="white"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+          {/* 쉴드 */}
+          <div className="dcp-shield-wrap">
+            <div className="dcp-shield-bg">
+              <div className="dcp-deco tr" />
+              <div className="dcp-deco bl" />
+              <svg width="72" height="72" viewBox="0 0 44 44" fill="none">
+                <path d="M22 4L8 10V22C8 30.8 14 39 22 41C30 39 36 30.8 36 22V10L22 4Z"
+                  fill="rgba(75,121,212,0.12)" />
+                <path d="M22 4L8 10V22C8 30.8 14 39 22 41C30 39 36 30.8 36 22V10L22 4Z"
+                  stroke="#4B79D4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M14 22L20 28L30 14"
+                  stroke="#4B79D4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <span className="did-card-verified-chip">인증 완료</span>
           </div>
 
-          <div className="did-card-sep" />
-
-          <div className="did-card-info">
-            <p className="did-card-label">이름</p>
-            <p className="did-card-name">{name}</p>
-
+          {/* 이름 + 만료일 */}
+          <div className="dcp-info">
+            <p className="dcp-name">{name}</p>
             {formattedExpiry && (
-              <>
-                <p className="did-card-label" style={{ marginTop: 24 }}>만료일</p>
-                <p className="did-card-expiry">
-                  VALID UNTIL <span>{formattedExpiry}</span>
-                </p>
-              </>
+              <div className="dcp-valid-row">
+                <span className="dcp-valid-label">VALID UNTIL</span>
+                <span className="dcp-valid-date">{formattedExpiry}</span>
+              </div>
             )}
           </div>
 
-          <div className="did-card-sep" />
-
-          <div className="did-card-did-row">
-            <span className="did-card-did-label">DID</span>
-            <span className="did-card-did-value">
-              {docId
-                ? `${docId.slice(0, 12)}...${docId.slice(-8)}`
-                : 'did:care:renter:verified'}
-            </span>
+          {/* DID 주소 */}
+          <div className="dcp-did-box">
+            <div
+              className="dcp-did-left"
+              onMouseEnter={() => setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+              onTouchStart={() => setShowTooltip(true)}
+              onTouchEnd={() => setTimeout(() => setShowTooltip(false), 2000)}
+            >
+              <span className="dcp-did-tag">DID</span>
+              <span className="dcp-did-value">{shortDid}</span>
+              {showTooltip && (
+                <div className="dcp-tooltip">
+                  {docId}
+                  <div className="dcp-tooltip-arrow" />
+                </div>
+              )}
+            </div>
+            <button className={`dcp-copy-btn${copied ? ' copied' : ''}`} onClick={copyDID}>
+              {copied ? '복사됨' : '복사'}
+            </button>
           </div>
         </div>
-
-        <div className="did-card-actions">
-          <button className="did-card-history-btn" onClick={() => {}}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="9" stroke="#F7A633" strokeWidth="2"/>
-              <path d="M12 7V12L15 15" stroke="#F7A633" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            이용 내역
-          </button>
-          <button
-            className="did-card-share-btn"
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({ title: 'DID 신원 증명', text: `${name} 님의 신원이 인증되었습니다.` })
-              }
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <circle cx="18" cy="5" r="3" stroke="white" strokeWidth="2"/>
-              <circle cx="6" cy="12" r="3" stroke="white" strokeWidth="2"/>
-              <circle cx="18" cy="19" r="3" stroke="white" strokeWidth="2"/>
-              <path d="M8.59 13.51L15.42 17.49M15.41 6.51L8.59 10.49" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
-        </div>
       </div>
+
+      {/* 하단 액션 */}
+      <div className="dcp-actions">
+        <button className="dcp-history-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 8 12 12 15 15"/>
+          </svg>
+          이용 내역
+        </button>
+        <button className="dcp-share-btn" onClick={() => {
+          if (navigator.share) navigator.share({ title: 'DID 신원 증명', text: `${name} 님의 신원이 인증되었습니다.` })
+        }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+        </button>
+      </div>
+
     </div>
   )
 }

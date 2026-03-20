@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import passportIcon from '../../assets/passport_icon.png'
-import { renterLicense } from '../../api/auth'
+import { renterLicense, renterDID } from '../../api/auth'
 import './DIDConfirmPage.css'
 
 export default function DIDConfirmPage() {
@@ -49,6 +49,8 @@ export default function DIDConfirmPage() {
 
       if (res.verified) {
         localStorage.setItem(`${docType}_verified`, 'true')
+        // 블록체인 DID 등록 (실패해도 카드 페이지로 이동)
+        try { await renterDID() } catch (e) { console.warn('[DID] 블록체인 등록 실패:', e) }
         navigate('/did-card', {
           state: {
             name: form.name,

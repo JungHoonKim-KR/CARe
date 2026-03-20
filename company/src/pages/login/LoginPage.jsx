@@ -129,7 +129,7 @@ export default function LoginPage() {
           </div>
 
           <p className="register-link">
-            회원이 아니신가요? <a href="/register">회원가입</a>
+            회원이 아니신가요? <a href="/company/register">회원가입</a>
           </p>
 
           <p className="copyright">

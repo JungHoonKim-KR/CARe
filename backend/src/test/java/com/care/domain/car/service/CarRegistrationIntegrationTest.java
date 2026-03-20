@@ -5,6 +5,7 @@ import com.care.domain.auth.service.AuthService;
 import com.care.domain.car.controller.dto.request.CarRegisterRequest;
 import com.care.domain.car.controller.dto.response.CarRegisterResponse;
 import com.care.domain.car.entity.CarModel;
+import com.care.domain.car.entity.CarSize;
 import com.care.domain.car.entity.OwnedCar;
 import com.care.domain.car.repository.CarImageRepository;
 import com.care.domain.car.repository.CarModelRepository;
@@ -73,7 +74,7 @@ class CarRegistrationIntegrationTest {
         // [1] 회사 회원가입
         // ──────────────────────────────────────────
         CompanySignUpRequest signUpRequest = new CompanySignUpRequest(
-                "통합테스트렌터카", TEST_EMAIL, "Password1!", null, "ko", null
+                "통합테스트렌터카", TEST_EMAIL, "Password1!", null, "ICN", "ko", null, null
         );
         authService.companySignUp(signUpRequest);
 
@@ -101,7 +102,7 @@ class CarRegistrationIntegrationTest {
         // ──────────────────────────────────────────
         // [3] 차량 모델 등록 (관리자 사전 등록 가정)
         // ──────────────────────────────────────────
-        carModelRepository.save(CarModel.create(MODEL_ID, "현대", "아이오닉5", "전기"));
+        carModelRepository.save(CarModel.create(MODEL_ID, "현대", "아이오닉5", "전기", CarSize.MEDIUM));
 
         InputStream is = getClass().getResourceAsStream("/testcar.png");
         assertThat(is).as("testcar.png 리소스가 없습니다 (src/test/resources/testcar.png 추가 필요)").isNotNull();

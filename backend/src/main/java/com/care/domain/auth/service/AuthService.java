@@ -43,6 +43,9 @@ public class AuthService {
                 request.getLanguageCode(),
                 request.getWalletAddress()
         );
+        if (request.getPrivyWalletId() != null) {
+            renter.updatePrivyWallet(request.getWalletAddress(), request.getPrivyWalletId());
+        }
         renterRepository.save(renter);
     }
 
@@ -57,9 +60,13 @@ public class AuthService {
                 request.getName(),
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
+                request.getAirportCode(),
                 request.getLanguageCode(),
                 request.getWalletAddress()
         );
+        if (request.getPrivyWalletId() != null) {
+            company.updatePrivyWallet(request.getWalletAddress(), request.getPrivyWalletId());
+        }
         companyRepository.save(company);
     }
 
@@ -94,7 +101,6 @@ public class AuthService {
         String accessToken = jwtUtil.generateAccessToken(userId, role);
         String refreshToken = jwtUtil.generateRefreshToken(userId, role);
 
-        // RT Redis 저장
         String jti = jwtUtil.getJti(refreshToken);
         redisTemplate.opsForValue().set("refresh:" + userId, jti, Duration.ofDays(7));
 
@@ -111,7 +117,6 @@ public class AuthService {
         String role = jwtUtil.parseClaims(refreshToken).get("role", String.class);
         String jti = jwtUtil.getJti(refreshToken);
 
-        // Redis에 저장된 RT와 비교
         String stored = redisTemplate.opsForValue().get("refresh:" + userId);
         if (!jti.equals(stored)) {
             throw new IllegalArgumentException("이미 사용된 리프레시 토큰입니다.");
@@ -122,12 +127,9 @@ public class AuthService {
 
     // 로그아웃
     public void logout(String accessToken, String userId) {
-        // AT blacklist 등록
         String jti = jwtUtil.getJti(accessToken);
         long expiration = jwtUtil.getExpiration(accessToken) - System.currentTimeMillis();
         redisTemplate.opsForValue().set("blacklist:" + jti, "true", expiration, TimeUnit.MILLISECONDS);
-
-        // RT 삭제
         redisTemplate.delete("refresh:" + userId);
     }
 }

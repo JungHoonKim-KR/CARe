@@ -29,6 +29,9 @@ public class Company extends BaseEntity {
     @Column(name = "wallet_address", length = 100, unique = true)
     private String walletAddress;
 
+    @Column(name = "privy_wallet_id", length = 100)
+    private String privyWalletId;
+
     @Column(name = "did_uri", length = 100)
     private String didUri;
 
@@ -52,12 +55,13 @@ public class Company extends BaseEntity {
 
     // 정적 팩토리 메서드 -> new 대신 of()로 Company 객체를 생성 및 반환
     // 나중에 추가되는 정보들은 null로 처리 (
-    public static Company of(String companyId, String name, String email, String passwordHash, String languageCode, String walletAddress) {
+    public static Company of(String companyId, String name, String email, String passwordHash, String airportCode, String languageCode, String walletAddress) {
         Company company = new Company();
         company.companyId = companyId;
         company.name = name;
         company.email = email;
         company.passwordHash = passwordHash;
+        company.airportCode = airportCode;
         company.languageCode = languageCode;
         company.walletAddress = walletAddress;
         company.didVerified = false;
@@ -73,5 +77,13 @@ public class Company extends BaseEntity {
         this.walletAddress = walletAddress;
     }
 
-    public void updateDid(String didUri) { this.didUri = didUri; }
+    public void updateDid(String didUri) {
+        this.didUri = didUri;
+        this.didVerified = true;
+    }
+
+    public void updatePrivyWallet(String walletAddress, String privyWalletId) {
+        this.walletAddress = walletAddress;
+        this.privyWalletId = privyWalletId;
+    }
 }

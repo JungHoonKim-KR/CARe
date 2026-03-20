@@ -61,6 +61,10 @@ apick:
 nts:
   api-key: ${NTS_API_KEY:}
 
+privy:
+  app-id: ${PRIVY_APP_ID:}
+  app-secret: ${PRIVY_APP_SECRET:}
+
 pinata:
   api-key: ${PINATA_API_KEY:}
   api-secret: ${PINATA_API_SECRET:}
@@ -83,6 +87,7 @@ blockchain:
     car-nft: ${CAR_NFT_ADDRESS:}
     did-registry: ${DID_REGISTRY_ADDRESS:}
     mock-usdc: ${MOCK_USDC_ADDRESS:}
+    dispute-settlement: ${DISPUTE_SETTLEMENT_ADDRESS:}
     rental: ${RENTAL_CONTRACT_ADDRESS:}
 
 ai:

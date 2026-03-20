@@ -2,13 +2,13 @@ import api from './auth'
 
 // 내 예약 목록 조회
 export const getMyReservations = async () => {
-  const response = await api.get('/api/renter/reservations')
+  const response = await api.get('/api/renters/me/reservations')
   return response.data
 }
 
 // 예약 상세 조회
 export const getReservationDetail = async (reservationId) => {
-  const response = await api.get(`/api/renter/reservations/${reservationId}`)
+  const response = await api.get(`/api/reservations/${reservationId}`)
   return response.data
 }
 
@@ -46,5 +46,11 @@ export const unlockSmartKey = async (reservationId) => {
 // 분쟁 상세 조회
 export const getDisputeDetail = async (reservationId, disputeId) => {
   const response = await api.get(`/api/reservations/${reservationId}/disputes/${disputeId}`)
+  return response.data
+}
+
+// 예약 생성
+export const createReservation = async (carId, insuranceId, totalPrice) => {
+  const response = await api.post('/api/reservations', { carId, insuranceId, totalPrice })
   return response.data
 }

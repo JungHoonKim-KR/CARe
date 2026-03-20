@@ -133,17 +133,30 @@ export default function SignUpPage() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="languageCode">언어 코드</label>
+              <label htmlFor="languageCode">언어</label>
               <div className="input-wrapper">
-                <input
-                  type="text"
+                <select
                   id="languageCode"
                   name="languageCode"
                   value={formData.languageCode}
                   onChange={handleChange}
-                  placeholder="KR (한국어)"
                   required
-                />
+                >
+                  <option value="">언어를 선택하세요</option>
+                  <option value="ko">한국어</option>
+                  <option value="en">English</option>
+                  <option value="ja">日本語</option>
+                  <option value="zh">中文</option>
+                  <option value="es">Español</option>
+                  <option value="fr">Français</option>
+                  <option value="de">Deutsch</option>
+                  <option value="ru">Русский</option>
+                  <option value="pt">Português</option>
+                  <option value="ar">العربية</option>
+                  <option value="it">Italiano</option>
+                  <option value="hi">हिन्दी</option>
+                  <option value="vi">Tiếng Việt</option>
+                </select>
               </div>
             </div>
 

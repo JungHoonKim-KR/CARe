@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react' // build trigger
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import LoginPage from './pages/login/LoginPage'

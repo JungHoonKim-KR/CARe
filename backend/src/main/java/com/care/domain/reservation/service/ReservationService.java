@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Slf4j
@@ -56,21 +57,29 @@ public class ReservationService {
             throw new BusinessException(ReservationErrorCode.WALLET_NOT_REGISTERED);
         }
 
+        // totalPrice 서버 계산: 대여일수 × 차량일일요금 + 보험료
+        long days = ChronoUnit.DAYS.between(request.pickupDate(), request.returnDate());
+        if (days < 1) {
+            throw new BusinessException(ReservationErrorCode.INVALID_DATE);
+        }
+        int totalPrice = (int) (days * car.getDailyPrice()) + insurance.getPrice();
+
         // 블록체인 결제
         String txHash;
         try {
-            txHash = careTokenService.transfer(renterWallet, companyWallet, request.totalPrice());
+            txHash = careTokenService.transfer(renterWallet, companyWallet, totalPrice);
         } catch (Exception e) {
             log.error("[Reservation] 결제 실패 | renter={}, company={}, amount={}, error={}",
-                    userId, company.getCompanyId(), request.totalPrice(), e.getMessage());
+                    userId, company.getCompanyId(), totalPrice, e.getMessage());
             throw new BusinessException(ReservationErrorCode.PAYMENT_FAILED);
         }
 
-        Reservation reservation = Reservation.create(renter, car, insurance, request.pickupDate(), request.returnDate(),request.totalPrice(),  txHash);
+        Reservation reservation = Reservation.create(renter, car, insurance,
+                request.pickupDate(), request.returnDate(), totalPrice, txHash);
         reservationRepository.save(reservation);
 
-        log.info("[Reservation] 예약 생성 | id={}, renter={}, car={}, pickup={}, return={}, price={}, txHash={}",
-                reservation.getReservationId(), userId, request.carId(), request.pickupDate(), request.returnDate(), request.totalPrice(), txHash);
+        log.info("[Reservation] 예약 생성 | id={}, renter={}, car={}, price={}, txHash={}",
+                reservation.getReservationId(), userId, request.carId(), totalPrice, txHash);
 
         return ReservationCreateResponse.from(reservation);
     }

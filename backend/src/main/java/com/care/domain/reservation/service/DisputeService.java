@@ -2,16 +2,22 @@ package com.care.domain.reservation.service;
 
 import com.care.domain.reservation.controller.dto.request.DisputeCreateRequest;
 import com.care.domain.reservation.controller.dto.request.DisputeDefenseRequest;
+import com.care.domain.reservation.controller.dto.request.DisputeSettleRequest;
 import com.care.domain.reservation.controller.dto.response.DisputeCreateResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDefenseResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDetailResponse;
+import com.care.domain.reservation.controller.dto.response.DisputeSettleResponse;
 import com.care.domain.reservation.entity.Dispute;
 import com.care.domain.reservation.entity.DisputeStatus;
 import com.care.domain.reservation.entity.Reservation;
+import com.care.domain.reservation.entity.Settlement;
+import com.care.domain.reservation.entity.SettlementStatus;
 import com.care.domain.reservation.entity.Scratch;
 import com.care.domain.reservation.repository.DisputeRepository;
 import com.care.domain.reservation.repository.ReservationRepository;
+import com.care.domain.reservation.repository.SettlementRepository;
 import com.care.domain.scan.repository.ScratchRepository;
+import com.care.global.blockchain.DisputeSettlementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +29,8 @@ public class DisputeService {
 	private final DisputeRepository disputeRepository;
 	private final ReservationRepository reservationRepository;
 	private final ScratchRepository scratchRepository;
+	private final SettlementRepository settlementRepository;
+	private final DisputeSettlementService disputeSettlementService;
 
 	@Transactional
 	public DisputeCreateResponse createDispute(String requesterId,
@@ -122,4 +130,32 @@ public class DisputeService {
 			throw new IllegalArgumentException(errorMessage);
 		}
 	}
+	@Transactional
+    public DisputeSettleResponse settleDispute(String requesterId, String disputeId, DisputeSettleRequest request) {
+        Dispute dispute = disputeRepository.findByDisputeId(disputeId)
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 분쟁입니다: " + disputeId));
+		Reservation reservation = dispute.getReservation();
+		validateCompanyAccess(requesterId, reservation);
+
+		SettlementStatus targetStatus = SettlementStatus.from(request.getStatus());
+		if (targetStatus == SettlementStatus.PENDING) {
+			throw new IllegalArgumentException("정산 API에서는 PENDING 상태를 사용할 수 없습니다.");
+		}
+
+		Settlement settlement = Settlement.createPending(reservation);
+		settlementRepository.save(settlement);
+
+		String txHash;
+		try {
+			txHash = disputeSettlementService.recordSettlement(settlement.getSettlementId(), request.getFinalAmount());
+		} catch (Exception e) {
+			throw new RuntimeException("온체인 정산 처리에 실패했습니다.", e);
+		}
+
+		settlement.complete(request.getFinalAmount(), txHash, targetStatus);
+		dispute.resolve();
+		dispute.getTargetScratch().clearDisputed();
+
+		return DisputeSettleResponse.from(settlement);
+    }
 }

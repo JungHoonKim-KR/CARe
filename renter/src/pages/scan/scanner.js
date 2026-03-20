@@ -2,7 +2,8 @@
 //  scanner.js  —  WebSocket 실시간 탐지 + 촬영 버튼 클릭 시 저장
 // ─────────────────────────────────────────────────────────────
 
-const SPRING_BOOT_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+import { scanBefore, scanAfter } from '../../api/scan'  // ← 경로는 맞게 수정
+
 const WHEEL_MATCH_TIME = 2500
 
 export class Scanner {
@@ -16,11 +17,10 @@ export class Scanner {
     this._matchValue   = 0
     this._isMatching   = false
 
-    this.onMatching  = null  // (progress 0~100) => void
-    this.onMatched   = null  // () => void — 매칭 완료, 촬영 버튼 활성화
-    this.onCapture   = null  // (zoneId, dataUrl, boxes) => void
+    this.onMatching  = null
+    this.onMatched   = null
+    this.onCapture   = null
   }
-
   setZone(zone) {
     this.zone        = zone
     this._matchValue = 0
@@ -81,63 +81,54 @@ export class Scanner {
   }
 
   // ── Spring Boot API 호출 → DB 저장
-  async _saveToSpringBoot(base64) {
-    const binary = atob(base64)
-    const arr    = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i)
-    const blob = new Blob([arr], { type: 'image/jpeg' })
+    async _saveToSpringBoot(base64) {
+      const binary = atob(base64)
+      const arr    = new Uint8Array(binary.length)
+      for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i)
+      const blob = new Blob([arr], { type: 'image/jpeg' })
 
-    const formData = new FormData()
-    formData.append('image', blob, 'capture.jpg')
-    formData.append('zone', this.zone.id)
+      const scratches = this.logType === 'AFTER'
+        ? await scanAfter(this.reservationId, this.zone.id, blob)
+        : await scanBefore(this.reservationId, this.zone.id, blob)
 
-    const endpoint = this.logType === 'AFTER'
-      ? `${SPRING_BOOT_URL}/scan/${this.reservationId}/after`
-      : `${SPRING_BOOT_URL}/scan/${this.reservationId}/before`
-
-    const res = await fetch(endpoint, { method: 'POST', body: formData })
-    if (!res.ok) throw new Error(`API 오류 ${res.status}`)
-
-    const scratches = await res.json()
-    return scratches.map(s => ({
-      x:     s.coordX,
-      y:     s.coordY,
-      w:     80,
-      h:     60,
-      label: '흠집',
-      score: 1.0,
-      cropS3Url:     s.cropS3Url,
-      originalS3Url: s.originalS3Url,
-    }))
-  }
-
+      return scratches.map(s => ({
+        x:     s.coordX,
+        y:     s.coordY,
+        w:     80,
+        h:     60,
+        label: '흠집',
+        score: 1.0,
+        cropS3Url:     s.cropS3Url,
+        originalS3Url: s.originalS3Url,
+      }))
+    }
   stopMatching() {
-    this._isMatching = false
-    this._clearTimers()
-  }
+      this._isMatching = false
+      this._clearTimers()
+    }
 
-  unlock() {
-    this._isMatching = false
-    this._matchValue = 0
-    this._clearTimers()
-    if (this.onMatching) this.onMatching(0)
-  }
+    unlock() {
+      this._isMatching = false
+      this._matchValue = 0
+      this._clearTimers()
+      if (this.onMatching) this.onMatching(0)
+    }
 
-  _clearTimers() {
-    if (this._matchTimer) {
-      clearInterval(this._matchTimer)
-      this._matchTimer = null
+    _clearTimers() {
+      if (this._matchTimer) {
+        clearInterval(this._matchTimer)
+        this._matchTimer = null
+      }
+    }
+
+    getCapture(zoneId)  { return this.captures[zoneId] }
+    isDone(zoneId)      { return !!this.captures[zoneId] }
+    isAllDone(zones)    { return zones.every(z => this.captures[z.id]) }
+
+    reset() {
+      this._isMatching = false
+      this._matchValue = 0
+      this.captures    = {}
+      this._clearTimers()
     }
   }
-
-  getCapture(zoneId)  { return this.captures[zoneId] }
-  isDone(zoneId)      { return !!this.captures[zoneId] }
-  isAllDone(zones)    { return zones.every(z => this.captures[z.id]) }
-
-  reset() {
-    this._isMatching = false
-    this._matchValue = 0
-    this.captures    = {}
-    this._clearTimers()
-  }
-}

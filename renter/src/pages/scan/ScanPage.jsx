@@ -6,8 +6,10 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useLocation }       from 'react-router-dom'
 import { Scanner }                      from './scanner.js'
 import { drawBoxes, clearOverlay, drawARBoxes } from './overlay.js'
-import { ZONES, MOCK_HISTORY, MOCK_RESULTS } from './zones.js'
+import { ZONES, MOCK_RESULTS } from './zones.js'
 import styles                           from './ScanPage.module.css'
+import { getScanResult }                from '../../api/scan'
+
 
 export default function ScanPage() {
   const { reservationId } = useParams()
@@ -28,24 +30,27 @@ export default function ScanPage() {
   const [matchStatus,  setMatchStatus]  = useState('detecting')
   const [matchValue,   setMatchValue]   = useState(0)
   const [showToast,    setShowToast]    = useState(false)
-  const [canCapture,   setCanCapture]   = useState(false)  // 촬영 버튼 활성화 여부
-  const [isCapturing,  setIsCapturing]  = useState(false)  // 촬영 중 로딩
+  const [canCapture,   setCanCapture]   = useState(false)
+  const [isCapturing,  setIsCapturing]  = useState(false)
+  const [allScratches, setAllScratches] = useState([])  // ← 전체 흠집 데이터
 
-  const [history, setHistory] = useState([])
-  const SPRING_BOOT_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
-  useEffect(() => {
-    if (!currentZone) return
-    fetch(`${SPRING_BOOT_URL}/scan/${reservationId}?logType=BEFORE&zone=${currentZone.id}`)
-      .then(res => res.json())
-      .then(data => setHistory(data))
-      .catch(() => setHistory([]))
-  }, [zoneIndex])
+  const currentZone = ZONES[zoneIndex]
 
-  const currentZone    = ZONES[zoneIndex]
+  // ── 구역별 흠집 필터링
+  const history = allScratches.filter(s => s.carPart === currentZone?.id)
+
   const matchStatusRef = useRef(matchStatus)
   useEffect(() => {
     matchStatusRef.current = matchStatus
   }, [matchStatus])
+
+  // ── 마운트 시 1번만 전체 흠집 조회
+  useEffect(() => {
+    if (!reservationId) return
+    getScanResult(reservationId, 'BEFORE')
+      .then(data => setAllScratches(Array.isArray(data) ? data : []))
+      .catch(() => setAllScratches([]))
+  }, [])
 
   // ── 폰트 로드
   useEffect(() => {
@@ -74,28 +79,24 @@ export default function ScanPage() {
       }
     }
 
-    // ScanPage.jsx 수정 제안
     const interval = setInterval(() => {
       if (matchStatusRef.current === 'captured') return;
       const video = videoRef.current;
       const ws = wsRef.current;
 
-      // 연결이 확실히 OPEN 상태일 때만 전송
       if (!video || !ws || ws.readyState !== WebSocket.OPEN) return;
 
       const tempCanvas = document.createElement('canvas');
-      // 모바일 부하를 줄이기 위해 해상도를 조금 낮춰서 보냅니다 (예: 640x360)
       tempCanvas.width = 640;
       tempCanvas.height = 360;
       tempCanvas.getContext('2d').drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
 
       tempCanvas.toBlob((blob) => {
-        // 소켓이 전송 가능한 상태(BufferedAmount 확인)인지 체크하면 더 좋습니다.
         if (blob && ws.readyState === WebSocket.OPEN) {
           ws.send(blob);
         }
-      }, 'image/jpeg', 0.3); // 품질을 0.3으로 낮춰 전송량 감소
-    }, 400); // 200ms에서 400ms로 간격 늘리기 (초당 2.5회)
+      }, 'image/jpeg', 0.3);
+    }, 400);
 
     return () => {
       clearInterval(interval)
@@ -147,7 +148,6 @@ export default function ScanPage() {
     const scanner = new Scanner(video, reservationId, logType)
     scannerRef.current = scanner
 
-    // 매칭 진행도
     scanner.onMatching = (progress) => {
       setMatchValue(progress)
       const circumference = 2 * Math.PI * 44
@@ -162,13 +162,11 @@ export default function ScanPage() {
       }
     }
 
-    // 매칭 완료 → 촬영 버튼 활성화
     scanner.onMatched = () => {
       setMatchStatus('matched')
       setCanCapture(true)
     }
 
-    // 촬영 완료 → bbox 표시
     scanner.onCapture = (zoneId, dataUrl, boxes) => {
       setCaptures(prev => ({ ...prev, [zoneId]: { dataUrl, boxes } }))
       setMatchStatus('captured')
@@ -216,19 +214,6 @@ export default function ScanPage() {
     handleNext()
   }
 
-  // 상단 const history = MOCK_HISTORY... 줄 삭제하고
-  {history.length === 0
-    ? <div className={styles.historyEmpty}>이 구역의 이전 흠집 기록이 없어요</div>
-    : history.map((h, i) => (
-        <div key={i} className={styles.historyCard}>
-          <img src={h.cropS3Url} className={styles.historyCardImg} />
-          <div className={styles.historyCardInfo}>
-            <div className={styles.historyCardDate}>{h.createdAt}</div>
-            <div className={styles.historyCardCount}>흠집 감지됨</div>
-          </div>
-        </div>
-      ))
-  }
   const result       = MOCK_RESULTS[currentZone?.id] || { hasDefect: false, count: 0 }
   const totalDefects = Object.values(captures).reduce((a, c) => a + (c.boxes?.length || 0), 0)
 
@@ -416,7 +401,6 @@ export default function ScanPage() {
       <div className={styles.actions}>
         <button className={styles.btnSkip} onClick={handleSkip}>건너뛰기</button>
 
-        {/* 촬영 버튼 — matched 상태일 때만 활성화 */}
         {matchStatus !== 'captured' ? (
           <button
             className={styles.btnCapture}
@@ -446,20 +430,16 @@ export default function ScanPage() {
             ? <div className={styles.historyEmpty}>이 구역의 이전 흠집 기록이 없어요</div>
             : history.map((h, i) => (
                 <div key={i} className={styles.historyCard}>
-                  <div className={styles.historyCardImg}>
-                    <div
-                      className={styles.defectMark}
-                      style={{
-                        left:   `${18 + i * 8}%`,
-                        top:    `${22 + i * 6}%`,
-                        width:  '26%',
-                        height: '28%',
-                      }}
-                    />
-                  </div>
+                  <img
+                    src={h.cropS3Url}
+                    className={styles.historyCardImg}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                   <div className={styles.historyCardInfo}>
-                    <div className={styles.historyCardDate}>{h.date}</div>
-                    <div className={styles.historyCardCount}>흠집 {h.count}개</div>
+                    <div className={styles.historyCardDate}>
+                      {new Date(h.createdAt).toLocaleDateString('ko-KR')}
+                    </div>
+                    <div className={styles.historyCardCount}>흠집 감지됨</div>
                   </div>
                 </div>
               ))

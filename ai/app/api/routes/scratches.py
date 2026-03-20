@@ -55,10 +55,10 @@ async def websocket_detect(websocket: WebSocket):
             else:
                 await websocket.send_json({"boxes": []})
 
-    except WebSocketDisconnect:
-        print("🟡 프론트엔드와 연결이 끊어졌습니다.")
+    except WebSocketDisconnect as e:
+        print(f"🟡 연결 끊김 - code: {e.code}, reason: {e.reason}")
     except Exception as e:
-        print(f"🔴 통신 중 에러: {e}")
+        print(f"🔴 통신 중 에러: {type(e).__name__}: {e}")
 
 @router.post("/detect")
 async def detect_and_save(

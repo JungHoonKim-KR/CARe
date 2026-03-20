@@ -31,6 +31,16 @@ export default function ScanPage() {
   const [canCapture,   setCanCapture]   = useState(false)  // 촬영 버튼 활성화 여부
   const [isCapturing,  setIsCapturing]  = useState(false)  // 촬영 중 로딩
 
+  const [history, setHistory] = useState([])
+  const SPRING_BOOT_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+  useEffect(() => {
+    if (!currentZone) return
+    fetch(`${SPRING_BOOT_URL}/scan/${reservationId}?logType=BEFORE&zone=${currentZone.id}`)
+      .then(res => res.json())
+      .then(data => setHistory(data))
+      .catch(() => setHistory([]))
+  }, [zoneIndex])
+
   const currentZone    = ZONES[zoneIndex]
   const matchStatusRef = useRef(matchStatus)
   useEffect(() => {
@@ -47,7 +57,10 @@ export default function ScanPage() {
 
   // ── WebSocket 실시간 탐지 (bbox 표시용)
   useEffect(() => {
-    wsRef.current = new WebSocket('ws://localhost:8000/api/v1/scratches/ws/detect')
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/api/v1/scratches/ws/detect`;
+
+    wsRef.current = new WebSocket(wsUrl);
     wsRef.current.onopen = () => console.log('🟢 [WS] AR 웹소켓 연결 성공!')
 
     wsRef.current.onmessage = (event) => {
@@ -61,20 +74,28 @@ export default function ScanPage() {
       }
     }
 
+    // ScanPage.jsx 수정 제안
     const interval = setInterval(() => {
-      if (matchStatusRef.current === 'captured') return
-      const video = videoRef.current
-      const ws    = wsRef.current
-      if (!video || !ws || ws.readyState !== WebSocket.OPEN) return
+      if (matchStatusRef.current === 'captured') return;
+      const video = videoRef.current;
+      const ws = wsRef.current;
 
-      const tempCanvas = document.createElement('canvas')
-      tempCanvas.width  = video.videoWidth  || 1280
-      tempCanvas.height = video.videoHeight || 720
-      tempCanvas.getContext('2d').drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height)
+      // 연결이 확실히 OPEN 상태일 때만 전송
+      if (!video || !ws || ws.readyState !== WebSocket.OPEN) return;
+
+      const tempCanvas = document.createElement('canvas');
+      // 모바일 부하를 줄이기 위해 해상도를 조금 낮춰서 보냅니다 (예: 640x360)
+      tempCanvas.width = 640;
+      tempCanvas.height = 360;
+      tempCanvas.getContext('2d').drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
       tempCanvas.toBlob((blob) => {
-        if (blob) ws.send(blob)
-      }, 'image/jpeg', 0.5)
-    }, 200)
+        // 소켓이 전송 가능한 상태(BufferedAmount 확인)인지 체크하면 더 좋습니다.
+        if (blob && ws.readyState === WebSocket.OPEN) {
+          ws.send(blob);
+        }
+      }, 'image/jpeg', 0.3); // 품질을 0.3으로 낮춰 전송량 감소
+    }, 400); // 200ms에서 400ms로 간격 늘리기 (초당 2.5회)
 
     return () => {
       clearInterval(interval)
@@ -195,7 +216,19 @@ export default function ScanPage() {
     handleNext()
   }
 
-  const history      = MOCK_HISTORY[currentZone?.id] || []
+  // 상단 const history = MOCK_HISTORY... 줄 삭제하고
+  {history.length === 0
+    ? <div className={styles.historyEmpty}>이 구역의 이전 흠집 기록이 없어요</div>
+    : history.map((h, i) => (
+        <div key={i} className={styles.historyCard}>
+          <img src={h.cropS3Url} className={styles.historyCardImg} />
+          <div className={styles.historyCardInfo}>
+            <div className={styles.historyCardDate}>{h.createdAt}</div>
+            <div className={styles.historyCardCount}>흠집 감지됨</div>
+          </div>
+        </div>
+      ))
+  }
   const result       = MOCK_RESULTS[currentZone?.id] || { hasDefect: false, count: 0 }
   const totalDefects = Object.values(captures).reduce((a, c) => a + (c.boxes?.length || 0), 0)
 

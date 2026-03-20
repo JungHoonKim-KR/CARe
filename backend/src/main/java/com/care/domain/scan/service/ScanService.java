@@ -129,4 +129,10 @@ public class ScanService {
             throw new RuntimeException("흠집 감지 서버 호출 실패: " + e.getMessage());
         }
     }
+    @Transactional(readOnly = true)
+    public List<ScanResponseDto> getScanResultByZone(String reservationId, String logType, String zone) {
+        List<Scratch> scratches = scratchRepository
+                .findByReservation_ReservationIdAndLogTypeAndCarPart(reservationId, logType, zone);
+        return ScanResponseDto.fromList(scratches);
+    }
 }

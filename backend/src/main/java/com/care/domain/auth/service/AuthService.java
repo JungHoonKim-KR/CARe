@@ -60,6 +60,7 @@ public class AuthService {
                 request.getName(),
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
+                request.getAirportCode(),
                 request.getLanguageCode(),
                 request.getWalletAddress()
         );

@@ -1,11 +1,16 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import AuthService from '../../services/AuthService'
 import './LoginPage.css'
 
 export default function LoginPage() {
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -13,12 +18,28 @@ export default function LoginPage() {
       ...prev,
       [name]: value
     }))
+    if (error) setError('')
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log('Login attempt:', formData)
-    // TODO: API 연동
+    setError('')
+    setLoading(true)
+
+    try {
+      const result = await AuthService.login(formData.email, formData.password)
+
+      if (result.success) {
+        navigate('/dashboard')
+      } else {
+        setError(result.message || '로그인에 실패했습니다.')
+      }
+    } catch (err) {
+      console.error('로그인 예외:', err)
+      setError('서버 연결에 실패했습니다. 네트워크 상태를 확인해주세요.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSocialLogin = (provider) => {
@@ -79,8 +100,14 @@ export default function LoginPage() {
               <a href="#" className="forgot-password">비밀번호를 잊으셨나요?</a>
             </div>
 
-            <button type="submit" className="login-button">
-              LOGIN
+            {error && (
+              <div className="error-message">
+                {error}
+              </div>
+            )}
+
+            <button type="submit" className="login-button" disabled={loading}>
+              {loading ? '로그인 중...' : 'LOGIN'}
             </button>
           </form>
 

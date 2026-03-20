@@ -29,7 +29,7 @@ export default function PaymentPage() {
     setLoading(true)
     setError('')
     try {
-      const result = await createReservation(carId, insuranceId, total)
+      const result = await createReservation(carId, insuranceId, total, searchInfo.pickupDate, searchInfo.returnDate)
       navigate('/booking-complete', {
         state: {
           car,

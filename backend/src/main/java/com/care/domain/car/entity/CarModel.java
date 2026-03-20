@@ -23,12 +23,17 @@ public class CarModel extends BaseEntity {
     @Column(name = "fuel_type", length = 20, nullable = false)
     private String fuelType;
 
-    public static CarModel create(String modelId, String brand, String modelName, String fuelType) {
+    @Enumerated(EnumType.STRING)
+    @Column(name = "car_size", length = 10, nullable = false)
+    private CarSize carSize;
+
+    public static CarModel create(String modelId, String brand, String modelName, String fuelType, CarSize carSize) {
         CarModel carModel = new CarModel();
         carModel.modelId = modelId;
         carModel.brand = brand;
         carModel.modelName = modelName;
         carModel.fuelType = fuelType;
+        carModel.carSize = carSize;
         return carModel;
     }
 }

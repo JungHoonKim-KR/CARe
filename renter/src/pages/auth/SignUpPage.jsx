@@ -27,6 +27,7 @@ export default function SignUpPage() {
     }
     setLoading(true)
     try {
+
       // 1. Privy 서버에서 지갑 자동 생성 (사용자는 블록체인 몰라도 됨)
       const { data } = await axios.post(`${PRIVY_SERVER_URL}/privy/wallet`, {
         email: form.email,
@@ -41,6 +42,14 @@ export default function SignUpPage() {
         walletAddress,
         privyWalletId: walletId,
       })
+
+      const data = await registerRenter({
+        email: form.email,
+        name: form.name,
+        password: form.password,
+        walletAddress: wallet.address,
+      })
+      console.log('[SignUp] 응답:', data)
 
       navigate('/login')
     } catch (err) {

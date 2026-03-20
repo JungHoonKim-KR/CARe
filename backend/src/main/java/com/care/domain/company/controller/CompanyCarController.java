@@ -1,7 +1,8 @@
-package com.care.domain.car.controller;
+package com.care.domain.company.controller;
 
 import com.care.domain.car.controller.dto.request.CarRegisterRequest;
 import com.care.domain.car.controller.dto.response.CarImageResponse;
+import com.care.domain.car.controller.dto.response.CarListResponse;
 import com.care.domain.car.controller.dto.response.CarRegisterResponse;
 import com.care.domain.car.service.CarService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,15 @@ import java.util.List;
 public class CompanyCarController {
 
     private final CarService carService;
+
+    /**
+     * GET /companies/{companyId}/cars
+     * 회사 차량 목록 조회
+     */
+    @GetMapping
+    public ResponseEntity<List<CarListResponse>> getCarList(@PathVariable String companyId) {
+        return ResponseEntity.ok(carService.getCarList(companyId));
+    }
 
     /**
      * POST /companies/{companyId}/cars

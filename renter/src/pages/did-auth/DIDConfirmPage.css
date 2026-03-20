@@ -137,3 +137,16 @@
   background: #e09420;
   transform: scale(0.99);
 }
+
+.did-confirm-error {
+  color: #e53935;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  margin: 0 20px 8px;
+}
+
+.did-confirm-primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

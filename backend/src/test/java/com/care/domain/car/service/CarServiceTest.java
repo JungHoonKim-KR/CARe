@@ -4,6 +4,7 @@ import com.care.domain.car.controller.dto.request.CarRegisterRequest;
 import com.care.domain.car.controller.dto.response.CarRegisterResponse;
 import com.care.domain.car.entity.CarImage.Side;
 import com.care.domain.car.entity.CarModel;
+import com.care.domain.car.entity.CarSize;
 import com.care.domain.car.entity.OwnedCar;
 import com.care.domain.car.exception.CarErrorCode;
 import com.care.domain.car.repository.CarImageRepository;
@@ -55,7 +56,7 @@ class CarServiceTest {
         Company company = Company.of(COMPANY_ID, "테스트렌터카", "test@company.com", "hashedpw", "ko", null);
         companyRepository.save(company);
 
-        CarModel carModel = CarModel.create(MODEL_ID, "현대", "아이오닉5", "전기");
+        CarModel carModel = CarModel.create(MODEL_ID, "현대", "아이오닉5", "전기", CarSize.MEDIUM);
         carModelRepository.save(carModel);
 
         given(s3Service.uploadToKey(any(), any())).willReturn("https://test.cloudfront.net/아이오닉5/car-id/FRONT.jpg");

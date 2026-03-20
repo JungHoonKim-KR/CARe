@@ -9,7 +9,7 @@
 .login-image-section {
   flex: 1;
   background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-              url('https://images.unsplash.com/photo-1590674899484-d5640e854abe?q=80&w=2000');
+              url('/company/main.jpg');
   background-size: cover;
   background-position: center;
   position: relative;

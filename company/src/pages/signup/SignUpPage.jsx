@@ -1,7 +1,10 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import AuthService from '../../services/AuthService'
 import './SignUpPage.css'
 
 export default function SignUpPage() {
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     businessNumber: '',
     companyName: '',
@@ -9,6 +12,8 @@ export default function SignUpPage() {
     password: '',
     confirmPassword: ''
   })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -16,18 +21,46 @@ export default function SignUpPage() {
       ...prev,
       [name]: value
     }))
+    // Clear error when user types
+    if (error) setError('')
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
 
+    // Validate password match
     if (formData.password !== formData.confirmPassword) {
-      alert('비밀번호가 일치하지 않습니다.')
+      setError('비밀번호가 일치하지 않습니다.')
       return
     }
 
-    console.log('Sign up attempt:', formData)
-    // TODO: API 연동
+    // Validate password length
+    if (formData.password.length < 8) {
+      setError('비밀번호는 8자 이상이어야 합니다.')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const result = await AuthService.register({
+        companyName: formData.companyName,
+        email: formData.email,
+        password: formData.password
+      })
+
+      if (result.success) {
+        alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.')
+        navigate('/login')
+      } else {
+        setError(result.message)
+      }
+    } catch (err) {
+      setError('회원가입 중 오류가 발생했습니다. 다시 시도해주세요.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSocialSignUp = (provider) => {
@@ -117,7 +150,6 @@ export default function SignUpPage() {
             <div className="form-group">
               <label htmlFor="confirmPassword">Password 확인</label>
               <div className="input-wrapper">
-                <span className="input-icon"></span>
                 <input
                   type="password"
                   id="confirmPassword"
@@ -130,8 +162,14 @@ export default function SignUpPage() {
               </div>
             </div>
 
-            <button type="submit" className="signup-button">
-              SIGN UP
+            {error && (
+              <div className="error-message">
+                {error}
+              </div>
+            )}
+
+            <button type="submit" className="signup-button" disabled={loading}>
+              {loading ? '회원가입 중...' : 'SIGN UP'}
             </button>
           </form>
 

@@ -2,7 +2,7 @@ import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import './CarDetailPage.css'
 
-export default function ReservationDetailPage() {
+export default function CarDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams()
 

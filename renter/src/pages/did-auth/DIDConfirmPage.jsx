@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import passportIcon from '../../assets/passport_icon.png'
+import { renterLicense } from '../../api/auth'
 import './DIDConfirmPage.css'
 
 export default function DIDConfirmPage() {
@@ -10,14 +11,60 @@ export default function DIDConfirmPage() {
   const docType = state?.docType || 'passport'
 
   const isPassport = docType === 'passport'
-  const [form, setForm] = useState({ name: '', docNo: '', issueDate: '' })
+
+  const [form, setForm] = useState({
+    name: '',
+    docNo: '',
+    birthDate: '',
+    issueDate: '',
+    expiryDate: '',
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const setField = (field) => (e) => setForm((p) => ({ ...p, [field]: e.target.value }))
 
-  const handleSubmit = () => {
-    // TODO: OCR AI integration, send to server
-    localStorage.setItem(`${docType}_verified`, 'true')
-    navigate('/did-auth')
+  const handleSubmit = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      const payload = isPassport
+        ? {
+            docType: 'PASSPORT',
+            passportName: form.name,
+            passportNo: form.docNo,
+            birthDate: form.birthDate.replace(/-/g, ''),
+            issueDate: form.issueDate.replace(/-/g, ''),
+            expiryDate: form.expiryDate.replace(/-/g, ''),
+          }
+        : {
+            docType: 'INT_LICENSE',
+            name: form.name,
+            licenseNo: form.docNo,
+            birthDate: form.birthDate.replace(/-/g, ''),
+            issueDate: form.issueDate.replace(/-/g, ''),
+          }
+
+      const res = await renterLicense(payload)
+
+      if (res.verified) {
+        localStorage.setItem(`${docType}_verified`, 'true')
+        navigate('/did-card', {
+          state: {
+            name: form.name,
+            docType: res.docType,
+            docId: res.docId,
+            expiryDate: isPassport ? form.expiryDate.replace(/-/g, '') : '',
+          },
+        })
+      } else {
+        setError('인증에 실패했습니다. 입력 정보를 다시 확인해 주세요.')
+      }
+    } catch {
+      setError('서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -30,7 +77,6 @@ export default function DIDConfirmPage() {
         </h2>
       </div>
 
-      {/* Captured image preview */}
       <div className="did-confirm-preview-wrap">
         {image ? (
           <img src={image} alt="촬영된 서류" className="did-confirm-preview-img" />
@@ -45,7 +91,6 @@ export default function DIDConfirmPage() {
         다시 촬영하기
       </button>
 
-      {/* Input form */}
       <div className="did-confirm-form">
         <div className="did-input-group">
           <label className="did-input-label">이름 (영문)</label>
@@ -68,6 +113,16 @@ export default function DIDConfirmPage() {
           />
         </div>
         <div className="did-input-group">
+          <label className="did-input-label">생년월일</label>
+          <input
+            type="text"
+            className="did-input"
+            placeholder="YYYY-MM-DD"
+            value={form.birthDate}
+            onChange={setField('birthDate')}
+          />
+        </div>
+        <div className="did-input-group">
           <label className="did-input-label">발급일자</label>
           <input
             type="text"
@@ -77,11 +132,29 @@ export default function DIDConfirmPage() {
             onChange={setField('issueDate')}
           />
         </div>
+        {isPassport && (
+          <div className="did-input-group">
+            <label className="did-input-label">만료일자</label>
+            <input
+              type="text"
+              className="did-input"
+              placeholder="YYYY-MM-DD"
+              value={form.expiryDate}
+              onChange={setField('expiryDate')}
+            />
+          </div>
+        )}
       </div>
 
+      {error && <p className="did-confirm-error">{error}</p>}
+
       <div className="did-confirm-footer">
-        <button className="did-confirm-primary-btn" onClick={handleSubmit}>
-          {isPassport ? '여권정보 등록하기' : '면허증 정보 등록하기'}
+        <button
+          className="did-confirm-primary-btn"
+          onClick={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? '확인 중...' : isPassport ? '여권정보 등록하기' : '면허증 정보 등록하기'}
         </button>
       </div>
     </div>

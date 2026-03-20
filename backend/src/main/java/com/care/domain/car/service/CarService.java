@@ -1,10 +1,17 @@
 package com.care.domain.car.service;
 
 import com.care.domain.car.controller.dto.request.CarRegisterRequest;
+import com.care.domain.car.controller.dto.request.CarReviewRequest;
+import com.care.domain.car.controller.dto.response.CarDetailResponse;
 import com.care.domain.car.controller.dto.response.CarImageResponse;
+import com.care.domain.car.controller.dto.response.CarListResponse;
 import com.care.domain.car.controller.dto.response.CarRegisterResponse;
+import com.care.domain.car.controller.dto.response.CarReviewResponse;
+import com.care.domain.car.controller.dto.response.CarSummaryResponse;
+import com.care.domain.car.controller.dto.response.ReturnReportResponse;
 import com.care.domain.car.entity.CarImage;
 import com.care.domain.car.entity.CarImage.Side;
+import com.care.domain.car.entity.CarSize;
 import com.care.domain.car.entity.CarModel;
 import com.care.domain.car.entity.OwnedCar;
 import com.care.domain.car.event.CarRegisteredEvent;
@@ -15,6 +22,12 @@ import com.care.domain.car.repository.OwnedCarRepository;
 import com.care.domain.company.entity.Company;
 import com.care.domain.company.exception.CompanyErrorCode;
 import com.care.domain.company.repository.CompanyRepository;
+import com.care.domain.reservation.entity.Reservation;
+import com.care.domain.reservation.entity.Review;
+import com.care.domain.reservation.exception.ReservationErrorCode;
+import com.care.domain.reservation.repository.ReservationRepository;
+import com.care.domain.reservation.repository.ReviewRepository;
+import com.care.domain.scan.repository.ScratchRepository;
 import com.care.global.exception.BusinessException;
 import com.care.global.ipfs.PinataService;
 import com.care.global.s3.S3Service;
@@ -39,6 +52,9 @@ public class CarService {
     private final CarImageRepository carImageRepository;
     private final CompanyRepository companyRepository;
     private final CarModelRepository carModelRepository;
+    private final ReservationRepository reservationRepository;
+    private final ReviewRepository reviewRepository;
+    private final ScratchRepository scratchRepository;
     private final S3Service s3Service;
     private final PinataService pinataService;
     private final ApplicationEventPublisher eventPublisher;
@@ -72,7 +88,7 @@ public class CarService {
         ownedCarRepository.save(car);
 
         // 2. side별 S3 + IPFS 업로드 → CarImage 저장
-        Map<Side, String> s3Urls  = new LinkedHashMap<>();
+        Map<Side, String> s3Urls = new LinkedHashMap<>();
         Map<String, String> ipfsCids = new LinkedHashMap<>();
 
         for (Map.Entry<Side, MultipartFile> entry : sideImages.entrySet()) {
@@ -106,6 +122,109 @@ public class CarService {
         ));
 
         return CarRegisterResponse.of(car, s3Urls);
+    }
+
+    /**
+     * 렌터 차량 목록 조회 (브랜드, 공항 필터)
+     */
+    @Transactional(readOnly = true)
+    public List<CarSummaryResponse> getCarSummaryList(String brand, String airportCode, CarSize carSize) {
+        return ownedCarRepository.findActiveCarsByFilter(brand, airportCode, carSize).stream()
+                .map(car -> {
+                    String frontImageUrl = carImageRepository
+                            .findByCarCarIdAndSide(car.getCarId(), Side.FRONT)
+                            .map(CarImage::getS3Url)
+                            .orElse(null);
+                    return CarSummaryResponse.of(car, frontImageUrl);
+                })
+                .toList();
+    }
+
+    /**
+     * 렌터 소유 차량 목록 조회 (Reservation 기반)
+     */
+    @Transactional(readOnly = true)
+    public List<CarSummaryResponse> getRenterOwnedCarList(String renterId) {
+        return reservationRepository.findByRenterUserId(renterId).stream()
+                .map(reservation -> {
+                    OwnedCar car = reservation.getOwnedCar();
+                    String frontImageUrl = carImageRepository
+                            .findByCarCarIdAndSide(car.getCarId(), Side.FRONT)
+                            .map(CarImage::getS3Url)
+                            .orElse(null);
+                    return CarSummaryResponse.of(car, frontImageUrl);
+                })
+                .toList();
+    }
+
+    /**
+     * 회사 차량 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public List<CarListResponse> getCarList(String companyId) {
+        return ownedCarRepository.findByCompanyCompanyId(companyId).stream()
+                .map(car -> {
+                    String frontImageUrl = carImageRepository
+                            .findByCarCarIdAndSide(car.getCarId(), Side.FRONT)
+                            .map(CarImage::getS3Url)
+                            .orElse(null);
+                    return CarListResponse.of(car, frontImageUrl);
+                })
+                .toList();
+    }
+
+    /**
+     * 차량 상세 조회
+     */
+    @Transactional(readOnly = true)
+    public CarDetailResponse getCarDetail(String carId) {
+        OwnedCar car = ownedCarRepository.findById(carId)
+                .orElseThrow(() -> new BusinessException(CarErrorCode.CAR_NOT_FOUND));
+
+        List<CarImageResponse> images = carImageRepository.findByCarCarId(carId).stream()
+                .map(CarImageResponse::from)
+                .toList();
+
+        return CarDetailResponse.of(car, images);
+    }
+
+    /**
+     * 차량 리뷰 작성
+     */
+    @Transactional
+    public CarReviewResponse createReview(String carId, CarReviewRequest request) {
+        OwnedCar car = ownedCarRepository.findById(carId)
+                .orElseThrow(() -> new BusinessException(CarErrorCode.CAR_NOT_FOUND));
+        Reservation reservation = reservationRepository.findByReservationId(request.reservationId())
+                .orElseThrow(() -> new BusinessException(ReservationErrorCode.RESERVATION_NOT_FOUND));
+        Review review = Review.create(UUID.randomUUID().toString(), reservation, car, request.rating(), request.content());
+        reviewRepository.save(review);
+        return CarReviewResponse.from(review);
+    }
+
+    /**
+     * 차량 리뷰 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public List<CarReviewResponse> getCarReviews(String carId) {
+        ownedCarRepository.findById(carId)
+                .orElseThrow(() -> new BusinessException(CarErrorCode.CAR_NOT_FOUND));
+        return reviewRepository.findByOwnedCarCarId(carId).stream()
+                .map(CarReviewResponse::from)
+                .toList();
+    }
+
+    /**
+     * 차량 반납 리포트 조회
+     */
+    @Transactional(readOnly = true)
+    public ReturnReportResponse getReturnReport(String carId, String reservationId) {
+        ownedCarRepository.findById(carId)
+                .orElseThrow(() -> new BusinessException(CarErrorCode.CAR_NOT_FOUND));
+        var scratches = reservationId != null
+                ? scratchRepository.findByOwnedCar_CarIdAndReservation_ReservationId(carId, reservationId)
+                : scratchRepository.findByOwnedCar_CarId(carId);
+        return ReturnReportResponse.of(reservationId, carId, scratches);
     }
 
     /**

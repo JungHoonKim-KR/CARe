@@ -29,6 +29,9 @@ public class Company extends BaseEntity {
     @Column(name = "wallet_address", length = 100, unique = true)
     private String walletAddress;
 
+    @Column(name = "privy_wallet_id", length = 100)
+    private String privyWalletId;
+
     @Column(name = "did_uri", length = 100)
     private String didUri;
 
@@ -41,8 +44,8 @@ public class Company extends BaseEntity {
     @Column(name = "city", length = 50)
     private String city;
 
-    @Column(name = "airport_id", length = 50)
-    private String airportId;
+    @Column(name = "airport_code", length = 10, nullable = false)
+    private String airportCode;
 
     @Column(name = "detail_address", length = 255)
     private String detailAddress;
@@ -73,5 +76,13 @@ public class Company extends BaseEntity {
         this.walletAddress = walletAddress;
     }
 
-    public void updateDid(String didUri) { this.didUri = didUri; }
+    public void updateDid(String didUri) {
+        this.didUri = didUri;
+        this.didVerified = true;
+    }
+
+    public void updatePrivyWallet(String walletAddress, String privyWalletId) {
+        this.walletAddress = walletAddress;
+        this.privyWalletId = privyWalletId;
+    }
 }

@@ -7,6 +7,8 @@ import com.care.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "reservation")
 @Getter
@@ -45,7 +47,36 @@ public class Reservation extends BaseEntity {
     @Column(name = "after_scan_tx_hash", length = 100)
     private String afterScanTxHash;
 
+    @Column(name = "payment_tx_hash", length = 100)
+    private String paymentTxHash;
+
+    @Column(name = "total_price")
+    private int totalPrice;
+
     public enum DepositStatus {
         SAFE, LOCKED, DEDUCTED
+    }
+
+    public static Reservation create(Renter renter, OwnedCar ownedCar, Insurance insurance,
+                                     int totalPrice, String paymentTxHash) {
+        Reservation r = new Reservation();
+        r.reservationId = UUID.randomUUID().toString();
+        r.renter = renter;
+        r.ownedCar = ownedCar;
+        r.insurance = insurance;
+        r.status = "RESERVED";
+        r.smartContractAddress = "";
+        r.depositStatus = DepositStatus.SAFE;
+        r.totalPrice = totalPrice;
+        r.paymentTxHash = paymentTxHash;
+        return r;
+    }
+
+    public void updateStatusToInUse() {
+        this.status = "IN_USE";
+    }
+
+    public void updateStatusToAfterScan() {
+        this.status = "AFTER_SCAN";
     }
 }

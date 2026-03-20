@@ -14,9 +14,10 @@ export default function ReservationTable({ reservations }) {
     return statusMap[status] || 'badge-gray'
   }
 
-  // const handleItemClick = (reservationId) => {
-  //   navigate(`/reservations/${reservationId}`)
-  // }
+  const handleItemClick = (reservationId) => {
+    navigate(`/reservations/${reservationId}`)
+  }
+
   return (
     <div className="reservation-table-container">
       <table className="reservation-table">
@@ -32,8 +33,10 @@ export default function ReservationTable({ reservations }) {
         </thead>
         <tbody>
           {reservations.map((reservation) => (
-            <tr key={reservation.id}
-              // onClick={() => handleItemClick(reservation.id)}
+            <tr
+              key={reservation.id}
+              onClick={() => handleItemClick(reservation.id)}
+              className="clickable-row"
             >
               <td>
                 <div className="cell-with-icon">

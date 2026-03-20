@@ -66,11 +66,11 @@ public class ReservationService {
             throw new BusinessException(ReservationErrorCode.PAYMENT_FAILED);
         }
 
-        Reservation reservation = Reservation.create(renter, car, insurance, request.totalPrice(), txHash);
+        Reservation reservation = Reservation.create(renter, car, insurance, request.pickupDate(), request.returnDate(),request.totalPrice(),  txHash);
         reservationRepository.save(reservation);
 
-        log.info("[Reservation] 예약 생성 | id={}, renter={}, car={}, price={}, txHash={}",
-                reservation.getReservationId(), userId, request.carId(), request.totalPrice(), txHash);
+        log.info("[Reservation] 예약 생성 | id={}, renter={}, car={}, pickup={}, return={}, price={}, txHash={}",
+                reservation.getReservationId(), userId, request.carId(), request.pickupDate(), request.returnDate(), request.totalPrice(), txHash);
 
         return ReservationCreateResponse.from(reservation);
     }

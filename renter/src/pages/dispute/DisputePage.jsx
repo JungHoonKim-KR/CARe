@@ -1,17 +1,51 @@
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import careLogo from '../../assets/care_logo.png'
+import { getDisputeDetail } from '../../api/reservation'
 import './DisputePage.css'
+
+const STATUS_LABELS = {
+  PENDING: '검토 중',
+  DEFENDED: '이의 신청됨',
+  RESOLVED: '해결됨',
+  REJECTED: '기각됨',
+}
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return d.toLocaleString('ko-KR', {
+    year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
 
 export default function DisputePage() {
   const navigate = useNavigate()
   const { state } = useLocation()
   const reservation = state?.reservation
-  const disputeDate = state?.disputeDate
-    || (reservation?.reservationId
-      ? localStorage.getItem(`disputeDate_${reservation.reservationId}`)
-      : null)
-    || reservation?.endDate
-    || '2026-03-17'
+  const disputeId = state?.disputeId
+
+  const [dispute, setDispute] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const reservationId = reservation?.reservationId
+    if (!reservationId || !disputeId) return
+
+    setLoading(true)
+    getDisputeDetail(reservationId, disputeId)
+      .then((data) => {
+        setDispute(data)
+        setError(null)
+      })
+      .catch((err) => {
+        console.error('분쟁 상세 조회 실패:', err)
+        setError('분쟁 정보를 불러오지 못했어요.')
+      })
+      .finally(() => setLoading(false))
+  }, [reservation?.reservationId, disputeId])
 
   const handleSettle = () => {
     if (reservation?.reservationId) {
@@ -22,7 +56,7 @@ export default function DisputePage() {
   }
 
   const handleDispute = () => {
-    navigate('/dispute-history', { state: { reservation } })
+    navigate('/dispute-history', { state: { reservation, disputeId } })
   }
 
   return (
@@ -55,6 +89,55 @@ export default function DisputePage() {
             <p className="dp-banner-sub">이전 흠집 로그 확인하기 →</p>
           </div>
         </button>
+
+        {/* 로딩 / 에러 */}
+        {loading && (
+          <div className="dp-desc-box">
+            <p className="dp-desc-text">분쟁 정보를 불러오는 중...</p>
+          </div>
+        )}
+        {error && (
+          <div className="dp-desc-box">
+            <p className="dp-desc-text" style={{ color: '#FF4D4F' }}>{error}</p>
+          </div>
+        )}
+
+        {/* 분쟁 상세 정보 (API 데이터) */}
+        {dispute && !loading && (
+          <div className="dp-section">
+            <p className="dp-section-title">분쟁 상세 정보</p>
+            <div className="dp-info-list">
+              <div className="dp-info-row">
+                <span className="dp-info-label">상태</span>
+                <span className="dp-info-value">{STATUS_LABELS[dispute.status] ?? dispute.status}</span>
+              </div>
+              {dispute.reason && (
+                <div className="dp-info-row">
+                  <span className="dp-info-label">사유</span>
+                  <span className="dp-info-value">{dispute.reason}</span>
+                </div>
+              )}
+              {dispute.claimAmount != null && (
+                <div className="dp-info-row">
+                  <span className="dp-info-label">청구 금액</span>
+                  <span className="dp-info-value">{dispute.claimAmount.toLocaleString('ko-KR')}원</span>
+                </div>
+              )}
+              {dispute.createdAt && (
+                <div className="dp-info-row">
+                  <span className="dp-info-label">신청일</span>
+                  <span className="dp-info-value">{formatDateTime(dispute.createdAt)}</span>
+                </div>
+              )}
+              {dispute.updatedAt && (
+                <div className="dp-info-row">
+                  <span className="dp-info-label">최종 수정</span>
+                  <span className="dp-info-value">{formatDateTime(dispute.updatedAt)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* AI 유사도 판별 결과 */}
         <div className="dp-section">

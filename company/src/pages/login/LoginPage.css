@@ -31,9 +31,10 @@
   flex: 1;
   background: white;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 40px;
+  padding: 40px 40px 60px;
+  overflow-y: auto;
 }
 
 .login-form-wrapper {
@@ -47,7 +48,7 @@
   color: #1a1a1a;
   margin-bottom: 12px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
 }
 
@@ -82,7 +83,7 @@
 .input-wrapper {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .input-icon {
@@ -156,7 +157,7 @@
 /* Divider */
 .divider {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   margin: 32px 0;
   color: #94a3b8;
   font-size: 13px;
@@ -190,7 +191,7 @@
   border-radius: 12px;
   background: white;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;

@@ -2,12 +2,15 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthService from '../../services/AuthService'
 import './SignUpPage.css'
+import mainImage from '../../assets/main.jpg'
 
 export default function SignUpPage() {
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
     businessNumber: '',
     companyName: '',
+    airportcode: '',
+    languageCode: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -46,6 +49,8 @@ export default function SignUpPage() {
     try {
       const result = await AuthService.register({
         companyName: formData.companyName,
+        airportCode: formData.airportCode,
+        languageCode: formData.languageCode,
         email: formData.email,
         password: formData.password
       })
@@ -54,10 +59,11 @@ export default function SignUpPage() {
         alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.')
         navigate('/login')
       } else {
-        setError(result.message)
+        setError(result.message || '회원가입에 실패했습니다. 잠시 후 다시 시도해주세요.')
       }
     } catch (err) {
-      setError('회원가입 중 오류가 발생했습니다. 다시 시도해주세요.')
+      console.error('회원가입 예외:', err)
+      setError('서버 연결에 실패했습니다. 네트워크 상태를 확인해주세요.')
     } finally {
       setLoading(false)
     }
@@ -71,7 +77,16 @@ export default function SignUpPage() {
   return (
     <div className="signup-container">
       {/* Left Side - Image */}
-      <div className="signup-image-section">
+      {/* <div className="signup-image-section"> */}
+      <div
+        className="signup-image-section"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${mainImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
         <div className="signup-logo">CARe</div>
       </div>
 
@@ -97,6 +112,36 @@ export default function SignUpPage() {
                   value={formData.businessNumber}
                   onChange={handleChange}
                   placeholder="123-45-67890"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="airportCode">공항 코드</label>
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  id="airportCode"
+                  name="airportCode"
+                  value={formData.airportCode}
+                  onChange={handleChange}
+                  placeholder="ICN (인천국제공항)"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="languageCode">언어 코드</label>
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  id="languageCode"
+                  name="languageCode"
+                  value={formData.languageCode}
+                  onChange={handleChange}
+                  placeholder="KR (한국어)"
                   required
                 />
               </div>

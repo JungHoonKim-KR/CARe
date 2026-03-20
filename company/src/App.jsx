@@ -24,7 +24,7 @@ export default function App() {
           <Sidebar />
           <main className="main-content">
             <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={<Navigate to="/register" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/cars" element={<CarManagementPage />} />
               <Route path="/cars/:id" element={<CarDetailPage />} />

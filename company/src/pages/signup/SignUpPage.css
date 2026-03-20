@@ -31,9 +31,9 @@
   flex: 1;
   background: white;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 40px;
+  padding: 40px 40px 60px;
   overflow-y: auto;
 }
 

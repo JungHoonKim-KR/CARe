@@ -111,6 +111,43 @@
   letter-spacing: -0.3px;
 }
 
+/* ─── 분쟁 정보 목록 ─────────────────────────────────── */
+.dp-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dp-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dp-info-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.dp-info-label {
+  font-size: 13px;
+  color: #999;
+  font-weight: 500;
+  flex-shrink: 0;
+  min-width: 60px;
+}
+
+.dp-info-value {
+  font-size: 14px;
+  color: #222;
+  font-weight: 600;
+  text-align: right;
+  word-break: break-all;
+}
+
 /* ─── Before/After 비교 ─────────────────────────────────── */
 .dp-compare-row {
   display: flex;

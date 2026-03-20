@@ -198,7 +198,7 @@ export default function HomePage() {
           </button>
           <span
             className={`did-badge ${didVerified ? 'did-badge--verified' : 'did-badge--pending'}`}
-            onClick={() => navigate(didVerified ? '/wallet' : '/did-auth')}
+            onClick={() => navigate(didVerified ? '/did-card' : '/did-auth', didVerified ? { state: { name: localStorage.getItem('did_name') || '', docId: localStorage.getItem('did_docId') || 'did:care:renter:verified', expiryDate: localStorage.getItem('did_expiry') || '' } } : undefined)}
             style={{ cursor: 'pointer' }}
           >
             {didVerified ? 'DID' : t('home.unverified')}

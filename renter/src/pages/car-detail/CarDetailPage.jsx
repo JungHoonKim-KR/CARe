@@ -88,6 +88,8 @@ export default function CarDetailPage() {
     navigate('/payment', {
       state: {
         car,
+        carId: car.id || car.carId,
+        insuranceId: selectedPlan.id,
         searchInfo,
         insurance: selectedPlan,
         rentalPrice: basePrice,

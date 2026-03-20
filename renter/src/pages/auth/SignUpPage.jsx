@@ -1,18 +1,16 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Wallet } from 'ethers'
+import axios from 'axios'
 import careLogo from '../../assets/care_logo.png'
 import { registerRenter } from '../../api/auth'
 import './AuthForm.css'
 
+const PRIVY_SERVER_URL = import.meta.env.VITE_PRIVY_SERVER_URL || 'http://localhost:3001'
+
 export default function SignUpPage() {
   const navigate = useNavigate()
 
-  const [form, setForm] = useState({
-    email: '',
-    name: '',
-    password: '',
-  })
+  const [form, setForm] = useState({ email: '', name: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -29,12 +27,21 @@ export default function SignUpPage() {
     }
     setLoading(true)
     try {
-      console.log('[SignUp] 요청:', { email: form.email, name: form.name })
-      // 임베디드 지갑 자동 생성
-      const wallet = Wallet.createRandom()
-      localStorage.setItem('embedded_wallet_address', wallet.address)
-      localStorage.setItem('embedded_wallet_key', wallet.privateKey)
-      console.log('[SignUp] 임베디드 지갑 생성:', wallet.address)
+
+      // 1. Privy 서버에서 지갑 자동 생성 (사용자는 블록체인 몰라도 됨)
+      const { data } = await axios.post(`${PRIVY_SERVER_URL}/privy/wallet`, {
+        email: form.email,
+      })
+      const { walletAddress, walletId, privyUserId } = data
+
+      // 2. Spring 백엔드에 회원가입 (지갑 주소 포함)
+      await registerRenter({
+        email: form.email,
+        name: form.name,
+        password: form.password,
+        walletAddress,
+        privyWalletId: walletId,
+      })
 
       const data = await registerRenter({
         email: form.email,
@@ -46,8 +53,8 @@ export default function SignUpPage() {
 
       navigate('/login')
     } catch (err) {
-      console.error('[SignUp] 오류:', err.response?.status, err.response?.data)
-      const msg = err.response?.data?.message || '회원가입에 실패했습니다.'
+      console.error('[SignUp] 오류:', err.response?.data || err.message)
+      const msg = err.response?.data?.message || err.response?.data?.error || '회원가입에 실패했습니다.'
       setError(msg)
     } finally {
       setLoading(false)

@@ -26,6 +26,9 @@ public class Renter extends BaseEntity {
     @Column(name = "wallet_address", length = 100, unique = true)
     private String walletAddress;
 
+    @Column(name = "privy_wallet_id", length = 100)
+    private String privyWalletId;
+
     @Column(name = "did_uri", length = 100)
     private String didUri;
 
@@ -50,5 +53,10 @@ public class Renter extends BaseEntity {
     public void updateDid(String didUri) {
         this.didUri = didUri;
         this.didVerified = true;
+    }
+
+    public void updatePrivyWallet(String walletAddress, String privyWalletId) {
+        this.walletAddress = walletAddress;
+        this.privyWalletId = privyWalletId;
     }
 }

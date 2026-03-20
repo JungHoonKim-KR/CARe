@@ -87,6 +87,7 @@ blockchain:
     car-nft: ${CAR_NFT_ADDRESS:}
     did-registry: ${DID_REGISTRY_ADDRESS:}
     mock-usdc: ${MOCK_USDC_ADDRESS:}
+    dispute-settlement: ${DISPUTE_SETTLEMENT_ADDRESS:}
     rental: ${RENTAL_CONTRACT_ADDRESS:}
 
 ai:

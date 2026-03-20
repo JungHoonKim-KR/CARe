@@ -30,5 +30,7 @@ public class CompanySignUpRequest {
 
     private String languageCode;
 
-    private String walletAddress; // Privy 연동 시 프론트에서 전달, 미연동 시 null
+    private String walletAddress; // 회원가입 시 Privy로 생성한 지갑 주소
+
+    private String privyWalletId; // Privy 지갑 ID (서명 시 사용)
 }

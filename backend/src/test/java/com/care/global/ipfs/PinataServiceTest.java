@@ -16,20 +16,15 @@ class PinataServiceTest {
     private PinataService pinataService;
 
     @Test
-    void IPFS_폴더구조_업로드_테스트() throws Exception {
+    void IPFS_이미지_업로드_테스트() throws Exception {
         InputStream is = getClass().getResourceAsStream("/img.png");
         MockMultipartFile file = new MockMultipartFile("img.png", "img.png", "image/png", is);
 
-        String folder = "test/character/짱구";
-        String cid = pinataService.upload(file, folder);
-        String url = pinataService.toUrl(cid, "img.png");
+        String cid = pinataService.uploadImage(file, "test-img");
 
-        System.out.println("CID  : " + cid);
-        System.out.println("URL  : " + url);
-        // 폴더 구조: ipfs://{cid}/test/character/짱구/img.png
-        System.out.println("FULL : " + pinataService.toUrl(cid, folder + "/img.png"));
+        System.out.println("CID : " + cid);
+        System.out.println("URL : https://gateway.pinata.cloud/ipfs/" + cid);
 
         assertThat(cid).isNotBlank();
-        assertThat(url).startsWith("https://gateway.pinata.cloud/ipfs/");
     }
 }

@@ -85,6 +85,44 @@ public class CareTokenService {
         return result.isEmpty() ? BigInteger.ZERO : (BigInteger) result.get(0).getValue();
     }
 
+    /**
+     * 토큰 송금 — 서버 관리자 대행 방식
+     * renter 잔액에서 차감 후 company에 충전 (faucet 기반 2-step)
+     *
+     * @param fromAddress 출금 지갑 (renter)
+     * @param toAddress   입금 지갑 (company)
+     * @param amount      송금액 (CARE 단위)
+     * @return 입금 트랜잭션 해시
+     */
+    public String transfer(String fromAddress, String toAddress, double amount) throws Exception {
+        // 잔액 확인
+        BigInteger balance = balanceOf(fromAddress);
+        BigInteger required = toCare(amount);
+        if (balance.compareTo(required) < 0) {
+            throw new RuntimeException("잔액 부족: 보유=" + balance + ", 필요=" + required);
+        }
+
+        // burn (출금)
+        Function burnFunction = new Function(
+                "burn",
+                Arrays.asList(new Address(fromAddress), new Uint256(required)),
+                Collections.emptyList()
+        );
+        String burnTxHash = sendFunction(burnFunction);
+        log.info("[CareToken] burn {} CARE from {} txHash: {}", amount, fromAddress, burnTxHash);
+
+        // faucet (입금)
+        Function mintFunction = new Function(
+                "faucet",
+                Arrays.asList(new Address(toAddress), new Uint256(required)),
+                Collections.emptyList()
+        );
+        String mintTxHash = sendFunction(mintFunction);
+        log.info("[CareToken] faucet {} CARE → {} txHash: {}", amount, toAddress, mintTxHash);
+
+        return mintTxHash;
+    }
+
     // ── 내부: Raw Transaction 서명 후 전송 ──────────────────────────────────
     private String sendFunction(Function function) throws Exception {
         String encoded = FunctionEncoder.encode(function);

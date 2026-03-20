@@ -17,6 +17,7 @@ import com.care.domain.reservation.repository.DisputeRepository;
 import com.care.domain.reservation.repository.ReservationRepository;
 import com.care.domain.reservation.repository.SettlementRepository;
 import com.care.domain.scan.repository.ScratchRepository;
+import com.care.global.blockchain.CareTokenService;
 import com.care.global.blockchain.DisputeSettlementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class DisputeService {
 	private final ScratchRepository scratchRepository;
 	private final SettlementRepository settlementRepository;
 	private final DisputeSettlementService disputeSettlementService;
+	private final CareTokenService careTokenService;
 
 	@Transactional
 	public DisputeCreateResponse createDispute(String requesterId,
@@ -145,17 +147,51 @@ public class DisputeService {
 		Settlement settlement = Settlement.createPending(reservation);
 		settlementRepository.save(settlement);
 
-		String txHash;
+		String settlementRecordTxHash;
 		try {
-			txHash = disputeSettlementService.recordSettlement(settlement.getSettlementId(), request.getFinalAmount());
+			settlementRecordTxHash = disputeSettlementService.recordSettlement(
+					settlement.getSettlementId(),
+					request.getFinalAmount()
+			);
 		} catch (Exception e) {
 			throw new RuntimeException("온체인 정산 처리에 실패했습니다.", e);
 		}
 
-		settlement.complete(request.getFinalAmount(), txHash, targetStatus);
+		String usdcTxHash = settlementRecordTxHash;
+		if (request.getFinalAmount() > 0) {
+			try {
+				usdcTxHash = transferUsdcByStatus(reservation, request.getFinalAmount(), targetStatus);
+			} catch (Exception e) {
+				throw new RuntimeException("자동 이체에 실패했습니다.", e);
+			}
+		}
+
+		settlement.complete(request.getFinalAmount(), usdcTxHash, targetStatus);
 		dispute.resolve();
 		dispute.getTargetScratch().clearDisputed();
 
 		return DisputeSettleResponse.from(settlement);
     }
+
+	private String transferUsdcByStatus(Reservation reservation, long finalAmount, SettlementStatus targetStatus) throws Exception {
+		String renterWallet = reservation.getRenter().getWalletAddress();
+		String companyWallet = reservation.getOwnedCar().getCompany().getWalletAddress();
+
+		if (renterWallet == null || renterWallet.isBlank()) {
+			throw new IllegalArgumentException("임차인 지갑 주소가 없습니다.");
+		}
+		if (companyWallet == null || companyWallet.isBlank()) {
+			throw new IllegalArgumentException("임대인 지갑 주소가 없습니다.");
+		}
+
+		double amount = (double) finalAmount;
+		if (targetStatus == SettlementStatus.COMPLETED) {
+			return careTokenService.transfer(renterWallet, companyWallet, amount);
+		}
+		if (targetStatus == SettlementStatus.REFUNDED) {
+			return careTokenService.transfer(companyWallet, renterWallet, amount);
+		}
+
+		throw new IllegalArgumentException("지원하지 않는 정산 상태입니다: " + targetStatus.name());
+	}
 }

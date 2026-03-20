@@ -13,6 +13,8 @@ public record ReservationSummaryResponse(
         String brand,
         String modelName,
         String insuranceName,
+        LocalDateTime pickupDate, // 추가
+        LocalDateTime returnDate,   // 추가
         LocalDateTime createdAt
 ) {
     public static ReservationSummaryResponse from(Reservation r) {
@@ -25,6 +27,8 @@ public record ReservationSummaryResponse(
                 r.getOwnedCar().getCarModel().getBrand(),
                 r.getOwnedCar().getCarModel().getModelName(),
                 r.getInsurance().getName(),
+                r.getPickupDate(),
+                r.getReturnDate(),
                 r.getCreatedAt()
         );
     }

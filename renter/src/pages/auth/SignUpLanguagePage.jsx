@@ -37,6 +37,7 @@ export default function SignUpLanguagePage() {
         email: state.email,
       })
       const { walletAddress, walletId } = privyData
+      localStorage.setItem('embedded_wallet_address', walletAddress)
 
       await registerRenter({
         email: state.email,

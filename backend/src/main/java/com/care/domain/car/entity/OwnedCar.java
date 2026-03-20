@@ -35,6 +35,9 @@ public class OwnedCar extends BaseEntity {
     @Column(name = "status", length = 20, nullable = false)
     private Status status;
 
+    @Column(name = "daily_price", nullable = false)
+    private int dailyPrice;
+
     public static OwnedCar create(String carId, Company company, CarModel carModel, String plateNumber) {
         OwnedCar car = new OwnedCar();
         car.carId = carId;

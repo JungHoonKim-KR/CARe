@@ -33,14 +33,15 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        navigateFallbackDenylist: [/^\/jenkins/, /^\/api/, /^\/company/],
       },
     }),
   ],
   server: {
     port: 5174,
     proxy: {
-      '/api': { 
-        target: 'http://localhost:8080', 
+      '/api': {
+        target: 'http://localhost:8080',
         changeOrigin: true }
     }
   }

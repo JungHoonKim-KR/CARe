@@ -4,16 +4,35 @@ class AuthService {
   // 회원가입
   async register(data) {
     try {
+      console.log('🚀 회원가입 요청 데이터:', {
+        name: data.companyName,
+        airportCode: data.airportCode,
+        languageCode: data.languageCode,
+        email: data.email,
+        password: '***'
+      })
+
       const response = await api.post('/api/auth/company/register', {
         name: data.companyName,
+        airportCode: data.airportCode,
+        languageCode: data.languageCode,
         email: data.email,
         password: data.password
       })
+
+      console.log('✅ 회원가입 성공:', response.data)
       return {
         success: true,
         data: response.data
       }
     } catch (error) {
+      console.error('❌ 회원가입 에러:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      })
+
       return {
         success: false,
         message: error.response?.data?.message || '회원가입에 실패했습니다.'

@@ -303,13 +303,17 @@ pipeline {
 
                     echo "Active - Backend: $BACKEND_COLOR, Renter: $RENTER_COLOR, Company: $COMPANY_COLOR"
 
-                    # nginx.conf 생성 (placeholder 치환) → bind mount 경로에 직접 write
-                    cp infra/nginx/nginx.conf /home/ubuntu/infra/nginx/nginx.conf
-                    sed -i "s|__BACKEND_HOST__|backend-$BACKEND_COLOR|g" /home/ubuntu/infra/nginx/nginx.conf
-                    sed -i "s|__RENTER_ROOT__|/usr/share/nginx/html/renter-$RENTER_COLOR|g" /home/ubuntu/infra/nginx/nginx.conf
-                    sed -i "s|__COMPANY_ROOT__|/usr/share/nginx/html/company-$COMPANY_COLOR|g" /home/ubuntu/infra/nginx/nginx.conf
+                    # nginx.conf 생성 (placeholder 치환)
+                    # sed -i는 새 inode를 생성해 Docker bind mount를 깨뜨리므로
+                    # 임시 파일에 치환 후 cat으로 기존 inode에 덮어씀
+                    sed \
+                        -e "s|__BACKEND_HOST__|backend-$BACKEND_COLOR|g" \
+                        -e "s|__RENTER_ROOT__|/usr/share/nginx/html/renter-$RENTER_COLOR|g" \
+                        -e "s|__COMPANY_ROOT__|/usr/share/nginx/html/company-$COMPANY_COLOR|g" \
+                        infra/nginx/nginx.conf > /tmp/nginx.conf.rendered
+                    cat /tmp/nginx.conf.rendered > /home/ubuntu/infra/nginx/nginx.conf
 
-                    # Nginx 설정 검증 후 무중단 reload (bind mount이므로 docker cp 불필요)
+                    # Nginx 설정 검증 후 무중단 reload
                     docker exec ${NGINX_CONTAINER} nginx -t
                     docker exec ${NGINX_CONTAINER} nginx -s reload
 

@@ -48,3 +48,9 @@ export const getDisputeDetail = async (reservationId, disputeId) => {
   const response = await api.get(`/api/reservations/${reservationId}/disputes/${disputeId}`)
   return response.data
 }
+
+// 예약 생성
+export const createReservation = async (carId, insuranceId, totalPrice) => {
+  const response = await api.post('/api/reservations', { carId, insuranceId, totalPrice })
+  return response.data
+}

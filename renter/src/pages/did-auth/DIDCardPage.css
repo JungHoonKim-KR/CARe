@@ -1,0 +1,246 @@
+* { box-sizing: border-box; }
+
+.did-card-page {
+  min-height: 100vh;
+  background: #f8f8f8;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.did-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 56px 20px 16px;
+  background: #fff;
+}
+
+.did-card-back-btn {
+  background: none;
+  border: none;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.did-card-header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -0.4px;
+}
+
+.did-card-manage {
+  font-size: 15px;
+  font-weight: 600;
+  color: #F7A633;
+  cursor: pointer;
+}
+
+/* ── Card wrap ── */
+.did-card-wrap {
+  padding: 20px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Card ── */
+.did-card {
+  width: 100%;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 32px 28px 28px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 브랜드 + 도트 ── */
+.did-card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 36px;
+}
+
+.did-card-brand {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.did-card-brand span {
+  font-size: 14px;
+  font-weight: 800;
+  color: #4B79D4;
+  letter-spacing: 1.5px;
+}
+
+.did-card-dots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.did-card-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c7d9f8;
+}
+
+/* ── 쉴드 ── */
+.did-card-shield-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.did-card-shield-bg {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.did-card-verified-chip {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: #F7A633;
+  border-radius: 20px;
+  padding: 8px 20px;
+  letter-spacing: -0.2px;
+}
+
+/* ── 구분선 ── */
+.did-card-sep {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 0 0 26px;
+}
+
+/* ── 정보 ── */
+.did-card-info {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 26px;
+}
+
+.did-card-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #aaa;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin: 0 0 6px;
+}
+
+.did-card-name {
+  font-size: 36px;
+  font-weight: 800;
+  color: #111;
+  margin: 0;
+  letter-spacing: -0.8px;
+  line-height: 1.15;
+}
+
+.did-card-expiry {
+  font-size: 16px;
+  font-weight: 600;
+  color: #888;
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+.did-card-expiry span {
+  color: #F7A633;
+  font-weight: 700;
+}
+
+/* ── DID 주소 ── */
+.did-card-did-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.did-card-did-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4B79D4;
+  background: #eff6ff;
+  border-radius: 5px;
+  padding: 4px 9px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.did-card-did-value {
+  font-size: 12px;
+  font-weight: 500;
+  color: #bbb;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 하단 액션 ── */
+.did-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.did-card-history-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #fff;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 18px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #222;
+  cursor: pointer;
+  letter-spacing: -0.3px;
+  transition: background 0.15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.did-card-history-btn:active {
+  background: #fff8ed;
+}
+
+.did-card-share-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #F7A633;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(247, 166, 51, 0.4);
+  transition: transform 0.12s;
+}
+
+.did-card-share-btn:active {
+  transform: scale(0.94);
+}

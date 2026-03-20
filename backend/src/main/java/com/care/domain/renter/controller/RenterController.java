@@ -4,6 +4,7 @@ import com.care.domain.car.controller.dto.request.CarReviewRequest;
 import com.care.domain.car.controller.dto.response.CarReviewResponse;
 import com.care.domain.car.controller.dto.response.CarSummaryResponse;
 import com.care.domain.car.service.CarService;
+import com.care.domain.reservation.controller.dto.response.ReservationDetailResponse;
 import com.care.domain.reservation.controller.dto.response.ReservationSummaryResponse;
 import com.care.domain.reservation.service.ReservationService;
 import com.care.domain.renter.controller.dto.request.DocumentVerifyRequest;
@@ -94,6 +95,7 @@ public class RenterController {
     public ResponseEntity<List<ReservationSummaryResponse>> getMyReservations(@AuthenticationPrincipal String userId) {
         return ResponseEntity.ok(reservationService.getRenterReservations(userId));
     }
+
 
     /**
      * GET /renters/me/token/balance

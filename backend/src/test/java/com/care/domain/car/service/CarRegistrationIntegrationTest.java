@@ -74,7 +74,7 @@ class CarRegistrationIntegrationTest {
         // [1] 회사 회원가입
         // ──────────────────────────────────────────
         CompanySignUpRequest signUpRequest = new CompanySignUpRequest(
-                "통합테스트렌터카", TEST_EMAIL, "Password1!", null, "ko", null
+                "통합테스트렌터카", TEST_EMAIL, "Password1!", null, "ICN", "ko", null, null
         );
         authService.companySignUp(signUpRequest);
 

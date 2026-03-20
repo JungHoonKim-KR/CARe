@@ -7,6 +7,8 @@ import ReservationDetailPage from './pages/reservation-detail/ReservationDetailP
 import AIReportPage from './pages/ai-report/AIReportPage'
 import CarManagementPage from './pages/car-management/CarManagementPage'
 import CarDetailPage from './pages/car-detail/CarDetailPage'
+import DisputesList from './pages/dispute/DisputesList'
+import DisputePage from './pages/dispute/DisputePage'
 import './App.css'
 
 export default function App() {
@@ -22,6 +24,8 @@ export default function App() {
           <Route path="/reservations" element={<ReservationPage />} />
           <Route path="/reservations/:id" element={<ReservationDetailPage />} />
           <Route path="/ai-report/:id" element={<AIReportPage />} />
+          <Route path="/disputes" element={<DisputesList />} />
+          <Route path="/disputes/:id" element={<DisputePage />} />
           {/* 추가 라우트는 여기에 */}
           <Route path="/profile" element={<div className="placeholder-page">내 정보 페이지</div>} />
           <Route path="/settings" element={<div className="placeholder-page">설정 페이지</div>} />

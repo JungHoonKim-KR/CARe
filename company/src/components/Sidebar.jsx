@@ -9,6 +9,7 @@ export default function Sidebar() {
     { id: 'dashboard', label: '대시보드', path: '/dashboard' },
     { id: 'cars', label: '차량 관리', path: '/cars' },
     { id: 'reservations', label: '예약 관리', path: '/reservations' },
+    { id: 'disputes', label: '분쟁 관리', path: '/disputes' },
     { id: 'profile', label: '내 정보', path: '/profile' },
   ]
 

@@ -1,7 +1,10 @@
 import cv2
 import numpy as np
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, File, UploadFile, Form
 from ultralytics import YOLO
+from PIL import Image
+from app.services.s3_service import upload_file_to_s3, upload_image_to_s3
+from app.services.ipfs_service import upload_to_ipfs
 
 router = APIRouter(prefix="/scratches") # 🌟 이렇게 수정!
 

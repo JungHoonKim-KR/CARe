@@ -126,7 +126,7 @@ public class ScanService {
             return res.getBody() != null ? res.getBody() : Collections.emptyMap();
         } catch (Exception e) {
             log.error("[Scan] FastAPI 호출 실패: {}", e.getMessage());
-            return Collections.emptyMap();
+            throw new RuntimeException("흠집 감지 서버 호출 실패: " + e.getMessage());
         }
     }
 }

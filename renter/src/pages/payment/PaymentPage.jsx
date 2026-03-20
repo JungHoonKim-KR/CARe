@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import BottomNav from '../../components/BottomNav'
 import { createReservation } from '../../api/reservation'
+import { getTokenBalance } from '../../api/auth'
 import './PaymentPage.css'
 
 export default function PaymentPage() {
@@ -17,9 +18,13 @@ export default function PaymentPage() {
   const deposit     = state?.deposit     || 300
   const total       = state?.total       || rentalPrice + insurance.price + deposit
 
-  const walletBalance = 20000
+  const [walletBalance, setWalletBalance] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    getTokenBalance().then((data) => setWalletBalance(parseFloat(data.balance))).catch(() => {})
+  }, [])
 
   const handlePay = async () => {
     if (walletBalance < total) {
@@ -29,7 +34,7 @@ export default function PaymentPage() {
     setLoading(true)
     setError('')
     try {
-      const result = await createReservation(carId, insuranceId, total)
+      const result = await createReservation(carId, insuranceId, total, searchInfo.pickupDate, searchInfo.returnDate)
       navigate('/booking-complete', {
         state: {
           car,
@@ -88,7 +93,7 @@ export default function PaymentPage() {
           <div className="pay-divider" />
           <div className="pay-row">
             <span className="pay-row-lbl">보유 토큰</span>
-            <span className="pay-row-val pay-row-bold">{walletBalance.toLocaleString()} USDC</span>
+            <span className="pay-row-val pay-row-bold">{walletBalance != null ? walletBalance.toLocaleString() : '...'} CARE</span>
           </div>
           <div className="pay-row">
             <span className="pay-row-lbl">결제 금액</span>

@@ -3,6 +3,7 @@ package com.care.domain.reservation.controller.dto.response;
 import com.care.domain.reservation.entity.Reservation;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record ReservationCreateResponse(
         String reservationId,

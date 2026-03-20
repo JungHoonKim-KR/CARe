@@ -48,7 +48,6 @@ export default function LoginPage() {
             <div className="form-group">
               <label htmlFor="email">Email Id</label>
               <div className="input-wrapper">
-                <span className="input-icon">📧</span>
                 <input
                   type="email"
                   id="email"
@@ -64,7 +63,6 @@ export default function LoginPage() {
             <div className="form-group">
               <label htmlFor="password">Password</label>
               <div className="input-wrapper">
-                <span className="input-icon">🔒</span>
                 <input
                   type="password"
                   id="password"

@@ -42,3 +42,9 @@ export const unlockSmartKey = async (reservationId) => {
   const response = await api.post(`/api/reservations/${reservationId}/smart-key/unlock`)
   return response.data
 }
+
+// 분쟁 상세 조회
+export const getDisputeDetail = async (reservationId, disputeId) => {
+  const response = await api.get(`/api/reservations/${reservationId}/disputes/${disputeId}`)
+  return response.data
+}

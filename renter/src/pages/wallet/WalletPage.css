@@ -305,3 +305,69 @@
   color: #999;
   font-size: 20px;
 }
+
+/* -- 카드 힌트 -- */
+.token-card-hint {
+  margin-top: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(92, 61, 0, 0.5);
+  letter-spacing: -0.2px;
+  position: relative;
+  z-index: 1;
+}
+
+/* -- 충전/환전 버튼 -- */
+.token-action-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.token-action-btn {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.token-action-btn:active {
+  opacity: 0.75;
+}
+
+.charge-btn {
+  background: #F7A633;
+  color: #fff;
+}
+
+.exchange-btn {
+  background: rgba(255, 255, 255, 0.6);
+  color: #5C3D00;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+/* -- 사용 내역 -- */
+.wallet-history-section {
+  padding: 28px 20px 0;
+}
+
+.wallet-history-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 16px;
+  letter-spacing: -0.3px;
+}
+
+.wallet-history-empty {
+  text-align: center;
+  padding: 40px 0;
+  color: #aaa;
+  font-size: 14px;
+}

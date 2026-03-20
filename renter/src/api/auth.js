@@ -100,4 +100,12 @@ export const renterDID = () =>
 export const renterLanguage = () =>
   api.put('/api/renters/me/language').then((r) => r.data)
 
+// ── CARE 토큰 충전 ────────────────────────────────────────────
+export const chargeToken = (amount) =>
+  api.post('/api/renters/me/token/charge', { amount }).then((r) => r.data)
+
+// ── CARE 토큰 잔액 조회 ───────────────────────────────────────
+export const getTokenBalance = () =>
+  api.get('/api/renters/me/token/balance').then((r) => r.data)
+
 export default api

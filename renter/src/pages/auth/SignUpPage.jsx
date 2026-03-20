@@ -43,14 +43,6 @@ export default function SignUpPage() {
         privyWalletId: walletId,
       })
 
-      const data = await registerRenter({
-        email: form.email,
-        name: form.name,
-        password: form.password,
-        walletAddress: wallet.address,
-      })
-      console.log('[SignUp] 응답:', data)
-
       navigate('/login')
     } catch (err) {
       console.error('[SignUp] 오류:', err.response?.data || err.message)

@@ -8,10 +8,23 @@ export default function DIDAuthPage() {
   const [verified, setVerified] = useState({ passport: false, license: false })
 
   useEffect(() => {
-    setVerified({
-      passport: localStorage.getItem('passport_verified') === 'true',
-      license: localStorage.getItem('license_verified') === 'true',
-    })
+    const passport = localStorage.getItem('passport_verified') === 'true'
+    const license  = localStorage.getItem('license_verified') === 'true'
+
+    // 둘 다 인증 완료면 바로 DID 카드로
+    if (passport && license) {
+      navigate('/did-card', {
+        replace: true,
+        state: {
+          name:       localStorage.getItem('did_name')   || '',
+          docId:      localStorage.getItem('did_docId')  || 'did:care:renter:verified',
+          expiryDate: localStorage.getItem('did_expiry') || '',
+        },
+      })
+      return
+    }
+
+    setVerified({ passport, license })
   }, [])
 
   const CheckIcon = () => (
@@ -43,7 +56,7 @@ export default function DIDAuthPage() {
         <ul className="did-docs-list">
           <li
             className={`did-docs-item ${verified.passport ? 'verified' : 'clickable'}`}
-            onClick={() => navigate('/did-guide')}
+            onClick={() => !verified.passport && navigate('/did-guide')}
           >
             <span className={`did-docs-num ${verified.passport ? 'verified-num' : ''}`}>
               {verified.passport ? <CheckIcon /> : '1'}
@@ -56,7 +69,7 @@ export default function DIDAuthPage() {
           </li>
           <li
             className={`did-docs-item ${verified.license ? 'verified' : 'clickable'}`}
-            onClick={() => navigate('/did-camera', { state: { docType: 'license' } })}
+            onClick={() => !verified.license && navigate('/did-camera', { state: { docType: 'license' } })}
           >
             <span className={`did-docs-num ${verified.license ? 'verified-num' : ''}`}>
               {verified.license ? <CheckIcon /> : '2'}
@@ -72,10 +85,10 @@ export default function DIDAuthPage() {
 
       <div className="did-auth-footer">
         <button
-          className={`did-primary-btn ${verified.passport && verified.license ? 'done' : ''}`}
-          onClick={() => verified.passport && verified.license ? navigate('/wallet') : navigate('/did-guide')}
+          className="did-primary-btn"
+          onClick={() => navigate('/did-guide')}
         >
-          {verified.passport && verified.license ? '인증 완료 ✓' : '인증하러 가기'}
+          인증하러 가기
         </button>
       </div>
     </div>

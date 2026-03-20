@@ -18,7 +18,6 @@ export default function WalletPage() {
   const [showFullAddr, setShowFullAddr] = useState(false)
 
   useEffect(() => {
-    if (!walletAddress) return
     setCareLoading(true)
     getTokenBalance()
       .then((data) => setCareBalance(data.balance))
@@ -27,7 +26,7 @@ export default function WalletPage() {
         setCareBalance('오류')
       })
       .finally(() => setCareLoading(false))
-  }, [walletAddress])
+  }, [])
 
   const shortAddr = (addr) => (addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : '')
 

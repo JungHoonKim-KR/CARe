@@ -14,6 +14,7 @@ def create_app() -> FastAPI:
         title="Face & Scratch Comparison API",
         version="1.0.0",
         description="Face verification and scratch comparison service.",
+        root_path="/ai",
     )
     cors_origins_env = os.getenv("CORS_ORIGINS", "http://localhost:5174")
     cors_origins = [origin.strip() for origin in cors_origins_env.split(",")]

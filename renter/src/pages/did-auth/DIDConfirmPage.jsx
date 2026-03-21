@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import passportIcon from '../../assets/passport_icon.png'
-import { renterLicense } from '../../api/auth'
+import { renterLicense, renterDID } from '../../api/auth'
 import './DIDConfirmPage.css'
 
 export default function DIDConfirmPage() {
@@ -9,7 +9,6 @@ export default function DIDConfirmPage() {
   const { state } = useLocation()
   const image = state?.image
   const docType = state?.docType || 'passport'
-
   const isPassport = docType === 'passport'
 
   const [form, setForm] = useState({
@@ -48,15 +47,34 @@ export default function DIDConfirmPage() {
       const res = await renterLicense(payload)
 
       if (res.verified) {
+        // 인증 결과 저장
         localStorage.setItem(`${docType}_verified`, 'true')
-        navigate('/did-card', {
-          state: {
-            name: form.name,
-            docType: res.docType,
-            docId: res.docId,
-            expiryDate: isPassport ? form.expiryDate.replace(/-/g, '') : '',
-          },
-        })
+
+        // 여권이면 DID 카드에 표시할 정보 저장
+        if (isPassport) {
+          localStorage.setItem('did_name', form.name)
+          localStorage.setItem('did_docId', res.docId || '')
+          localStorage.setItem('did_expiry', form.expiryDate.replace(/-/g, ''))
+        }
+
+        const bothDone =
+          localStorage.getItem('passport_verified') === 'true' &&
+          localStorage.getItem('license_verified') === 'true'
+
+        if (bothDone) {
+          // 둘 다 완료 → 블록체인 DID 등록 후 카드 페이지로
+          try { await renterDID() } catch (e) { console.warn('[DID] 블록체인 등록 실패:', e) }
+          navigate('/did-card', {
+            state: {
+              name: localStorage.getItem('did_name') || form.name,
+              docId: localStorage.getItem('did_docId') || res.docId,
+              expiryDate: localStorage.getItem('did_expiry') || '',
+            },
+          })
+        } else {
+          // 하나만 완료 → 다시 목록 화면으로
+          navigate('/did-auth')
+        }
       } else {
         setError('인증에 실패했습니다. 입력 정보를 다시 확인해 주세요.')
       }

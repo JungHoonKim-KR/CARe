@@ -115,21 +115,22 @@
 /* 대여 일정 */
 .schedule-section {
   display: flex;
-  flex-direction: column;
-  gap: 0;
+  flex-direction: row;
+  gap: 24px;
+  align-items: stretch;
 }
 
 .schedule-item {
   display: flex;
-  gap: 20px;
-  padding: 16px 0;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
 }
 
 .schedule-label {
   font-size: 14px;
   color: #6c757d;
   font-weight: 600;
-  min-width: 50px;
 }
 
 .schedule-details {
@@ -149,9 +150,9 @@
 }
 
 .schedule-divider {
-  height: 1px;
+  width: 1px;
   background-color: #e9ecef;
-  margin: 0;
+  align-self: stretch;
 }
 
 /* 이용 상태 */

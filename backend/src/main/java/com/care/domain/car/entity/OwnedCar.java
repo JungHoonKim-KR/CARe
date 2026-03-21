@@ -38,12 +38,13 @@ public class OwnedCar extends BaseEntity {
     @Column(name = "daily_price", nullable = false)
     private int dailyPrice;
 
-    public static OwnedCar create(String carId, Company company, CarModel carModel, String plateNumber) {
+    public static OwnedCar create(String carId, Company company, CarModel carModel, String plateNumber, int dailyPrice) {
         OwnedCar car = new OwnedCar();
         car.carId = carId;
         car.company = company;
         car.carModel = carModel;
         car.plateNumber = plateNumber;
+        car.dailyPrice = dailyPrice;
         car.status = Status.PENDING;
         return car;
     }

@@ -45,10 +45,10 @@ export default function LoginPage() {
     }
   }
 
-  const handleSocialLogin = (provider) => {
-    console.log('Social login:', provider)
-    // TODO: 소셜 로그인 구현
-  }
+  // const handleSocialLogin = (provider) => {
+  //   console.log('Social login:', provider)
+  //   // TODO: 소셜 로그인 구현
+  // }
 
   return (
     <div className="login-container">
@@ -106,11 +106,11 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="divider">
+          {/* <div className="divider">
             <span>OR</span>
-          </div>
+          </div> */}
 
-          <div className="social-login">
+          {/* <div className="social-login">
             <button
               type="button"
               className="social-button google"
@@ -146,7 +146,7 @@ export default function LoginPage() {
                 <path d="M15.4287 17.0833C14.5703 17.9417 13.6287 17.8833 12.7287 17.4917C11.7703 17.0917 10.8953 17.075 9.8953 17.4917C8.62031 17.9917 7.95365 17.9167 7.19531 17.0833C2.32031 11.95 3.06198 4.15833 8.56198 3.9C9.85365 3.96667 10.7453 4.63333 11.4953 4.68333C12.637 4.45 13.737 3.75833 14.962 3.84167C16.437 3.95833 17.5453 4.55 18.262 5.625C15.4703 7.33333 16.162 11.1333 18.762 12.1667C18.2703 13.4833 17.6203 14.7917 15.4203 17.0917L15.4287 17.0833ZM11.3787 3.85C11.2203 2.01667 12.6453 0.483333 14.3453 0.333333C14.5953 2.46667 12.4953 4.1 11.3787 3.85Z" fill="black"/>
               </svg>
             </button>
-          </div>
+          </div> */}
 
           <p className="register-link">
             회원이 아니신가요? <a href="/company/register">회원가입</a>

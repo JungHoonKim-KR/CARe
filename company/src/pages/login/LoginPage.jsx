@@ -1,10 +1,13 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import AuthService from '../../services/AuthService'
 import './LoginPage.css'
 
 export default function LoginPage() {
+  const location = useLocation()
   const navigate = useNavigate()
+  const from = location.state?.from?.pathname || '/cars'
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -14,7 +17,7 @@ export default function LoginPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value
     }))
@@ -30,7 +33,7 @@ export default function LoginPage() {
       const result = await AuthService.login(formData.email, formData.password)
 
       if (result.success) {
-        navigate('/dashboard')
+        navigate(from, { replace: true })
       } else {
         setError(result.message || '로그인에 실패했습니다.')
       }
@@ -49,20 +52,16 @@ export default function LoginPage() {
 
   return (
     <div className="login-container">
-      {/* Left Side - Image */}
       <div className="login-image-section">
         <div className="login-logo">CARe</div>
       </div>
 
-      {/* Right Side - Form */}
       <div className="login-form-section">
         <div className="login-form-wrapper">
-          <h1 className="login-title">
-            환영합니다
-          </h1>
+          <h1 className="login-title">환영합니다</h1>
           <p className="login-subtitle">
             No.1 글로벌 렌터카 서비스 CARe입니다.
-            고객에게 투명하고 신뢰성 높은 렌터카를 제공해보세요. 
+            고객에게 투명하고 신뢰성 높은 렌터카를 제공해보세요.
           </p>
 
           <form onSubmit={handleSubmit} className="login-form">
@@ -100,11 +99,7 @@ export default function LoginPage() {
               <a href="#" className="forgot-password">비밀번호를 잊으셨나요?</a>
             </div>
 
-            {error && (
-              <div className="error-message">
-                {error}
-              </div>
-            )}
+            {error && <div className="error-message">{error}</div>}
 
             <button type="submit" className="login-button" disabled={loading}>
               {loading ? '로그인 중...' : 'LOGIN'}

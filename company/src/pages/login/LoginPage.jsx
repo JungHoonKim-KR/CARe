@@ -102,7 +102,7 @@ export default function LoginPage() {
           </form>
 
           <p className="register-link">
-            회원이 아니신가요? <a href="/company/register">회원가입</a>
+            회원이 아니신가요? <a href="/register">회원가입</a>
           </p>
 
           <p className="copyright">
@@ -111,4 +111,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )}
+  )
+}

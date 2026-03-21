@@ -84,6 +84,14 @@ export default function DisputePage() {
               <span className="label">분쟁 유형</span>
               <span className="value">{dispute.issueType}</span>
             </div>
+            <div className="info-item">
+              <span className="label">렌터 이름</span>
+              <span className="value">{dispute.renterName}</span>
+            </div>
+            <div className="info-item">
+              <span className="label">렌터 이메일</span>
+              <span className="value">{dispute.renterEmail}</span>
+            </div>
           </div>
         </div>
 
@@ -110,21 +118,6 @@ export default function DisputePage() {
                 <div className="info-item">
                   <span className="label">연식</span>
                   <span className="value">{dispute.carModel}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Renter Info */}
-            <div className="card">
-              <h2 className="section-title">렌터 정보</h2>
-              <div className="info-grid">
-                <div className="info-item">
-                  <span className="label">이름</span>
-                  <span className="value">{dispute.renterName}</span>
-                </div>
-                <div className="info-item full-width">
-                  <span className="label">이메일</span>
-                  <span className="value">{dispute.renterEmail}</span>
                 </div>
               </div>
             </div>

@@ -86,7 +86,7 @@ export default function DisputesList() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-label">전체 분쟁</div>
@@ -100,7 +100,7 @@ export default function DisputesList() {
           <div className="stat-label">해결 완료</div>
           <div className="stat-value">{stats.resolved}</div>
         </div>
-      </div>
+      </div> */}
 
       {/* Tab Filter */}
       <div className="tab-filter">

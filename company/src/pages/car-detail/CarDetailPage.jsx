@@ -120,7 +120,7 @@ export default function CarDetailPage() {
                       onClick={() => setIsNFTModalOpen(true)}
                       title="NFT 정보 보기"
                     >
-                      🔗 NFT
+                      NFT
                     </button>
                   </div>
                 </div>
@@ -163,7 +163,7 @@ export default function CarDetailPage() {
               <p className="description-text">{carData.description}</p>
             </div>
           </div>
-
+{/* 
           <div className="card nft-info-card">
             <h3 className="card-title">NFT 정보</h3>
             <div className="nft-info-row">
@@ -174,7 +174,7 @@ export default function CarDetailPage() {
               <span className="nft-label">발행일</span>
               <span className="nft-value">{nftInfo.issueDate}</span>
             </div>
-          </div>
+          </div> */}
 
           <div className="card defect-log-card">
             <h3 className="card-title">초기 결함 로그 (AI 탐지)</h3>

@@ -11,14 +11,29 @@ import CarManagementPage from './pages/car-management/CarManagementPage'
 import CarDetailPage from './pages/car-detail/CarDetailPage'
 import CarRegisterPage from './pages/car-register/CarRegisterPage'
 import ProtectedRoute from './components/ProtectedRoute'
+import AuthService from './services/AuthService'
 import './App.css'
 
 export default function App() {
+  const isAuthenticated = AuthService.isAuthenticated()
+
   return (
     <Routes>
+      {/* 🔥 기본 루트 분기 */}
+      <Route
+        path="/"
+        element={
+          isAuthenticated
+            ? <Navigate to="/dashboard" replace />
+            : <Navigate to="/login" replace />
+        }
+      />
+
+      {/* 공개 페이지 */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<SignUpPage />} />
 
+      {/* 보호된 영역 */}
       <Route
         path="*"
         element={
@@ -27,7 +42,6 @@ export default function App() {
               <Sidebar />
               <main className="main-content">
                 <Routes>
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/cars" element={<CarManagementPage />} />
                   <Route path="/cars/:id" element={<CarDetailPage />} />

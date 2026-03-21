@@ -6,7 +6,7 @@ import './LoginPage.css'
 export default function LoginPage() {
   const location = useLocation()
   const navigate = useNavigate()
-  const from = location.state?.from?.pathname || '/cars'
+  const from = location.state?.from?.pathname || '/dashboard'
 
   const [formData, setFormData] = useState({
     email: '',

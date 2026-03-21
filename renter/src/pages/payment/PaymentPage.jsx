@@ -1,5 +1,13 @@
+<<<<<<< HEAD
 import { useNavigate, useLocation } from 'react-router-dom'
 import BottomNav from '../../components/BottomNav'
+=======
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import BottomNav from '../../components/BottomNav'
+import { createReservation } from '../../api/reservation'
+import { getTokenBalance } from '../../api/auth'
+>>>>>>> origin/develop
 import './PaymentPage.css'
 
 export default function PaymentPage() {
@@ -13,16 +21,53 @@ export default function PaymentPage() {
   const deposit     = state?.deposit     || 300
   const total       = state?.total       || rentalPrice + insurance.price + deposit
 
+<<<<<<< HEAD
   const walletBalance = 20000
 
   const handlePay = () => {
+=======
+  const [walletBalance, setWalletBalance] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    getTokenBalance().then((data) => setWalletBalance(parseFloat(data.balance))).catch(() => {})
+  }, [])
+
+  const handlePay = async () => {
+>>>>>>> origin/develop
     if (walletBalance < total) {
       alert('보유 토큰이 부족합니다.')
       return
     }
+<<<<<<< HEAD
     navigate('/booking-complete', {
       state: { car, searchInfo, total, rentalPrice, insurance, deposit },
     })
+=======
+    setLoading(true)
+    setError('')
+    try {
+      const result = await createReservation(carId, insuranceId, total, searchInfo.pickupDate, searchInfo.returnDate)
+      navigate('/booking-complete', {
+        state: {
+          car,
+          searchInfo,
+          total,
+          rentalPrice,
+          insurance,
+          deposit,
+          reservationId: result.reservationId || result.data?.reservationId,
+          paymentTxHash: result.paymentTxHash || result.data?.paymentTxHash,
+        },
+      })
+    } catch (err) {
+      const msg = err.response?.data?.message || '결제에 실패했습니다. 다시 시도해주세요.'
+      setError(msg)
+    } finally {
+      setLoading(false)
+    }
+>>>>>>> origin/develop
   }
 
   const pickupLabel  = searchInfo.pickupDate
@@ -64,7 +109,7 @@ export default function PaymentPage() {
           <div className="pay-divider" />
           <div className="pay-row">
             <span className="pay-row-lbl">보유 토큰</span>
-            <span className="pay-row-val pay-row-bold">{walletBalance.toLocaleString()} USDC</span>
+            <span className="pay-row-val pay-row-bold">{walletBalance != null ? walletBalance.toLocaleString() : '...'} CARE</span>
           </div>
           <div className="pay-row">
             <span className="pay-row-lbl">결제 금액</span>

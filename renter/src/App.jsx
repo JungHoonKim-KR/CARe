@@ -26,10 +26,8 @@ import DIDCardPage from './pages/did-auth/DIDCardPage'
 import ScanPage from './pages/scan/ScanPage'
 import CarFaceAuthPage from './pages/car-faceauth/CarFaceAuthPage'
 import CarSmartKeyPage from './pages/car-smartkey/CarSmartKeyPage'
-import CarCrackPage from './pages/car-crack/CarCrackPage'
 import DamageHistoryPage from './pages/damage-history/DamageHistoryPage'
 import DamageDetailPage from './pages/damage-detail/DamageDetailPage'
-import CarReturnPage from './pages/car-return/CarReturnPage'
 import DisputePage from './pages/dispute/DisputePage'
 import DisputeHistoryPage from './pages/dispute/DisputeHistoryPage'
 
@@ -63,11 +61,9 @@ function App() {
           <Route path="/did-confirm" element={<DIDConfirmPage />} />
           <Route path="/did-card" element={<DIDCardPage />} />
           <Route path="/car-faceauth" element={<CarFaceAuthPage />} />
-          <Route path="/car-crack" element={<CarCrackPage />} />
           <Route path="/car-smartkey" element={<CarSmartKeyPage />} />
           <Route path="/damage-history" element={<DamageHistoryPage />} />
           <Route path="/damage-detail" element={<DamageDetailPage />} />
-          <Route path="/car-return" element={<CarReturnPage />} />
           <Route path="/dispute" element={<DisputePage />} />
           <Route path="/dispute-history" element={<DisputeHistoryPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

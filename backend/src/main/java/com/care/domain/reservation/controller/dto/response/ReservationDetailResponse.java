@@ -2,11 +2,15 @@ package com.care.domain.reservation.controller.dto.response;
 
 import com.care.domain.reservation.entity.Reservation;
 
+import java.time.LocalDate;
+
 public record ReservationDetailResponse(
         String reservationId,
         String status,
         String smartContractAddress,
         String depositStatus,
+        LocalDate pickupDate,
+        LocalDate returnDate,
         String beforeScanTxHash,
         String afterScanTxHash,
         RenterInfo renter,
@@ -38,6 +42,8 @@ public record ReservationDetailResponse(
                 r.getStatus(),
                 r.getSmartContractAddress(),
                 r.getDepositStatus() != null ? r.getDepositStatus().name() : null,
+                r.getPickupDate(),
+                r.getReturnDate(),
                 r.getBeforeScanTxHash(),
                 r.getAfterScanTxHash(),
                 new RenterInfo(

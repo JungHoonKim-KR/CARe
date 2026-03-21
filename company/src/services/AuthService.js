@@ -53,8 +53,6 @@ class AuthService {
         password
       })
 
-      console.log('로그인 응답 전체:', response.data)
-
       const accessToken =
         response.data.accessToken ||
         response.data.accesstoken ||
@@ -76,7 +74,6 @@ class AuthService {
 
         if (!companyId) {
           const payload = this.decodeJwtPayload(accessToken)
-          console.log('JWT payload:', payload)
           companyId = payload?.sub || null
         }
       }
@@ -88,9 +85,6 @@ class AuthService {
       if (companyId) {
         localStorage.setItem('companyId', companyId)
       }
-
-      console.log('저장된 token:', localStorage.getItem('token'))
-      console.log('저장된 companyId:', localStorage.getItem('companyId'))
 
       return {
         success: true,
@@ -105,11 +99,28 @@ class AuthService {
     }
   }
 
-  logout() {
+  async logout() {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken')
+
+      await api.post('/api/auth/logout', {
+        refreshToken
+      })
+    } catch (error) {
+      console.error('로그아웃 API 에러:', error?.response?.data || error)
+    } finally {
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('companyId')
+      sessionStorage.clear()
+    }
+  }
+
+  logoutLocal() {
     localStorage.removeItem('token')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('companyId')
-    window.location.href = '/company/login'
+    sessionStorage.clear()
   }
 
   isAuthenticated() {

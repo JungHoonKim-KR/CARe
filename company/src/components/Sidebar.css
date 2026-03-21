@@ -114,3 +114,13 @@
   font-size: 11px;
   color: var(--sidebar-text);
 }
+
+
+.sidebar-logout-button.sidebar-item {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+}

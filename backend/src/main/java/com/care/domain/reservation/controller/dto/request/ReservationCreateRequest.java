@@ -4,11 +4,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record ReservationCreateRequest(
         @NotBlank String carId,
         @NotBlank String insuranceId,
-        @NotNull LocalDate pickupDate,
-        @NotNull LocalDate returnDate
+        @NotNull LocalDateTime pickupDate,
+        @NotNull LocalDateTime returnDate
 ) {}

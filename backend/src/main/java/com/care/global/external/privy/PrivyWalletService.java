@@ -13,9 +13,10 @@ import java.util.Map;
 
 /**
  * Privy Pregenerate Embedded Wallet API
- * 참고 : https://docs.privy.io/guide/server/wallets/new-user
+ *
+ * - 프론트(renter)는 Node.js 프록시 서버(privy-server.mjs)를 통해 지갑 생성
+ * - 백엔드(company 등)는 Node.js 프록시 서버에 HTTP 요청으로 지갑 생성
  */
-
 @Slf4j
 @Service
 public class PrivyWalletService {
@@ -23,15 +24,8 @@ public class PrivyWalletService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${privy.app-id:}")
-    private String appId;
-
-    @Value("${privy.app-secret:}")
-    private String appSecret;
-
-    // https://docs.privy.io/api-reference/users/create
-    // 앱 유저를 만들면서  pre-generate embedded wallet을 같이 만드는 방식
-    private static final String PRIVY_USERS_URL = "https://auth.privy.io/api/v1/users";
+    @Value("${privy.server-url:http://localhost:3001}")
+    private String privyServerUrl;
 
     public PrivyWalletService(RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
@@ -40,46 +34,38 @@ public class PrivyWalletService {
 
     /**
      * 회원가입 시 Privy 임베디드 지갑 자동 생성
-     * @return [walletAddress, privyUserId] — 실패 시 [null, null]
+     * @return [walletAddress, privyWalletId] — 실패 시 [null, null]
      */
     public String[] createWalletForUser(String email) {
         log.info("[Privy] createWalletForUser - email: {}", email);
 
-        if (appId == null || appId.isBlank()) {
+        if (privyServerUrl == null || privyServerUrl.isBlank()) {
+            log.warn("[Privy] PRIVY_SERVER_URL 미설정 - 지갑 생성 스킵");
             return new String[]{null, null};
         }
 
         try {
-            HttpHeaders headers = buildHeaders();
-            Map<String, Object> body = Map.of(
-                    "create_ethereum_wallet", true,
-                    "linked_accounts", new Object[]{
-                            Map.of("address", email, "type", "email")
-                    }
-            );
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
 
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(
+                    Map.of("email", email), headers);
+
             ResponseEntity<String> response = restTemplate.postForEntity(
-                    PRIVY_USERS_URL, request, String.class);
+                    privyServerUrl + "/privy/wallet", request, String.class);
 
-            log.info("[Privy] 응답 status: {}, body: {}", response.getStatusCode(), response.getBody());
+            log.info("[Privy] 응답 status: {}", response.getStatusCode());
 
             JsonNode root = objectMapper.readTree(response.getBody());
-            String privyUserId = root.path("id").asText();
-            JsonNode linkedAccounts = root.path("linked_accounts");
+            String walletAddress = root.path("walletAddress").asText(null);
+            String walletId = root.path("walletId").asText(null);
 
-            for (JsonNode account : linkedAccounts) {
-                String type = account.path("type").asText();
-                String walletClient = account.path("walletClient").asText();
-                // 응답 : type=wallet, walletClient=privy
-                if ("wallet".equals(type) && "privy".equals(walletClient)) {
-                    String walletAddress = account.path("address").asText();
-                    log.info("[Privy] 지갑 생성 완료 - address: {}, userId: {}", walletAddress, privyUserId);
-                    return new String[]{walletAddress, privyUserId};
-                }
+            if (walletAddress != null) {
+                log.info("[Privy] 지갑 생성 완료 - address: {}, walletId: {}", walletAddress, walletId);
+                return new String[]{walletAddress, walletId};
             }
 
-            log.warn("[Privy] 응답에 지갑이 존재 X - body: {}", response.getBody());
+            log.warn("[Privy] 응답에 지갑 주소 없음 - body: {}", response.getBody());
 
         } catch (Exception e) {
             log.error("[Privy] 지갑 생성 실패: {}", e.getMessage(), e);
@@ -87,16 +73,5 @@ public class PrivyWalletService {
 
         return new String[]{null, null};
     }
-
-    private HttpHeaders buildHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("privy-app-id", appId);
-        headers.set("User-Agent", "CareApp/1.0");
-        // Basic Auth: Base64(appId:appSecret)
-        String credentials = Base64.getEncoder()
-                .encodeToString((appId + ":" + appSecret).getBytes());
-        headers.set("Authorization", "Basic " + credentials);
-        return headers;
-    }
 }
+

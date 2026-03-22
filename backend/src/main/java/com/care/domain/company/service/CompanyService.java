@@ -50,7 +50,7 @@ public class CompanyService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 업체입니다."));
 
         if (company.getWalletAddress() == null) {
-            throw new IllegalArgumentException("지갑 주소가 없습니다. Privy 연동 후 이용해주세요.");
+            throw new IllegalArgumentException("지갑 주소가 없습니다.");
         }
 
         if (company.getBizNumber() == null) {
@@ -67,4 +67,5 @@ public class CompanyService {
 
         return didUri;
     }
+
 }

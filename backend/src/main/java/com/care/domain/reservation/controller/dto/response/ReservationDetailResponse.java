@@ -2,15 +2,15 @@ package com.care.domain.reservation.controller.dto.response;
 
 import com.care.domain.reservation.entity.Reservation;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record ReservationDetailResponse(
         String reservationId,
         String status,
         String smartContractAddress,
         String depositStatus,
-        LocalDate pickupDate,
-        LocalDate returnDate,
+        LocalDateTime pickupDate,
+        LocalDateTime returnDate,
         String beforeScanTxHash,
         String afterScanTxHash,
         RenterInfo renter,

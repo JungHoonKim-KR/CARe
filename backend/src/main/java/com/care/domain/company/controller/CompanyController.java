@@ -6,7 +6,6 @@ import com.care.domain.company.controller.dto.response.CompanyProfileResponse;
 import com.care.domain.company.service.CompanyService;
 import com.care.domain.reservation.controller.dto.response.ReservationSummaryResponse;
 import com.care.domain.reservation.service.ReservationService;
-import com.care.domain.renter.controller.dto.request.LanguageUpdateRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -51,13 +50,5 @@ public class CompanyController {
     public ResponseEntity<Map<String, String>> registerDid(@AuthenticationPrincipal String companyId) throws Exception {
         String didUri = companyService.registerDid(companyId);
         return ResponseEntity.ok(Map.of("didUri", didUri));
-    }
-
-    @PutMapping("/language")
-    public ResponseEntity<Void> updateLanguage(
-            @AuthenticationPrincipal String companyId,
-            @Valid @RequestBody LanguageUpdateRequest request) {
-        companyService.updateLanguage(companyId, request.getLanguageCode());
-        return ResponseEntity.ok().build();
     }
 }

@@ -73,6 +73,7 @@ public class AuthService {
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
                 request.getLanguageCode(),
+                null,
                 walletAddress
         );
         if (privyWalletId != null) company.updatePrivyWallet(walletAddress, privyWalletId);

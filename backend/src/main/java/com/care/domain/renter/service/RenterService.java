@@ -25,11 +25,4 @@ public class RenterService {
         List<RenterDocument> documents = renterDocumentRepository.findAllByRenter_UserId(userId);
         return new RenterProfileResponse(renter, documents);
     }
-
-    @Transactional
-    public void updateLanguage(String userId, String languageCode) {
-        Renter renter = renterRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-        renter.updateLanguage(languageCode);
-    }
 }

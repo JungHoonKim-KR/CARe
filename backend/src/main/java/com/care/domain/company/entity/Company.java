@@ -62,7 +62,6 @@ public class Company extends BaseEntity {
         company.email = email;
         company.passwordHash = passwordHash;
         company.airportCode = airportCode;
-        company.languageCode = languageCode;
         company.walletAddress = walletAddress;
         company.didVerified = false;
         return company;
@@ -85,5 +84,9 @@ public class Company extends BaseEntity {
     public void updatePrivyWallet(String walletAddress, String privyWalletId) {
         this.walletAddress = walletAddress;
         this.privyWalletId = privyWalletId;
+    }
+
+    public void updateLanguage(String languageCode) {
+        this.languageCode = languageCode;
     }
 }

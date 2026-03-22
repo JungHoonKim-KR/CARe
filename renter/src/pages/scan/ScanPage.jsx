@@ -3,16 +3,18 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState } from 'react'
-import { useParams, useLocation }       from 'react-router-dom'
+import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { Scanner }                      from './scanner.js'
 import { ZONES }                        from './zones.js'
 import styles                           from './ScanPage.module.css'
 import { getScanResult }                from '../../api/scan'
 import careLogo                         from '../../assets/care_logo.png'
 import { drawBoxes, clearOverlay, updateARBoxes, startARLoop, stopARLoop, showHistoryOverlay } from './overlay.js'
+
 export default function ScanPage() {
   const { reservationId } = useParams()
   const location          = useLocation()
+  const navigate          = useNavigate()
   const logType           = location.state?.logType || 'BEFORE'
 
   const videoRef    = useRef(null)
@@ -59,11 +61,11 @@ export default function ScanPage() {
 
   // WebSocket + rAF
   useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const protocol  = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const AI_WS_URL = import.meta.env.VITE_AI_WS_URL || `${protocol}//${window.location.hostname}:8000`
-    const wsUrl = `${AI_WS_URL}/api/v1/scratches/ws/detect`
-    wsRef.current = new WebSocket(wsUrl)
-    wsRef.current.onopen = () => console.log('🟢 [WS] 연결 성공!')
+    const wsUrl     = `${AI_WS_URL}/api/v1/scratches/ws/detect`
+    wsRef.current   = new WebSocket(wsUrl)
+    wsRef.current.onopen    = () => console.log('🟢 [WS] 연결 성공!')
     wsRef.current.onmessage = (event) => {
       if (matchStatusRef.current === 'captured') return
       const data = JSON.parse(event.data)
@@ -161,18 +163,13 @@ export default function ScanPage() {
     setCaptures(prev => ({ ...prev, [currentZone.id]: { dataUrl: null, boxes: [] } }))
     handleNext()
   }
+  function handleCardClick(i) {
+    const newActive = activeCard === i ? null : i
+    setActiveCard(newActive)
+    if (newActive !== null) showHistoryOverlay(history[newActive], videoRef.current)
+    else showHistoryOverlay(null, videoRef.current)
+  }
 
-    function handleCardClick(i) {
-      const newActive = activeCard === i ? null : i
-      setActiveCard(newActive)
-
-      // AR 오버레이 표시/해제
-      if (newActive !== null) {
-        showHistoryOverlay(history[newActive], videoRef.current)
-      } else {
-        showHistoryOverlay(null, videoRef.current)
-      }
-    }
   const totalDefects = Object.values(captures).reduce((a, c) => a + (c.boxes?.length || 0), 0)
 
   function getInstructionHtml() {
@@ -184,19 +181,21 @@ export default function ScanPage() {
         : `<strong style="color:#10b981">이상 없음</strong> — 깨끗한 상태입니다.`
     }
     if (matchStatus === 'matched')
-      return `<strong style="color:#b8962e">촬영 버튼</strong>을 눌러 흠집을 저장하세요.`
+      return `<strong style="color:#F7A633">촬영 버튼</strong>을 눌러 흠집을 저장하세요.`
     return currentZone.instruction
   }
 
-  // 완료 화면
+  // ── 완료 화면
   if (isDone) return (
-    <div className={styles.page}>
+    <div className={styles.page} style={{ overflowY: 'auto' }}>
       <div className={styles.summary}>
+
         <div className={styles.summaryHero}>
           <div className={styles.summaryCheck}>✓</div>
           <div className={styles.summaryHeroTitle}>스캔 완료</div>
           <div className={styles.summaryHeroSub}>모든 구역이 안전하게 기록되었습니다</div>
         </div>
+
         <div className={styles.summaryStats}>
           <div className={styles.statCard}>
             <div className={styles.statLabel}>감지된 흠집</div>
@@ -207,51 +206,65 @@ export default function ScanPage() {
             <div className={`${styles.statValue} ${styles.statValueSafe}`}>{ZONES.length}</div>
           </div>
         </div>
-        <div className={styles.summaryGrid}>
-          {ZONES.map(z => {
-            const cap = captures[z.id]
-            const hasDefect = (cap?.boxes?.length || 0) > 0
-            return (
-              <div key={z.id} className={`${styles.summaryCard} ${hasDefect ? styles.summaryCardHasDefect : ''}`}>
-                <div className={styles.summaryCardImg} />
-                <div className={styles.summaryCardInfo}>
-                  <span className={styles.summaryCardZone}>{z.label}</span>
-                  <span className={`${styles.summaryCardStatus} ${hasDefect ? styles.summaryCardDefect : styles.summaryCardClean}`}>
-                    {hasDefect ? `흠집 ${cap.boxes.length}개` : '이상 없음'}
-                  </span>
-                </div>
+
+        {/* 흠집 있는 구역만 크롭 이미지 표시 */}
+        {ZONES.map(z => {
+          const cap       = captures[z.id]
+          const boxes     = cap?.boxes || []
+          const hasDefect = boxes.length > 0
+          if (!hasDefect) return null
+
+          return (
+            <div key={z.id} className={styles.summaryZoneCard}>
+              <div className={styles.summaryZoneHeader}>
+                <span className={styles.summaryZoneName}>{z.label}</span>
+                <span className={styles.summaryZoneCount}>흠집 {boxes.length}개</span>
               </div>
-            )
-          })}
-        </div>
-        <button className={styles.btnDone} onClick={() => console.log('완료:', captures)}>완료</button>
+              <div className={styles.summaryZoneScroll}>
+                {boxes.map((box, i) => (
+                  box.cropS3Url
+                    ? <img key={i} src={box.cropS3Url} alt={`흠집 ${i + 1}`} className={styles.summaryCropImg} />
+                    : <div key={i} className={styles.summaryCropImgEmpty} />
+                ))}
+              </div>
+            </div>
+          )
+        })}
+
+        {/* 흠집 없으면 올클리어 */}
+        {totalDefects === 0 && (
+          <div className={styles.summaryAllClear}>
+            <span style={{ fontSize: 32 }}>🎉</span>
+            <p>모든 구역에서 흠집이 발견되지 않았어요!</p>
+          </div>
+        )}
+
+        <button className={styles.btnDone} onClick={() => navigate('/my-car')}>
+          완료
+        </button>
       </div>
     </div>
   )
 
-  // 스캔 화면
+  // ── 스캔 화면
   return (
     <div className={styles.page}>
 
-      {/* 카메라 + 오버레이 */}
       <div className={styles.cameraWrap}>
         <video ref={videoRef} className={styles.video} playsInline muted />
         <canvas ref={arCanvasRef} className={styles.overlay} style={{ zIndex: 1 }} />
         <canvas ref={canvasRef}   className={styles.overlay} style={{ zIndex: 2 }} />
         <div className={styles.scanLine} />
 
-        {/* 헤더 — 로고 + 구역 진행 */}
         <div className={styles.header}>
           <img src={careLogo} alt="CAre" className={styles.headerLogo} />
           <span className={styles.headerStep}>{zoneIndex + 1} / {ZONES.length}</span>
         </div>
 
-        {/* 저장됨 토스트 */}
         <div className={`${styles.saveToast} ${showToast ? styles.visible : ''}`}>
           ✓ 흠집이 저장되었습니다
         </div>
 
-        {/* 번호판 가이드 */}
         {currentZone.type === 'plate' && matchStatus !== 'captured' && (
           <div className={`${styles.guidePlate} ${styles[matchStatus] || styles.detecting}`}>
             <div className={styles.guidePlateInner}>
@@ -264,7 +277,6 @@ export default function ScanPage() {
           </div>
         )}
 
-        {/* 바퀴 가이드 */}
         {currentZone.type === 'wheel' && matchStatus !== 'captured' && (
           <>
             {currentZone.wheelSide === 'left' && (
@@ -286,7 +298,6 @@ export default function ScanPage() {
           </>
         )}
 
-        {/* 스텝바 */}
         <div className={styles.stepbar}>
           {ZONES.map((z, i) => {
             const cap = captures[z.id]
@@ -300,23 +311,21 @@ export default function ScanPage() {
             )
           })}
         </div>
+
         <div className={styles.zoneNameBar}>
           <span className={styles.zoneName}>{currentZone.name}</span>
         </div>
       </div>
 
-      {/* 매칭 진행바 */}
       <div className={styles.matchProgress}>
         <div className={styles.matchFill} style={{ width: `${matchValue}%` }} />
       </div>
 
-      {/* 안내 텍스트 */}
       <div className={styles.instruction}>
         <div className={styles.instructionIcon}>{currentZone.icon}</div>
         <div className={styles.instructionText} dangerouslySetInnerHTML={{ __html: getInstructionHtml() }} />
       </div>
 
-      {/* 버튼 */}
       <div className={styles.actions}>
         <button className={styles.btnSkip} onClick={handleSkip}>건너뛰기</button>
         {matchStatus !== 'captured' ? (
@@ -330,7 +339,6 @@ export default function ScanPage() {
         )}
       </div>
 
-      {/* 흠집 기록 — flex-grow로 남은 공간 채움 */}
       <div className={styles.historySection}>
         <div className={styles.historyHeader}>
           <span className={styles.historyTitle}>이 구역의 흠집 기록</span>

@@ -251,9 +251,9 @@ export function showHistoryOverlay(scratch, videoEl) {
 
   // 크롭 이미지 미리 로드
   const img = new Image()
-//  img.crossOrigin = 'anonymous'
-//  img.src = cropS3Url
-historyOverlay = { x, y, w, h, img: null, opacity: 0 }
+  img.crossOrigin = 'anonymous'
+  img.src = cropS3Url
+//historyOverlay = { x, y, w, h, img: null, opacity: 0 }
 
   // 페이드인
   historyOverlay = { x, y, w, h, img, opacity: 0 }

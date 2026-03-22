@@ -8,6 +8,7 @@ import com.care.domain.company.entity.Company;
 import com.care.domain.company.repository.CompanyRepository;
 import com.care.domain.renter.entity.Renter;
 import com.care.domain.renter.repository.RenterRepository;
+import com.care.global.external.nts.NtsVerifyClient;
 import com.care.global.external.privy.PrivyWalletService;
 import com.care.global.jwt.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final RedisTemplate<String, String> redisTemplate;
     private final PrivyWalletService privyWalletService;
+    private final NtsVerifyClient ntsVerifyClient;
 
     // 임대인 회원가입
     @Transactional
@@ -44,6 +46,9 @@ public class AuthService {
             String[] wallet = privyWalletService.createWalletForUser(request.getEmail());
             walletAddress = wallet[0];
             privyWalletId = wallet[1];
+        }
+        if (walletAddress == null) {
+            throw new IllegalStateException("지갑 생성에 실패했습니다. Privy 서버 상태를 확인해주세요.");
         }
         Renter renter = Renter.of(
                 UUID.randomUUID().toString(),
@@ -63,20 +68,31 @@ public class AuthService {
         if (companyRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
-        // company는 별도 프론트 없으므로 백엔드에서 직접 Privy 호출
+        // 사업자번호 유효성 검증
+        if (request.getBizNumber() != null && !request.getBizNumber().isBlank()) {
+            boolean bizValid = ntsVerifyClient.verifyBusinessNumber(request.getBizNumber());
+            if (!bizValid) {
+                throw new IllegalArgumentException("유효하지 않은 사업자등록번호입니다.");
+            }
+        }
+        // Privy 지갑 생성
         String[] wallet = privyWalletService.createWalletForUser(request.getEmail());
         String walletAddress = wallet[0];
         String privyWalletId = wallet[1];
+        if (walletAddress == null) {
+            throw new IllegalStateException("지갑 생성에 실패했습니다. Privy 서버 상태를 확인해주세요.");
+        }
         Company company = Company.of(
                 UUID.randomUUID().toString(),
                 request.getName(),
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
+                request.getAirportCode(),
                 request.getLanguageCode(),
-                null,
                 walletAddress
         );
         if (privyWalletId != null) company.updatePrivyWallet(walletAddress, privyWalletId);
+        if (request.getBizNumber() != null) company.updateBizVerified(request.getBizNumber());
         companyRepository.save(company);
     }
 

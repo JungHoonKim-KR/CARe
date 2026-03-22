@@ -206,40 +206,45 @@ pipeline {
                 expression { env.BUILD_RENTER == 'true' }
             }
             steps {
-                sh '''
-                    set -euo pipefail
-                    echo "=== Renter Blue-Green Deployment ==="
+                withCredentials([file(credentialsId: 'renter-env-file', variable: 'RENTER_ENV_FILE')]) {
+                    sh '''
+                        set -euo pipefail
+                        echo "=== Renter Blue-Green Deployment ==="
 
-                    # 디렉토리 초기화 (최초 실행 시)
-                    mkdir -p /home/ubuntu/renter/dist-blue
-                    mkdir -p /home/ubuntu/renter/dist-green
+                        # .env.production 주입
+                        cp "$RENTER_ENV_FILE" renter/.env.production
 
-                    # 현재 활성 색상 확인 (없으면 blue가 기본)
-                    CURRENT_COLOR=$(cat /home/ubuntu/renter/active_color 2>/dev/null || echo "blue")
+                        # 디렉토리 초기화 (최초 실행 시)
+                        mkdir -p /home/ubuntu/renter/dist-blue
+                        mkdir -p /home/ubuntu/renter/dist-green
 
-                    # 배포 대상 색상 결정 (토글)
-                    if [ "$CURRENT_COLOR" = "blue" ]; then
-                        TARGET_COLOR="green"
-                    else
-                        TARGET_COLOR="blue"
-                    fi
+                        # 현재 활성 색상 확인 (없으면 blue가 기본)
+                        CURRENT_COLOR=$(cat /home/ubuntu/renter/active_color 2>/dev/null || echo "blue")
 
-                    echo "Renter: $CURRENT_COLOR -> $TARGET_COLOR"
+                        # 배포 대상 색상 결정 (토글)
+                        if [ "$CURRENT_COLOR" = "blue" ]; then
+                            TARGET_COLOR="green"
+                        else
+                            TARGET_COLOR="blue"
+                        fi
 
-                    # 1. React 빌드
-                    echo "Building Renter application..."
-                    docker build --no-cache -t renter-builder -f renter/Dockerfile .
+                        echo "Renter: $CURRENT_COLOR -> $TARGET_COLOR"
 
-                    # 2. 빌드 결과물을 대상 디렉토리에 복사
-                    echo "Copying build output to dist-$TARGET_COLOR..."
-                    rm -rf /home/ubuntu/renter/dist-$TARGET_COLOR/*
-                    docker run --rm -v /home/ubuntu/renter/dist-$TARGET_COLOR:/output renter-builder sh -c "cp -r /tmp/dist/* /output/"
+                        # 1. React 빌드
+                        echo "Building Renter application..."
+                        docker build --no-cache -t renter-builder -f renter/Dockerfile .
 
-                    # 3. 활성 색상 업데이트
-                    echo "$TARGET_COLOR" > /home/ubuntu/renter/active_color
+                        # 2. 빌드 결과물을 대상 디렉토리에 복사
+                        echo "Copying build output to dist-$TARGET_COLOR..."
+                        rm -rf /home/ubuntu/renter/dist-$TARGET_COLOR/*
+                        docker run --rm -v /home/ubuntu/renter/dist-$TARGET_COLOR:/output renter-builder sh -c "cp -r /tmp/dist/* /output/"
 
-                    echo "=== Renter deployed to $TARGET_COLOR ==="
-                '''
+                        # 3. 활성 색상 업데이트
+                        echo "$TARGET_COLOR" > /home/ubuntu/renter/active_color
+
+                        echo "=== Renter deployed to $TARGET_COLOR ==="
+                    '''
+                }
             }
         }
 

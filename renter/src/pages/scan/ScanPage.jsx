@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useLocation }       from 'react-router-dom'
 import { Scanner }                      from './scanner.js'
-import { drawBoxes, clearOverlay, drawARBoxes } from './overlay.js'
+import { drawBoxes, clearOverlay, updateARBoxes, startARLoop, stopARLoop } from './overlay.js'
 import { ZONES, MOCK_RESULTS }          from './zones.js'
 import styles                           from './ScanPage.module.css'
 import { getScanResult }                from '../../api/scan'
@@ -34,10 +34,10 @@ export default function ScanPage() {
   const [allScratches, setAllScratches] = useState([])
   const [activeCard,   setActiveCard]   = useState(null)
 
-  const currentZone = ZONES[zoneIndex]
-  const history     = allScratches.filter(s => s.carPart === currentZone?.id)
-
+  const currentZone    = ZONES[zoneIndex]
+  const history        = allScratches.filter(s => s.carPart === currentZone?.id)
   const matchStatusRef = useRef(matchStatus)
+
   useEffect(() => { matchStatusRef.current = matchStatus }, [matchStatus])
   useEffect(() => { setActiveCard(null) }, [zoneIndex])
 
@@ -57,18 +57,22 @@ export default function ScanPage() {
     document.head.appendChild(link)
   }, [])
 
-  // WebSocket
+  // ── WebSocket + rAF 루프
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const wsUrl    = `${protocol}//${window.location.host}/api/v1/scratches/ws/detect`
+    const AI_WS_URL = import.meta.env.VITE_AI_WS_URL || 'ws://localhost:8000'
+    const wsUrl = `${AI_WS_URL}/api/v1/scratches/ws/detect`
     wsRef.current  = new WebSocket(wsUrl)
     wsRef.current.onopen = () => console.log('🟢 [WS] 연결 성공!')
+
     wsRef.current.onmessage = (event) => {
-      if (matchStatusRef.current === 'captured') { clearOverlay(arCanvasRef.current); return }
+      // 촬영 완료 상태면 AR 박스 무시
+      if (matchStatusRef.current === 'captured') return
       const data = JSON.parse(event.data)
-      if (data.boxes && arCanvasRef.current && videoRef.current)
-        drawARBoxes(arCanvasRef.current, videoRef.current, data.boxes)
+      if (data.boxes) updateARBoxes(data.boxes) // ← lerp + persistence 적용
     }
+
+    // 400ms마다 프레임 전송
     const interval = setInterval(() => {
       if (matchStatusRef.current === 'captured') return
       const video = videoRef.current, ws = wsRef.current
@@ -76,28 +80,49 @@ export default function ScanPage() {
       const c = document.createElement('canvas')
       c.width = 640; c.height = 360
       c.getContext('2d').drawImage(video, 0, 0, 640, 360)
-      c.toBlob(blob => { if (blob && ws.readyState === WebSocket.OPEN) ws.send(blob) }, 'image/jpeg', 0.3)
+      c.toBlob(blob => {
+        if (blob && ws.readyState === WebSocket.OPEN) ws.send(blob)
+      }, 'image/jpeg', 0.3)
     }, 400)
-    return () => { clearInterval(interval); if (wsRef.current) wsRef.current.close() }
+
+    return () => {
+      clearInterval(interval)
+      stopARLoop() // ← rAF 루프 정지
+      if (wsRef.current) wsRef.current.close()
+    }
   }, [])
 
-  // 카메라
+  // ── 카메라 시작 + rAF 루프 시작
   useEffect(() => {
     let stream = null, cancelled = false
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: 1280, height: 720 }, audio: false })
+
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: 1280, height: 720 },
+      audio: false,
+    })
       .then(s => {
         stream = s
         if (cancelled) { s.getTracks().forEach(t => t.stop()); return }
         const video = videoRef.current
         if (!video) return
         video.srcObject = s
-        video.onloadedmetadata = () => { if (!cancelled) video.play().catch(() => {}) }
+        video.onloadedmetadata = () => {
+          if (!cancelled) {
+            video.play().catch(() => {})
+            // 카메라 준비 완료 후 rAF 루프 시작
+            startARLoop(arCanvasRef.current, video)
+          }
+        }
       })
       .catch(err => { if (!cancelled) console.error('[ScanPage] 카메라 실패', err) })
-    return () => { cancelled = true; stream?.getTracks().forEach(t => t.stop()) }
+
+    return () => {
+      cancelled = true
+      stream?.getTracks().forEach(t => t.stop())
+    }
   }, [])
 
-  // Scanner
+  // ── Scanner 초기화 + 매칭 시작
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
@@ -115,20 +140,30 @@ export default function ScanPage() {
         if (c) c.style.strokeDasharray = `${dash} 999`
       })
     }
-    scanner.onMatched  = () => { setMatchStatus('matched'); setCanCapture(true) }
-    scanner.onCapture  = (zoneId, dataUrl, boxes) => {
+    scanner.onMatched = () => { setMatchStatus('matched'); setCanCapture(true) }
+    scanner.onCapture = (zoneId, dataUrl, boxes) => {
       setCaptures(prev => ({ ...prev, [zoneId]: { dataUrl, boxes } }))
       setMatchStatus('captured'); setCanCapture(false); setIsCapturing(false)
-      if (canvasRef.current && videoRef.current) {
+      stopARLoop() // 촬영 완료 시 rAF 루프 정지
+      clearOverlay(arCanvasRef.current)
+      if (canvasRef.current && videoRef.current)
         drawBoxes(canvasRef.current, videoRef.current, boxes)
-        clearOverlay(arCanvasRef.current)
-      }
       if (boxes.length > 0) { setShowToast(true); setTimeout(() => setShowToast(false), 2000) }
     }
+
     scanner.setZone(currentZone)
     scanner.startMatching()
     return () => { scannerRef.current = null }
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoneIndex])
+
+  // 구역 넘어갈 때 rAF 루프 재시작
+  useEffect(() => {
+    if (zoneIndex === 0) return // 첫 마운트는 카메라 useEffect에서 처리
+    const video = videoRef.current
+    if (video && video.readyState >= 2) {
+      startARLoop(arCanvasRef.current, video)
+    }
   }, [zoneIndex])
 
   async function handleCapture() {
@@ -150,16 +185,18 @@ export default function ScanPage() {
   const totalDefects = Object.values(captures).reduce((a, c) => a + (c.boxes?.length || 0), 0)
 
   function getInstructionHtml() {
-    if (matchStatus === 'captured')
-      return result.hasDefect
-        ? `<strong style="color:#ef4444">흠집 ${result.count}개</strong>가 감지되어 저장되었습니다. 다음 구역으로 이동하세요.`
+    if (matchStatus === 'captured') {
+      const cap = captures[currentZone?.id]
+      const count = cap?.boxes?.length || 0
+      return count > 0
+        ? `<strong style="color:#ef4444">흠집 ${count}개</strong>가 감지되어 저장되었습니다. 다음 구역으로 이동하세요.`
         : `<strong style="color:#10b981">이상 없음</strong> — 깨끗한 상태입니다. 다음 구역으로 이동하세요.`
+    }
     if (matchStatus === 'matched')
       return `구역 인식 완료! <strong style="color:#b8962e">촬영 버튼</strong>을 눌러 흠집을 저장하세요.`
     return currentZone.instruction
   }
-
-  // 완료 화면
+  // ── 완료 화면
   if (isDone) return (
     <div className={styles.page}>
       <div className={styles.summary}>
@@ -200,35 +237,30 @@ export default function ScanPage() {
     </div>
   )
 
-  // 스캔 화면
+  // ── 스캔 화면
   return (
     <div className={styles.page}>
 
-      {/* ── 카메라 + 오버레이 UI 전체 */}
       <div className={styles.cameraWrap}>
         <video ref={videoRef} className={styles.video} playsInline muted />
         <canvas ref={arCanvasRef} className={styles.overlay} style={{ zIndex: 1 }} />
         <canvas ref={canvasRef}   className={styles.overlay} style={{ zIndex: 2 }} />
         <div className={styles.scanLine} />
 
-        {/* 헤더 오버레이 */}
         <div className={styles.header}>
           <span className={styles.headerLogo}>CAre</span>
           <span className={styles.headerStep}>{zoneIndex + 1} / {ZONES.length} 구역</span>
         </div>
 
-        {/* LIVE 뱃지 */}
         <div className={styles.liveBadge}>
           <div className={styles.liveDot} />
           <span className={styles.liveText}>LIVE</span>
         </div>
 
-        {/* 저장됨 토스트 */}
         <div className={`${styles.saveToast} ${showToast ? styles.visible : ''}`}>
           ✓ 흠집이 저장되었습니다
         </div>
 
-        {/* 번호판 가이드 */}
         {currentZone.type === 'plate' && matchStatus !== 'captured' && (
           <div className={`${styles.guidePlate} ${styles[matchStatus] || styles.detecting}`}>
             <div className={styles.guidePlateInner}>
@@ -244,7 +276,6 @@ export default function ScanPage() {
           </div>
         )}
 
-        {/* 바퀴 가이드 */}
         {currentZone.type === 'wheel' && matchStatus !== 'captured' && (
           <>
             {currentZone.wheelSide === 'left' && (
@@ -268,7 +299,6 @@ export default function ScanPage() {
           </>
         )}
 
-        {/* 스텝바 — 카메라 안 하단 */}
         <div className={styles.stepbar}>
           {ZONES.map((z, i) => {
             const cap = captures[z.id]
@@ -284,7 +314,6 @@ export default function ScanPage() {
           })}
         </div>
 
-        {/* 존 헤더 — 카메라 맨 아래 */}
         <div className={styles.zoneHeader}>
           <div>
             <div className={styles.zoneLabel}>촬영 구역</div>
@@ -299,18 +328,15 @@ export default function ScanPage() {
         </div>
       </div>
 
-      {/* ── 매칭 진행바 */}
       <div className={styles.matchProgress}>
         <div className={styles.matchFill} style={{ width: `${matchValue}%` }} />
       </div>
 
-      {/* ── 안내 텍스트 */}
       <div className={styles.instruction}>
         <div className={styles.instructionIcon}>{currentZone.icon}</div>
         <div className={styles.instructionText} dangerouslySetInnerHTML={{ __html: getInstructionHtml() }} />
       </div>
 
-      {/* ── 버튼 */}
       <div className={styles.actions}>
         <button className={styles.btnSkip} onClick={handleSkip}>건너뛰기</button>
         {matchStatus !== 'captured' ? (
@@ -324,7 +350,6 @@ export default function ScanPage() {
         )}
       </div>
 
-      {/* ── 이전 흠집 기록 */}
       <div className={styles.historySection}>
         <div className={styles.historyHeader}>
           <span className={styles.historyTitle}>이 구역의 흠집 기록</span>

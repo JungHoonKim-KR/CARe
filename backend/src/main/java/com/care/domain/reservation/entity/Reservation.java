@@ -7,7 +7,6 @@ import com.care.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -53,10 +52,10 @@ public class Reservation extends BaseEntity {
     private String paymentTxHash;
 
     @Column(name = "pickup_date")
-    private LocalDate pickupDate;
+    private LocalDateTime pickupDate;
 
     @Column(name = "return_date")
-    private LocalDate returnDate;
+    private LocalDateTime returnDate;
 
     @Column(name = "total_price")
     private int totalPrice;
@@ -66,7 +65,7 @@ public class Reservation extends BaseEntity {
     }
 
     public static Reservation create(Renter renter, OwnedCar ownedCar, Insurance insurance,
-                                     LocalDate pickupDate, LocalDate returnDate,
+                                     LocalDateTime pickupDate, LocalDateTime returnDate,
                                      int totalPrice, String paymentTxHash) {
         Reservation r = new Reservation();
         r.reservationId = UUID.randomUUID().toString();

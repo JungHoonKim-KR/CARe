@@ -32,6 +32,7 @@ import DamageDetailPage from './pages/damage-detail/DamageDetailPage'
 import DisputePage from './pages/dispute/DisputePage'
 import DisputeHistoryPage from './pages/dispute/DisputeHistoryPage'
 import ReservationListPage from './pages/reservations/ReservationListPage'
+import ReturnGuidePage from './pages/car-return/ReturnGuidePage'
 
 function App() {
   return (
@@ -70,6 +71,7 @@ function App() {
           <Route path="/dispute" element={<DisputePage />} />
           <Route path="/dispute-history" element={<DisputeHistoryPage />} />
           <Route path="/reservations" element={<ReservationListPage />} />
+          <Route path="/return-guide" element={<ReturnGuidePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

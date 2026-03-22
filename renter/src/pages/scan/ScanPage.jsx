@@ -5,12 +5,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useLocation }       from 'react-router-dom'
 import { Scanner }                      from './scanner.js'
-import { drawBoxes, clearOverlay, updateARBoxes, startARLoop, stopARLoop } from './overlay.js'
 import { ZONES }                        from './zones.js'
 import styles                           from './ScanPage.module.css'
 import { getScanResult }                from '../../api/scan'
 import careLogo                         from '../../assets/care_logo.png'
-
+import { drawBoxes, clearOverlay, updateARBoxes, startARLoop, stopARLoop, showHistoryOverlay } from './overlay.js'
 export default function ScanPage() {
   const { reservationId } = useParams()
   const location          = useLocation()
@@ -162,8 +161,18 @@ export default function ScanPage() {
     setCaptures(prev => ({ ...prev, [currentZone.id]: { dataUrl: null, boxes: [] } }))
     handleNext()
   }
-  function handleCardClick(i) { setActiveCard(prev => prev === i ? null : i) }
 
+    function handleCardClick(i) {
+      const newActive = activeCard === i ? null : i
+      setActiveCard(newActive)
+
+      // AR 오버레이 표시/해제
+      if (newActive !== null) {
+        showHistoryOverlay(history[newActive], videoRef.current)
+      } else {
+        showHistoryOverlay(null, videoRef.current)
+      }
+    }
   const totalDefects = Object.values(captures).reduce((a, c) => a + (c.boxes?.length || 0), 0)
 
   function getInstructionHtml() {

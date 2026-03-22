@@ -2,7 +2,7 @@ package com.care.domain.reservation.controller.dto.response;
 
 import com.care.domain.reservation.entity.Reservation;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalDateTime;
 
 public record ReservationSummaryResponse(
@@ -14,8 +14,8 @@ public record ReservationSummaryResponse(
         String brand,
         String modelName,
         String insuranceName,
-        LocalDate pickupDate, // 추가
-        LocalDate returnDate,   // 추가
+        LocalDateTime pickupDate,
+        LocalDateTime returnDate,
         LocalDateTime createdAt
 ) {
     public static ReservationSummaryResponse from(Reservation r) {

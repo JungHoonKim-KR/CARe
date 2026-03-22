@@ -13,7 +13,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/companies/me")
@@ -44,11 +43,5 @@ public class CompanyController {
     @GetMapping("/reservations")
     public ResponseEntity<List<ReservationSummaryResponse>> getReservations(@AuthenticationPrincipal String companyId) {
         return ResponseEntity.ok(reservationService.getCompanyReservations(companyId));
-    }
-
-    @PostMapping("/did")
-    public ResponseEntity<Map<String, String>> registerDid(@AuthenticationPrincipal String companyId) throws Exception {
-        String didUri = companyService.registerDid(companyId);
-        return ResponseEntity.ok(Map.of("didUri", didUri));
     }
 }

@@ -28,6 +28,10 @@ public class CompanySignUpRequest {
     @Size(max = 50)
     private String bizNumber;
 
+    @NotBlank
+    @Size(max = 10)
+    private String airportCode;
+
     private String languageCode;
 
     private String walletAddress; // 회원가입 시 Privy로 생성한 지갑 주소

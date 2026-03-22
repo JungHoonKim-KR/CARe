@@ -12,6 +12,7 @@ public record CarSummaryResponse(
         CarSize carSize,
         String countryCode,
         String airportCode,
+        String companyId,
         String companyName,
         String frontImageUrl
 ) {
@@ -25,6 +26,7 @@ public record CarSummaryResponse(
                 car.getCarModel().getCarSize(),
                 car.getCompany().getCountryCode(),
                 car.getCompany().getAirportCode(),
+                car.getCompany().getCompanyId(),
                 car.getCompany().getName(),
                 frontImageUrl
         );

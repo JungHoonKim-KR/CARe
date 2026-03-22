@@ -84,7 +84,7 @@ public class CarService {
         sideImages.put(Side.RIGHT, request.rightImage());
 
         // 1. OwnedCar 저장 (PENDING)
-        OwnedCar car = OwnedCar.create(carId, company, carModel, request.plateNumber());
+        OwnedCar car = OwnedCar.create(carId, company, carModel, request.plateNumber(), request.dailyPrice());
         ownedCarRepository.save(car);
 
         // 2. side별 S3 + IPFS 업로드 → CarImage 저장

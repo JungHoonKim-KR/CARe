@@ -4,6 +4,7 @@ import SplashPage from './pages/splash/SplashPage'
 import LandingPage from './pages/landing/LandingPage'
 import LoginPage from './pages/auth/LoginPage'
 import SignUpPage from './pages/auth/SignUpPage'
+import SignUpLanguagePage from './pages/auth/SignUpLanguagePage'
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
 import ResetPasswordPage from './pages/auth/ResetPasswordPage'
 import LanguageSelectPage from './pages/language/LanguageSelectPage'
@@ -26,12 +27,11 @@ import DIDCardPage from './pages/did-auth/DIDCardPage'
 import ScanPage from './pages/scan/ScanPage'
 import CarFaceAuthPage from './pages/car-faceauth/CarFaceAuthPage'
 import CarSmartKeyPage from './pages/car-smartkey/CarSmartKeyPage'
-import CarCrackPage from './pages/car-crack/CarCrackPage'
 import DamageHistoryPage from './pages/damage-history/DamageHistoryPage'
 import DamageDetailPage from './pages/damage-detail/DamageDetailPage'
-import CarReturnPage from './pages/car-return/CarReturnPage'
 import DisputePage from './pages/dispute/DisputePage'
 import DisputeHistoryPage from './pages/dispute/DisputeHistoryPage'
+import ReservationListPage from './pages/reservations/ReservationListPage'
 
 function App() {
   return (
@@ -43,6 +43,7 @@ function App() {
           <Route path="/scan/:reservationId" element={<ScanPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/signup/language" element={<SignUpLanguagePage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/language" element={<LanguageSelectPage />} />
@@ -63,13 +64,12 @@ function App() {
           <Route path="/did-confirm" element={<DIDConfirmPage />} />
           <Route path="/did-card" element={<DIDCardPage />} />
           <Route path="/car-faceauth" element={<CarFaceAuthPage />} />
-          <Route path="/car-crack" element={<CarCrackPage />} />
           <Route path="/car-smartkey" element={<CarSmartKeyPage />} />
           <Route path="/damage-history" element={<DamageHistoryPage />} />
           <Route path="/damage-detail" element={<DamageDetailPage />} />
-          <Route path="/car-return" element={<CarReturnPage />} />
           <Route path="/dispute" element={<DisputePage />} />
           <Route path="/dispute-history" element={<DisputeHistoryPage />} />
+          <Route path="/reservations" element={<ReservationListPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

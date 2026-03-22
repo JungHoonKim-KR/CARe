@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CarImage extends BaseEntity {
 
-    public enum Side { FRONT, REAR, LEFT, RIGHT }
+    public enum Side { FRONT, REAR, FRONT_LEFT, FRONT_RIGHT, REAR_LEFT, REAR_RIGHT }
 
     @Id
     @Column(name = "id", length = 100)
@@ -23,7 +23,7 @@ public class CarImage extends BaseEntity {
     private OwnedCar car;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "side", length = 10, nullable = false)
+    @Column(name = "side", length = 15, nullable = false)
     private Side side;
 
     @Column(name = "s3_url", length = 500, nullable = false)

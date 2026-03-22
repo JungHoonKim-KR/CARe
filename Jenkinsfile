@@ -13,12 +13,19 @@ pipeline {
         // Backend
         BACKEND_IMAGE = "spring-boot-app:latest"
 
+        // AI Face
+        AI_VERIFY_IMAGE = "ai-verify:latest"
+        AI_VERIFY_CONTAINER = "ai-verify"
+
         // Nginx
         NGINX_CONTAINER = "nginx"
 
         // Infrastructure
         MYSQL_CONTAINER = "mysql"
         REDIS_CONTAINER = "redis"
+
+        // YOLO 서버 (RunPod 확정 전까지 localhost, 이후 실제 IP로 변경)
+        AI_YOLO_HOST = "${env.AI_YOLO_HOST ?: 'localhost'}"
     }
 
     stages {
@@ -73,20 +80,22 @@ pipeline {
                     def renterChanged       = changes.any { it.startsWith('renter/') }
                     def companyChanged      = changes.any { it.startsWith('company/') }
                     def nginxConfChanged    = changes.any { it.startsWith('infra/nginx/') }
+                    def aiFaceChanged       = changes.any { it.startsWith('ai-verify/') }
 
                     // Jenkinsfile 변경 시 전체 빌드
-                    env.BUILD_BACKEND = (jenkinsfileChanged || backendChanged)   ? 'true' : 'false'
-                    env.BUILD_RENTER  = (jenkinsfileChanged || renterChanged)    ? 'true' : 'false'
-                    env.BUILD_COMPANY = (jenkinsfileChanged || companyChanged)   ? 'true' : 'false'
-                    env.BUILD_NGINX_CONF = (nginxConfChanged) ? 'true' : 'false'
+                    env.BUILD_BACKEND  = (jenkinsfileChanged || backendChanged)  ? 'true' : 'false'
+                    env.BUILD_RENTER   = (jenkinsfileChanged || renterChanged)   ? 'true' : 'false'
+                    env.BUILD_COMPANY  = (jenkinsfileChanged || companyChanged)  ? 'true' : 'false'
+                    env.BUILD_NGINX_CONF = (nginxConfChanged)                    ? 'true' : 'false'
+                    env.BUILD_AI_VERIFY  = (jenkinsfileChanged || aiFaceChanged)   ? 'true' : 'false'
 
-                    if (!jenkinsfileChanged && !backendChanged && !renterChanged && !companyChanged && !nginxConfChanged) {
+                    if (!jenkinsfileChanged && !backendChanged && !renterChanged && !companyChanged && !nginxConfChanged && !aiFaceChanged) {
                         echo "No relevant changes detected. Skipping deployment."
                         currentBuild.result = 'NOT_BUILT'
-                        error("No changes detected in backend, renter, company, or nginx")
+                        error("No changes detected in backend, renter, company, nginx, or ai-verify")
                     }
 
-                    echo "Build Triggered - Backend: ${env.BUILD_BACKEND}, Renter: ${env.BUILD_RENTER}, Company: ${env.BUILD_COMPANY}, Nginx: ${env.BUILD_NGINX_CONF}"
+                    echo "Build Triggered - Backend: ${env.BUILD_BACKEND}, Renter: ${env.BUILD_RENTER}, Company: ${env.BUILD_COMPANY}, Nginx: ${env.BUILD_NGINX_CONF}, AI-Face: ${env.BUILD_AI_VERIFY}"
                 }
             }
         }
@@ -283,13 +292,55 @@ pipeline {
         }
 
         // ============================================================
-        // 7. Nginx 설정 업데이트
+        // 7. AI-Face 빌드 & 배포
+        // ============================================================
+        stage('Build & Deploy AI-Face') {
+            when {
+                expression { env.BUILD_AI_VERIFY == 'true' }
+            }
+            steps {
+                script {
+                    withCredentials([file(credentialsId: 'ai-verify-env-file', variable: 'AI_FACE_ENV_PATH')]) {
+                        sh '''
+                            set -e
+                            echo "=== AI-Face Deployment ==="
+
+                            mkdir -p /home/ubuntu/ai-verify
+                            cp ${AI_FACE_ENV_PATH} /home/ubuntu/ai-verify/.env
+
+                            echo "Building AI-Face Docker image..."
+                            docker build -t ${AI_VERIFY_IMAGE} ai-verify/
+
+                            echo "Restarting ai-verify container..."
+                            docker stop ${AI_VERIFY_CONTAINER} 2>/dev/null || true
+                            docker rm ${AI_VERIFY_CONTAINER} 2>/dev/null || true
+
+                            docker run -d \
+                                --name ${AI_VERIFY_CONTAINER} \
+                                --network ${DOCKER_NETWORK} \
+                                --restart unless-stopped \
+                                --env-file /home/ubuntu/ai-verify/.env \
+                                ${AI_VERIFY_IMAGE}
+
+                            echo "Waiting for ai-verify to start..."
+                            sleep 10
+                            docker ps | grep ${AI_VERIFY_CONTAINER}
+
+                            echo "=== AI-Face deployed ==="
+                        '''
+                    }
+                }
+            }
+        }
+
+        // ============================================================
+        // 8. Nginx 설정 업데이트
         // - Renter/Company/Nginx 변경 시 항상 실행
         // - placeholder 치환 후 nginx reload (Zero Downtime)
         // ============================================================
         stage('Update Nginx Config') {
             when {
-                expression { env.BUILD_BACKEND == 'true' || env.BUILD_RENTER == 'true' || env.BUILD_COMPANY == 'true' || env.BUILD_NGINX_CONF == 'true' }
+                expression { env.BUILD_BACKEND == 'true' || env.BUILD_RENTER == 'true' || env.BUILD_COMPANY == 'true' || env.BUILD_NGINX_CONF == 'true' || env.BUILD_AI_VERIFY == 'true' }
             }
             steps {
                 sh '''
@@ -310,6 +361,7 @@ pipeline {
                         -e "s|__BACKEND_HOST__|backend-$BACKEND_COLOR|g" \
                         -e "s|__RENTER_ROOT__|/usr/share/nginx/html/renter-$RENTER_COLOR|g" \
                         -e "s|__COMPANY_ROOT__|/usr/share/nginx/html/company-$COMPANY_COLOR|g" \
+                        -e "s|__AI_YOLO_HOST__|${AI_YOLO_HOST}|g" \
                         infra/nginx/nginx.conf > /tmp/nginx.conf.rendered
                     cat /tmp/nginx.conf.rendered > /home/ubuntu/infra/nginx/nginx.conf
 

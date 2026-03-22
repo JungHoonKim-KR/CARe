@@ -1,31 +1,28 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { getRenterProfile } from '../../api/auth'
 import './DIDCardPage.css'
 
 export default function DIDCardPage() {
   const navigate = useNavigate()
   const { state } = useLocation()
+  const expiryDate = state?.expiryDate || localStorage.getItem('did_expiry') || ''
 
-  const name = state?.name || '-'
-  const expiryDate = state?.expiryDate || ''
-  const docId = state?.docId || 'did:care:renter:verified'
-
-  const [copied, setCopied] = useState(false)
+  const [userName, setUserName] = useState('')
   const [revealed, setRevealed] = useState(false)
-  const [showTooltip, setShowTooltip] = useState(false)
 
-  const shortDid = docId.length > 20
-    ? `${docId.slice(0, 12)}...${docId.slice(-8)}`
-    : docId
+  useEffect(() => {
+    const timer = setTimeout(() => setRevealed(true), 100)
+    // 백엔드에서 실제 이름 조회
+    getRenterProfile()
+      .then((data) => setUserName(data?.name || localStorage.getItem('did_name') || ''))
+      .catch(() => setUserName(localStorage.getItem('did_name') || ''))
+    return () => clearTimeout(timer)
+  }, [])
 
   const formattedExpiry = expiryDate.length === 8
     ? `${expiryDate.slice(0, 4)}.${expiryDate.slice(4, 6)}.${expiryDate.slice(6, 8)}`
     : expiryDate
-
-  useEffect(() => {
-    const timer = setTimeout(() => setRevealed(true), 100)
-    return () => clearTimeout(timer)
-  }, [])
 
   const copyDID = () => {
     try {
@@ -93,7 +90,7 @@ export default function DIDCardPage() {
 
           {/* 이름 + 만료일 */}
           <div className="dcp-info">
-            <p className="dcp-name">{name}</p>
+            <p className="dcp-name">{userName || '인증 완료'}</p>
             {formattedExpiry && (
               <div className="dcp-valid-row">
                 <span className="dcp-valid-label">VALID UNTIL</span>
@@ -114,15 +111,8 @@ export default function DIDCardPage() {
 
       {/* 하단 액션 */}
       <div className="dcp-actions">
-        <button className="dcp-history-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 8 12 12 15 15"/>
-          </svg>
-          인증 내역
-        </button>
         <button className="dcp-share-btn" onClick={() => {
-          if (navigator.share) navigator.share({ title: 'DID 신원 증명', text: `${name} 님의 신원이 인증되었습니다.` })
+          if (navigator.share) navigator.share({ title: '신원 인증 완료', text: `${userName} 님의 신원이 인증되었습니다.` })
         }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>

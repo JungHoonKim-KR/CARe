@@ -223,7 +223,7 @@ export default function DisputeHistoryPage() {
                           <path d="M3 17L12 22L21 17M3 12L12 17L21 12"
                             stroke="#F7A633" strokeWidth="2" strokeLinejoin="round"/>
                         </svg>
-                        <span className="dh-blockchain-text">blockchain verified · 0x34e...698d</span>
+                        <span className="dh-blockchain-text">검증 완료</span>
                       </div>
                     </>
                   ) : (

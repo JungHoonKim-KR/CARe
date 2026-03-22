@@ -55,7 +55,7 @@ export default function DIDCardPage() {
             <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="#111" />
           </svg>
         </button>
-        <span className="dcp-header-title">DID 신원 증명</span>
+        <span className="dcp-header-title">신원 인증 완료</span>
       </div>
 
       {/* 카드 영역 */}
@@ -65,8 +65,8 @@ export default function DIDCardPage() {
           {/* 브랜드 + 도트 */}
           <div className="dcp-card-top">
             <div className="dcp-brand">
-              <span>TRUST</span>
-              <span>E-SIGN</span>
+              <span>CARe</span>
+              <span>VERIFIED</span>
             </div>
             <div className="dcp-dots">
               {Array.from({ length: 9 }).map((_, i) => (
@@ -102,27 +102,12 @@ export default function DIDCardPage() {
             )}
           </div>
 
-          {/* DID 주소 */}
+          {/* 인증 정보 */}
           <div className="dcp-did-box">
-            <div
-              className="dcp-did-left"
-              onMouseEnter={() => setShowTooltip(true)}
-              onMouseLeave={() => setShowTooltip(false)}
-              onTouchStart={() => setShowTooltip(true)}
-              onTouchEnd={() => setTimeout(() => setShowTooltip(false), 2000)}
-            >
-              <span className="dcp-did-tag">DID</span>
-              <span className="dcp-did-value">{shortDid}</span>
-              {showTooltip && (
-                <div className="dcp-tooltip">
-                  {docId}
-                  <div className="dcp-tooltip-arrow" />
-                </div>
-              )}
+            <div className="dcp-did-left">
+              <span className="dcp-did-tag">✓</span>
+              <span className="dcp-did-value">여권 및 면허증 인증 완료</span>
             </div>
-            <button className={`dcp-copy-btn${copied ? ' copied' : ''}`} onClick={copyDID}>
-              {copied ? '복사됨' : '복사'}
-            </button>
           </div>
         </div>
       </div>
@@ -134,7 +119,7 @@ export default function DIDCardPage() {
             <circle cx="12" cy="12" r="10"/>
             <polyline points="12 8 12 12 15 15"/>
           </svg>
-          이용 내역
+          인증 내역
         </button>
         <button className="dcp-share-btn" onClick={() => {
           if (navigator.share) navigator.share({ title: 'DID 신원 증명', text: `${name} 님의 신원이 인증되었습니다.` })

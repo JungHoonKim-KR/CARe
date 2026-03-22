@@ -25,7 +25,7 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config
-    if (error.response?.status === 401 && !original._retry) {
+    if ((error.response?.status === 401 || error.response?.status === 403) && !original._retry) {
       const refreshToken = localStorage.getItem('refreshToken')
       if (!refreshToken) return Promise.reject(error)
 

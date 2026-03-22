@@ -42,4 +42,9 @@ public class RenterDocument extends BaseEntity {
         if (verified) doc.verifiedAt = java.time.LocalDateTime.now();
         return doc;
     }
+
+    public void markVerified() {
+        this.verified = true;
+        this.verifiedAt = java.time.LocalDateTime.now();
+    }
 }

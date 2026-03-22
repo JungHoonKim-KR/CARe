@@ -8,6 +8,7 @@ import com.care.domain.reservation.controller.dto.response.ReservationDetailResp
 import com.care.domain.reservation.controller.dto.response.ReservationSummaryResponse;
 import com.care.domain.reservation.service.ReservationService;
 import com.care.domain.renter.controller.dto.request.DocumentVerifyRequest;
+import com.care.domain.renter.controller.dto.request.LanguageUpdateRequest;
 import com.care.domain.renter.controller.dto.request.TokenChargeRequest;
 import com.care.domain.renter.controller.dto.response.DocumentVerifyResponse;
 import com.care.domain.renter.controller.dto.response.RenterProfileResponse;
@@ -41,13 +42,16 @@ public class RenterController {
         return ResponseEntity.ok(renterService.getProfile(userId));
     }
 
-    @PostMapping("/did")
-    public ResponseEntity<Map<String, String>> registerDid(@AuthenticationPrincipal String userId) throws Exception {
-        String didUri = renterService.registerDid(userId);
-        return ResponseEntity.ok(Map.of("didUri", didUri));
+    // 언어 설정
+    @PutMapping("/language")
+    public ResponseEntity<Void> updateLanguage(
+            @AuthenticationPrincipal String userId,
+            @Valid @RequestBody LanguageUpdateRequest request) {
+        renterService.updateLanguage(userId, request.getLanguageCode());
+        return ResponseEntity.ok().build();
     }
 
-    // 서류 검증 api
+    // 서류 검증 api (둘 다 완료 시 DID+VC 자동 발급)
     @PostMapping("/documents")
     public ResponseEntity<DocumentVerifyResponse> verifyDocument(
             @AuthenticationPrincipal String userId,

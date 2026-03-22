@@ -44,7 +44,7 @@ export default function ProfilePage() {
           {t('profile.wallet')}
         </li>
         <li className="profile-menu-item">{t('profile.editInfo')}</li>
-        <li className="profile-menu-item">{t('profile.reservations')}</li>
+        <li className="profile-menu-item" onClick={() => navigate('/reservations')}>{t('profile.reservations')}</li>
         <li
           className="profile-menu-item"
           onClick={() => navigate('/language', { state: { from: 'profile' } })}

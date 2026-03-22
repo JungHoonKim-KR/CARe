@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import carIcon from '../../assets/car_icon.png'
 import BottomNav from '../../components/BottomNav'
 import { getMyReservations } from '../../api/reservation'
@@ -59,17 +59,20 @@ function getPickupStatus(reservation) {
 
 export default function MyCarPage() {
   const navigate = useNavigate()
-  const [reservation, setReservation] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const { state } = useLocation()
+  const [reservation, setReservation] = useState(state?.reservation || null)
+  const [loading, setLoading] = useState(!state?.reservation)
   const [showDisputeModal, setShowDisputeModal] = useState(false)
 
   useEffect(() => {
+    if (state?.reservation) return
     const fetchData = async () => {
       try {
         const data = await getMyReservations()
-        const active = Array.isArray(data)
-          ? data.find((r) => r.status === 'ACTIVE') || data[0]
-          : data?.data?.find?.((r) => r.status === 'ACTIVE') || data?.data?.[0] || data
+        const list = Array.isArray(data) ? data : (data?.data ?? [])
+        const active = list.find((r) => r.status === 'IN_USE')
+          || list.find((r) => r.status === 'RESERVED')
+          || list[0]
         if (active) {
           setReservation(active)
           const pending = localStorage.getItem(`disputePending_${active.reservationId}`) === 'true'
@@ -121,9 +124,19 @@ export default function MyCarPage() {
     ? localStorage.getItem(`faceAuthDone_${reservation.reservationId}`) === 'true'
     : false
   const pickupReady  = faceAuthDone && crackDone
-  const pickupStatus = getPickupStatus({ ...reservation, startDate: reservation.startDate, endDate: reservation.endDate })
-  const startLabel = formatDateLabel(reservation.startDate)
-  const endLabel   = formatDateLabel(reservation.endDate)
+
+  const startDate = reservation.pickupDate ? reservation.pickupDate.split('T')[0] : reservation.startDate
+  const endDate   = reservation.returnDate ? reservation.returnDate.split('T')[0] : reservation.endDate
+  const startTime = reservation.pickupDate ? reservation.pickupDate.split('T')[1]?.slice(0, 5) : reservation.startTime
+  const endTime   = reservation.returnDate ? reservation.returnDate.split('T')[1]?.slice(0, 5) : reservation.endTime
+
+  const pickupStatus = getPickupStatus({ ...reservation, startDate, endDate })
+  const startLabel = formatDateLabel(startDate)
+  const endLabel   = formatDateLabel(endDate)
+
+  // 반납 버튼: 픽업일 당일 이후부터 활성화
+  const today = new Date(); today.setHours(0,0,0,0)
+  const returnActive = startDate ? new Date(startDate) <= today : false
   const carName    = reservation.brand && reservation.modelName
     ? `${reservation.brand} ${reservation.modelName}`
     : reservation.carName || '차량 정보 없음'
@@ -168,13 +181,11 @@ export default function MyCarPage() {
           <div className="mc-schedule-row">
             <div className="mc-schedule-col">
               <span className="mc-schedule-tag pickup">픽업</span>
-              {startLabel && (
-                <p className="mc-schedule-date">
-                  {startLabel.month}월 {startLabel.day}일
-                  <span className="mc-schedule-weekday"> ({startLabel.weekday})</span>
-                </p>
-              )}
-              <p className="mc-schedule-time">{reservation.startTime || '--:--'}</p>
+              <p className="mc-schedule-date">
+                {startLabel ? `${startLabel.month}월 ${startLabel.day}일` : '--'}
+                {startLabel && <span className="mc-schedule-weekday"> ({startLabel.weekday})</span>}
+              </p>
+              <p className="mc-schedule-time">{startTime || '--:--'}</p>
             </div>
 
             <div className="mc-schedule-arrow">
@@ -186,13 +197,11 @@ export default function MyCarPage() {
 
             <div className="mc-schedule-col">
               <span className="mc-schedule-tag return">반납</span>
-              {endLabel && (
-                <p className="mc-schedule-date">
-                  {endLabel.month}월 {endLabel.day}일
-                  <span className="mc-schedule-weekday"> ({endLabel.weekday})</span>
-                </p>
-              )}
-              <p className="mc-schedule-time">{reservation.endTime || '--:--'}</p>
+              <p className="mc-schedule-date">
+                {endLabel ? `${endLabel.month}월 ${endLabel.day}일` : '--'}
+                {endLabel && <span className="mc-schedule-weekday"> ({endLabel.weekday})</span>}
+              </p>
+              <p className="mc-schedule-time">{endTime || '--:--'}</p>
             </div>
           </div>
 
@@ -261,8 +270,16 @@ export default function MyCarPage() {
         <div style={{ height: 130 }} />
       </div>
 
-      {/* 하단 고정 - Smart Key */}
+      {/* 하단 고정 - Smart Key + 반납 */}
       <div className="mc-action-bar">
+        <button
+          className={`mc-return-bar-btn${returnActive ? '' : ' locked'}`}
+          disabled={!returnActive}
+          onClick={() => returnActive && navigate(`/scan/${reservation.reservationId}`, { state: { logType: 'AFTER' } })}
+        >
+          <span>반납하기</span>
+          {!returnActive && <span className="mc-smartkey-lock-badge">픽업일 이후 가능</span>}
+        </button>
         <button
           className={`mc-smartkey-inner${pickupReady ? '' : ' locked'}`}
           onClick={() => navigate(
@@ -298,7 +315,7 @@ export default function MyCarPage() {
               <span>!</span>
             </div>
             <p className="mc-dispute-modal-text">
-              {(reservation?.endDate || '').replace(/-/g, '-')} 반납하신<br/>
+              {(endDate || '').replace(/-/g, '-')} 반납하신<br/>
               차량에 대해서 업체에서<br/>
               금액을 청구했어요.
             </p>

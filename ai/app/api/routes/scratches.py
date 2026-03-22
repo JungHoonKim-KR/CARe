@@ -6,6 +6,8 @@ from ultralytics import YOLO
 from PIL import Image
 from app.services.s3_service import upload_file_to_s3, upload_image_to_s3
 from app.services.ipfs_service import upload_to_ipfs
+from app.services.scratch_comparison_service import compare_scratches_from_urls
+from app.schemas.scratch import ScratchComparisonByUrlRequest, ScratchComparisonResponse
 
 router = APIRouter(prefix="/scratches")
 
@@ -121,3 +123,15 @@ async def detect_and_save(
             })
 
     return {"defects": defects, "zone": zone, "log_type": log_type}
+
+
+@router.post("/compare", response_model=ScratchComparisonResponse)
+async def compare_by_urls(request: ScratchComparisonByUrlRequest):
+    similarity, diff_score = compare_scratches_from_urls(
+        request.ref_crop_s3_url,
+        request.target_crop_s3_url,
+    )
+    return {
+        "similarity": similarity,
+        "diff_score": diff_score,
+    }

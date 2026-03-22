@@ -7,6 +7,11 @@ class ScratchComparisonResponse(BaseModel):
     diff_score: float = Field(..., description="Average feature map L1 difference")
 
 
+class ScratchComparisonByUrlRequest(BaseModel):
+    ref_crop_s3_url: str = Field(..., description="Reference crop image URL (BEFORE)")
+    target_crop_s3_url: str = Field(..., description="Target crop image URL (AFTER)")
+
+
 class BBox(BaseModel):
     x: float
     y: float

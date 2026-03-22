@@ -87,7 +87,7 @@ export default function CarDetailPage() {
   }
 
   const services = car.services || {
-    included: ['무료 GPS', '스노우 체인', '무제한 주행거리', '조건조건 1'],
+    included: ['무료 GPS', '스노우 체인', '무제한 주행거리', '네비게이션'],
     excluded: ['스노우 체인', '유아용 카시트'],
   }
 

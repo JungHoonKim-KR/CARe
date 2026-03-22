@@ -93,3 +93,12 @@ export const createReservation = async (carId, insuranceId, totalPrice, pickupDa
   })
   return response.data
 }
+
+// 분쟁 이의 신청
+export const submitDefense = async (reservationId, disputeId, defenseLogId) => {
+  const response = await api.post(
+    `/api/reservations/${reservationId}/disputes/${disputeId}/defense`,
+    { defenseLogId }
+  )
+  return response.data
+}

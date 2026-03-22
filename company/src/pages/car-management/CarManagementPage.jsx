@@ -88,7 +88,8 @@ export default function CarManagementPage() {
           <h1 className="page-title">차량 관리</h1>
           <p className="page-subtitle">등록된 차량을 관리하고 새로운 차량을 등록하세요</p>
         </div>
-        <button className="btn btn-primary">+ 차량 등록</button>
+        <button className="btn btn-primary"
+          onClick={() => navigate('/cars/register')}>+ 차량 등록</button>
       </div>
 
       <TabFilter tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />

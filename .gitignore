@@ -10,6 +10,11 @@ renter/backend/build/
 renter/backend/bin/
 renter/backend/.gradle/
 
+# Capacitor Android build outputs
+renter/android/app/build/
+renter/android/.gradle/
+renter/android/build/
+
 # Node.js
 node_modules/
 **/node_modules/

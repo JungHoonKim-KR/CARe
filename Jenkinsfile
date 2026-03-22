@@ -24,8 +24,8 @@ pipeline {
         MYSQL_CONTAINER = "mysql"
         REDIS_CONTAINER = "redis"
 
-        // YOLO 서버 (RunPod 확정 전까지 localhost, 이후 실제 IP로 변경)
-        AI_YOLO_HOST = "${env.AI_YOLO_HOST ?: 'localhost'}"
+        // YOLO 서버 전체 URL (예: https://xxxx.trycloudflare.com 또는 http://localhost:8000)
+        AI_YOLO_URL = "${env.AI_YOLO_URL ?: 'http://localhost:8000'}"
     }
 
     stages {
@@ -361,7 +361,7 @@ pipeline {
                         -e "s|__BACKEND_HOST__|backend-$BACKEND_COLOR|g" \
                         -e "s|__RENTER_ROOT__|/usr/share/nginx/html/renter-$RENTER_COLOR|g" \
                         -e "s|__COMPANY_ROOT__|/usr/share/nginx/html/company-$COMPANY_COLOR|g" \
-                        -e "s|__AI_YOLO_HOST__|${AI_YOLO_HOST}|g" \
+                        -e "s|__AI_YOLO_URL__|${AI_YOLO_URL}|g" \
                         infra/nginx/nginx.conf > /tmp/nginx.conf.rendered
                     cat /tmp/nginx.conf.rendered > /home/ubuntu/infra/nginx/nginx.conf
 

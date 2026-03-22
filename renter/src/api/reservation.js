@@ -79,7 +79,17 @@ export const getDisputeDetail = async (reservationId, disputeId) => {
 }
 
 // 예약 생성
-export const createReservation = async (carId, insuranceId, totalPrice, startDate, endDate) => {
-  const response = await api.post('/api/reservations', { carId, insuranceId, totalPrice, startDate, endDate })
+export const createReservation = async (carId, insuranceId, totalPrice, pickupDate, pickupTime, returnDate, returnTime) => {
+  const toDateTime = (date, time) => {
+    if (!date) return null
+    const t = time || '10:00'
+    return `${date}T${t}:00`
+  }
+  const response = await api.post('/api/reservations', {
+    carId,
+    insuranceId,
+    pickupDate: toDateTime(pickupDate, pickupTime),
+    returnDate: toDateTime(returnDate, returnTime),
+  })
   return response.data
 }

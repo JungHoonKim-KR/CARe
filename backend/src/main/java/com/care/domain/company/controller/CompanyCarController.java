@@ -40,10 +40,12 @@ public class CompanyCarController {
             @RequestPart String dailyPrice, // multipart/form-data에서 int 직접 바인딩 불가 → String으로 받아 parseInt 변환
             @RequestPart MultipartFile frontImage,
             @RequestPart MultipartFile rearImage,
-            @RequestPart MultipartFile leftImage,
-            @RequestPart MultipartFile rightImage
+            @RequestPart MultipartFile frontLeftImage,
+            @RequestPart MultipartFile frontRightImage,
+            @RequestPart MultipartFile rearLeftImage,
+            @RequestPart MultipartFile rearRightImage
     ) {
-        CarRegisterRequest request = new CarRegisterRequest(modelId, plateNumber, Integer.parseInt(dailyPrice), frontImage, rearImage, leftImage, rightImage);
+        CarRegisterRequest request = new CarRegisterRequest(modelId, plateNumber, Integer.parseInt(dailyPrice), frontImage, rearImage, frontLeftImage, frontRightImage, rearLeftImage, rearRightImage);
         return ResponseEntity.ok(carService.registerCar(companyId, request));
     }
 

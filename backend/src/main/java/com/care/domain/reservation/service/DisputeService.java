@@ -10,18 +10,18 @@ import com.care.domain.reservation.controller.dto.response.DisputeSettleResponse
 import com.care.domain.reservation.entity.Dispute;
 import com.care.domain.reservation.entity.DisputeStatus;
 import com.care.domain.reservation.entity.Reservation;
-import com.care.domain.reservation.entity.Settlement;
 import com.care.domain.reservation.entity.SettlementStatus;
 import com.care.domain.reservation.entity.Scratch;
 import com.care.domain.reservation.repository.DisputeRepository;
 import com.care.domain.reservation.repository.ReservationRepository;
-import com.care.domain.reservation.repository.SettlementRepository;
 import com.care.domain.scan.repository.ScratchRepository;
 import com.care.global.blockchain.CareTokenService;
 import com.care.global.blockchain.DisputeSettlementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +30,6 @@ public class DisputeService {
 	private final DisputeRepository disputeRepository;
 	private final ReservationRepository reservationRepository;
 	private final ScratchRepository scratchRepository;
-	private final SettlementRepository settlementRepository;
 	private final DisputeSettlementService disputeSettlementService;
 	private final CareTokenService careTokenService;
 
@@ -144,13 +143,10 @@ public class DisputeService {
 			throw new IllegalArgumentException("정산 API에서는 PENDING 상태를 사용할 수 없습니다.");
 		}
 
-		Settlement settlement = Settlement.createPending(reservation);
-		settlementRepository.save(settlement);
-
 		String settlementRecordTxHash;
 		try {
 			settlementRecordTxHash = disputeSettlementService.recordSettlement(
-					settlement.getSettlementId(),
+					disputeId,
 					request.getFinalAmount()
 			);
 		} catch (Exception e) {
@@ -165,12 +161,17 @@ public class DisputeService {
 				throw new RuntimeException("자동 이체에 실패했습니다.", e);
 			}
 		}
-
-		settlement.complete(request.getFinalAmount(), usdcTxHash, targetStatus);
 		dispute.resolve();
 		dispute.getTargetScratch().clearDisputed();
 
-		return DisputeSettleResponse.from(settlement);
+		return DisputeSettleResponse.of(
+				disputeId,
+				reservation.getReservationId(),
+				request.getFinalAmount(),
+				targetStatus.name(),
+				LocalDateTime.now(),
+				usdcTxHash
+		);
     }
 
 	private String transferUsdcByStatus(Reservation reservation, long finalAmount, SettlementStatus targetStatus) throws Exception {

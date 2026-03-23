@@ -26,11 +26,12 @@ class AuthService {
   async register(data) {
     try {
       const response = await api.post('/api/auth/company/register', {
-        name: data.companyName,
+        name: data.name,
         airportCode: data.airportCode,
         languageCode: data.languageCode,
         email: data.email,
-        password: data.password
+        password: data.password,
+        bizNumber: data.bizNumber
       })
 
       return {

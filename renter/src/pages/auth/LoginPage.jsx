@@ -34,9 +34,17 @@ export default function LoginPage() {
       const refreshToken = data.refreshToken || data.data?.refreshToken
       const userData     = data.user         || data.data?.user || null
       const userInfo = userData || { email: form.email }
+
+      // 이전 계정 서류 인증 상태 초기화
+      localStorage.removeItem('passport_verified')
+      localStorage.removeItem('license_verified')
+      localStorage.removeItem('did_name')
+      localStorage.removeItem('did_docId')
+      localStorage.removeItem('did_expiry')
+
       login(accessToken, refreshToken, userInfo)
 
-      // 백엔드에서 언어 설정 로드
+      // 백엔드에서 언어 설정 + 서류 인증 상태 로드
       try {
         const profile = await getRenterProfile()
         const lang = profile?.languageCode || profile?.data?.languageCode
@@ -44,8 +52,14 @@ export default function LoginPage() {
           localStorage.setItem('language', lang)
           i18n.changeLanguage(lang)
         }
+        // 실제 인증 상태로 localStorage 업데이트
+        const docs = profile?.documents ?? []
+        const passportDone = docs.some(d => d.docType === 'PASSPORT' && d.verified)
+        const licenseDone = docs.some(d => d.docType === 'INT_LICENSE' && d.verified)
+        localStorage.setItem('passport_verified', passportDone ? 'true' : 'false')
+        localStorage.setItem('license_verified', licenseDone ? 'true' : 'false')
       } catch {
-        // 언어 로드 실패 시 무시
+        // 프로필 로드 실패 시 무시
       }
 
       navigate('/home')

@@ -17,7 +17,6 @@ import BookingCompletePage from './pages/booking-complete/BookingCompletePage'
 import WalletPage from './pages/wallet/WalletPage'
 import ChargePage from './pages/wallet/ChargePage'
 import TokenHistoryPage from './pages/wallet/TokenHistoryPage'
-import WalletConnectPage from './pages/wallet-connect/WalletConnectPage'
 import DIDAuthPage from './pages/did-auth/DIDAuthPage'
 import DIDPassportGuidePage from './pages/did-auth/DIDPassportGuidePage'
 import DIDCameraPage from './pages/did-auth/DIDCameraPage'
@@ -30,6 +29,8 @@ import DamageHistoryPage from './pages/damage-history/DamageHistoryPage'
 import DamageDetailPage from './pages/damage-detail/DamageDetailPage'
 import DisputePage from './pages/dispute/DisputePage'
 import DisputeHistoryPage from './pages/dispute/DisputeHistoryPage'
+import ReservationListPage from './pages/reservations/ReservationListPage'
+import ReturnGuidePage from './pages/car-return/ReturnGuidePage'
 
 function App() {
   return (
@@ -54,7 +55,6 @@ function App() {
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/wallet/token" element={<TokenHistoryPage />} />
           <Route path="/wallet/charge" element={<ChargePage />} />
-          <Route path="/wallet-connect" element={<WalletConnectPage />} />
           <Route path="/did-auth" element={<DIDAuthPage />} />
           <Route path="/did-guide" element={<DIDPassportGuidePage />} />
           <Route path="/did-camera" element={<DIDCameraPage />} />
@@ -66,6 +66,8 @@ function App() {
           <Route path="/damage-detail" element={<DamageDetailPage />} />
           <Route path="/dispute" element={<DisputePage />} />
           <Route path="/dispute-history" element={<DisputeHistoryPage />} />
+          <Route path="/reservations" element={<ReservationListPage />} />
+          <Route path="/return-guide" element={<ReturnGuidePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

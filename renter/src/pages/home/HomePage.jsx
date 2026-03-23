@@ -36,7 +36,14 @@ const AIRPORTS = {
   ],
 }
 
-const CAR_TYPES = ['전체', '소형', '중형', '대형', 'SUV', '밴', '럭셔리']
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, h) => {
+  const period = h >= 12 ? 'PM' : 'AM'
+  const hour12 = h % 12 || 12
+  return {
+    value: `${String(h).padStart(2, '0')}:00`,
+    label: `${period} ${String(hour12).padStart(2, '0')}:00`,
+  }
+})
 
 const initialFormState = {
   country: '',
@@ -187,7 +194,7 @@ export default function HomePage() {
             onClick={() => navigate(didVerified ? '/wallet' : '/did-auth')}
             style={{ cursor: 'pointer' }}
           >
-            {didVerified ? 'DID' : '미인증'}
+            {didVerified ? '인증완료' : t('home.unverified')}
           </span>
         </div>
       </header>
@@ -239,13 +246,16 @@ export default function HomePage() {
             </div>
           </button>
           <div className="search-field time-field">
-            <span className="date-label">시간</span>
-            <input
-              className="time-input"
-              type="time"
+            <span className="date-label">{t('home.time')}</span>
+            <select
+              className="time-select"
               value={form.pickupTime}
               onChange={(e) => setForm((p) => ({ ...p, pickupTime: e.target.value }))}
-            />
+            >
+              {HOUR_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -260,13 +270,16 @@ export default function HomePage() {
             </div>
           </button>
           <div className="search-field time-field">
-            <span className="date-label">시간</span>
-            <input
-              className="time-input"
-              type="time"
+            <span className="date-label">{t('home.time')}</span>
+            <select
+              className="time-select"
               value={form.returnTime}
               onChange={(e) => setForm((p) => ({ ...p, returnTime: e.target.value }))}
-            />
+            >
+              {HOUR_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
           </div>
         </div>
 

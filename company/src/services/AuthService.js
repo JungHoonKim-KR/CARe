@@ -1,46 +1,52 @@
 import api from './api'
 
 class AuthService {
-  // 회원가입
+  decodeJwtPayload(token) {
+    try {
+      if (!token) return null
+
+      const payloadBase64 = token.split('.')[1]
+      if (!payloadBase64) return null
+
+      const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/')
+      const decoded = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((char) => `%${('00' + char.charCodeAt(0).toString(16)).slice(-2)}`)
+          .join('')
+      )
+
+      return JSON.parse(decoded)
+    } catch (error) {
+      console.error('JWT 디코딩 실패:', error)
+      return null
+    }
+  }
+
   async register(data) {
     try {
-      console.log('🚀 회원가입 요청 데이터:', {
-        name: data.companyName,
-        airportCode: data.airportCode,
-        languageCode: data.languageCode,
-        email: data.email,
-        password: '***'
-      })
-
       const response = await api.post('/api/auth/company/register', {
-        name: data.companyName,
+        name: data.name,
         airportCode: data.airportCode,
         languageCode: data.languageCode,
         email: data.email,
-        password: data.password
+        password: data.password,
+        bizNumber: data.bizNumber
       })
 
-      console.log('✅ 회원가입 성공:', response.data)
       return {
         success: true,
         data: response.data
       }
     } catch (error) {
-      console.error('❌ 회원가입 에러:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message
-      })
-
+      console.error('회원가입 에러:', error)
       return {
         success: false,
-        message: error.response?.data?.message || '회원가입에 실패했습니다.'
+        message: error?.response?.data?.message || '회원가입에 실패했습니다.'
       }
     }
   }
 
-  // 로그인
   async login(email, password) {
     try {
       console.log('🔐 로그인 요청:', { email })
@@ -50,42 +56,99 @@ class AuthService {
         password
       })
 
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token)
+      const accessToken =
+        response.data.accessToken ||
+        response.data.accesstoken ||
+        response.data.token
+
+      const refreshToken =
+        response.data.refreshToken ||
+        response.data.refreshtoken
+
+      let companyId =
+        response.data.companyId ||
+        response.data.companyUUID ||
+        response.data.id ||
+        response.data.company?.companyId ||
+        response.data.company?.id
+
+      if (accessToken) {
+        localStorage.setItem('token', accessToken)
+
+        if (!companyId) {
+          const payload = this.decodeJwtPayload(accessToken)
+          companyId = payload?.sub || null
+        }
       }
 
-      console.log('✅ 로그인 성공')
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken)
+      }
+
+      if (companyId) {
+        localStorage.setItem('companyId', companyId)
+      }
+
       return {
         success: true,
         data: response.data
       }
     } catch (error) {
-      console.error('❌ 로그인 에러:', {
-        status: error.response?.status,
-        data: error.response?.data
-      })
-
+      console.error('로그인 에러:', error)
       return {
         success: false,
-        message: error.response?.data?.message || '로그인에 실패했습니다.'
+        message: error?.response?.data?.message || '로그인에 실패했습니다.'
       }
     }
   }
 
-  // 로그아웃
-  logout() {
-    localStorage.removeItem('token')
-    window.location.href = '/login'
+  async logout() {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken')
+
+      await api.post('/api/auth/logout', {
+        refreshToken
+      })
+    } catch (error) {
+      console.error('로그아웃 API 에러:', error?.response?.data || error)
+    } finally {
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('companyId')
+      sessionStorage.clear()
+    }
   }
 
-  // 현재 로그인 상태 확인
+  logoutLocal() {
+    localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
+    localStorage.removeItem('companyId')
+    sessionStorage.clear()
+  }
+
   isAuthenticated() {
     return !!localStorage.getItem('token')
   }
 
-  // 토큰 가져오기
   getToken() {
     return localStorage.getItem('token')
+  }
+
+  getCompanyId() {
+    const savedCompanyId = localStorage.getItem('companyId')
+    if (savedCompanyId) return savedCompanyId
+
+    const token = localStorage.getItem('token')
+    if (!token) return null
+
+    const payload = this.decodeJwtPayload(token)
+    const companyId = payload?.sub || null
+
+    if (companyId) {
+      localStorage.setItem('companyId', companyId)
+    }
+
+    return companyId
   }
 }
 

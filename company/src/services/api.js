@@ -1,36 +1,48 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 })
 
-// Request interceptor
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
+
+    if (!config.headers) {
+      config.headers = {}
+    }
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type']
+      delete config.headers['content-type']
+    } else {
+      config.headers['Content-Type'] = 'application/json'
+    }
+
     return config
   },
-  (error) => {
-    return Promise.reject(error)
-  }
+  (error) => Promise.reject(error)
 )
 
-// Response interceptor
 api.interceptors.response.use(
-  (response) => {
-    return response
-  },
+  (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    console.error('API ERROR:', error)
+    console.error('API ERROR STATUS:', error?.response?.status)
+    console.error('API ERROR DATA:', error?.response?.data)
+    console.error('API ERROR URL:', error?.config?.url)
+
+    if (error?.response?.status === 401) {
       localStorage.removeItem('token')
-      window.location.href = '/login'
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('companyId')
+      window.location.href = '/company/login'
     }
+
     return Promise.reject(error)
   }
 )

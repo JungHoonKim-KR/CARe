@@ -1,9 +1,10 @@
+import time
 import cv2
 import numpy as np
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from ultralytics import YOLO
 
-router = APIRouter(prefix="/scratches") # 🌟 이렇게 수정!
+router = APIRouter(prefix="/scratches")
 
 # 🌟 서버가 켜질 때 AI 모델을 딱 한 번만 불러와서 대기시킵니다.
 MODEL_PATH = "app/models/scratches/best.pt"
@@ -26,9 +27,12 @@ async def websocket_detect(websocket: WebSocket):
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
             if img is not None:
+                start = time.time()
                 # 3. AI 모델 추론 시작! (conf=0.25는 "25% 이상 확신하면 흠집으로 인정해라"라는 뜻)
                 # 흠집을 너무 못 찾으면 0.1로 내리고, 너무 잡다한 걸 다 잡으면 0.5로 올리면 됩니다.
                 results = model.predict(source=img, conf=0.25, verbose=False)
+                print(f"[YOLO-WS] 추론 시간: {(time.time() - start)*1000:.1f}ms | 탐지 수: {sum(len(r.boxes) for r in results)}")
+
 
                 real_boxes = []
 

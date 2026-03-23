@@ -35,7 +35,34 @@ export default function LoginPage() {
       console.log('[Login] accessToken:', accessToken)
       // 백엔드 응답에 user 없으면 이메일을 직접 저장
       const userInfo = userData || { email: form.email }
+
+      // 이전 계정 서류 인증 상태 초기화
+      localStorage.removeItem('passport_verified')
+      localStorage.removeItem('license_verified')
+      localStorage.removeItem('did_name')
+      localStorage.removeItem('did_docId')
+      localStorage.removeItem('did_expiry')
+
       login(accessToken, refreshToken, userInfo)
+
+      // 백엔드에서 언어 설정 + 서류 인증 상태 로드
+      try {
+        const profile = await getRenterProfile()
+        const lang = profile?.languageCode || profile?.data?.languageCode
+        if (lang) {
+          localStorage.setItem('language', lang)
+          i18n.changeLanguage(lang)
+        }
+        // 실제 인증 상태로 localStorage 업데이트
+        const docs = profile?.documents ?? []
+        const passportDone = docs.some(d => d.docType === 'PASSPORT' && d.verified)
+        const licenseDone = docs.some(d => d.docType === 'INT_LICENSE' && d.verified)
+        localStorage.setItem('passport_verified', passportDone ? 'true' : 'false')
+        localStorage.setItem('license_verified', licenseDone ? 'true' : 'false')
+      } catch {
+        // 프로필 로드 실패 시 무시
+      }
+
       navigate('/home')
     } catch (err) {
       console.error('[Login] 오류:', err.response?.status, err.response?.data)

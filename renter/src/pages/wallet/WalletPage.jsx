@@ -52,13 +52,13 @@ export default function WalletPage() {
                   <path d="M11.5 4L5.5 10L2.5 7" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <span className="wallet-card-name">DID 신원증명</span>
+              <span className="wallet-card-name">신원 인증</span>
             </div>
             <button
               className={`wallet-pill-btn ${didVerified ? 'did-verified-pill' : ''}`}
               onClick={(e) => { e.stopPropagation(); if (!didVerified) navigate('/did-auth') }}
             >
-              {didVerified ? '인증완료 ✓' : '등록하기'}
+              {didVerified ? '인증완료 ✓' : '인증하기'}
             </button>
           </div>
           <div className="did-face-illust">

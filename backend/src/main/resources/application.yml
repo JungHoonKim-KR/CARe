@@ -61,6 +61,11 @@ apick:
 nts:
   api-key: ${NTS_API_KEY:}
 
+privy:
+  app-id: ${PRIVY_APP_ID:}
+  app-secret: ${PRIVY_APP_SECRET:}
+  server-url: ${PRIVY_SERVER_URL:http://localhost:3001}
+
 pinata:
   api-key: ${PINATA_API_KEY:}
   api-secret: ${PINATA_API_SECRET:}

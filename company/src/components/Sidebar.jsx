@@ -1,9 +1,11 @@
 import React from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import AuthService from '../services/AuthService'
 import './Sidebar.css'
 
 export default function Sidebar() {
   const location = useLocation()
+  const navigate = useNavigate()
 
   const menuItems = [
     { id: 'dashboard', label: '대시보드', path: '/dashboard' },
@@ -14,9 +16,16 @@ export default function Sidebar() {
   ]
 
   const bottomItems = [
-    { id: 'settings', label: '설정', path: '/settings' },
-    { id: 'logout', label: '로그아웃', path: '/logout' },
+    { id: 'settings', label: '설정', path: '/settings' }
   ]
+
+  const handleLogout = async () => {
+    const confirmed = window.confirm('로그아웃하시겠습니까?')
+    if (!confirmed) return
+
+    await AuthService.logout()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <aside className="sidebar">
@@ -45,12 +54,21 @@ export default function Sidebar() {
             <Link
               key={item.id}
               to={item.path}
-              className="sidebar-item"
+              className={`sidebar-item ${location.pathname === item.path ? 'active' : ''}`}
             >
               <span className="sidebar-icon">{item.icon}</span>
               <span className="sidebar-label">{item.label}</span>
             </Link>
           ))}
+
+          <button
+            type="button"
+            className="sidebar-item sidebar-logout-button"
+            onClick={handleLogout}
+          >
+            <span className="sidebar-icon"></span>
+            <span className="sidebar-label">로그아웃</span>
+          </button>
 
           <div className="sidebar-company-info">
             <div className="company-name">강남 렌터카</div>

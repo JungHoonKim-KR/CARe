@@ -9,16 +9,34 @@ import AIReportPage from './pages/ai-report/AIReportPage'
 import CarManagementPage from './pages/car-management/CarManagementPage'
 import CarDetailPage from './pages/car-detail/CarDetailPage'
 import CarRegisterPage from './pages/car-register/CarRegisterPage'
+<<<<<<< HEAD
 import DisputesList from './pages/dispute/DisputesList'
 import DisputePage from './pages/dispute/DisputePage'
+=======
+import ProtectedRoute from './components/ProtectedRoute'
+import AuthService from './services/AuthService'
+>>>>>>> cea883334bf5911fc6abf465d7e817cdae7d5ab5
 import './App.css'
 
 export default function App() {
+  const isAuthenticated = AuthService.isAuthenticated()
+
   return (
     <Routes>
-      {/* Login Route - No Sidebar */}
+      {/* 🔥 기본 루트 분기 */}
+      <Route
+        path="/"
+        element={
+          isAuthenticated
+            ? <Navigate to="/dashboard" replace />
+            : <Navigate to="/login" replace />
+        }
+      />
+
+      {/* 공개 페이지 */}
       <Route path="/login" element={<LoginPage />} />
 
+<<<<<<< HEAD
       {/* Main App Routes - With Sidebar */}
       <Route
         path="*"
@@ -43,6 +61,30 @@ export default function App() {
               </Routes>
             </main>
           </div>
+=======
+      {/* 보호된 영역 */}
+      <Route
+        path="*"
+        element={
+          <ProtectedRoute>
+            <div className="app-container">
+              <Sidebar />
+              <main className="main-content">
+                <Routes>
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/cars" element={<CarManagementPage />} />
+                  <Route path="/cars/:id" element={<CarDetailPage />} />
+                  <Route path="/cars/register" element={<CarRegisterPage />} />
+                  <Route path="/reservations" element={<ReservationPage />} />
+                  <Route path="/reservations/:id" element={<ReservationDetailPage />} />
+                  <Route path="/ai-report/:id" element={<AIReportPage />} />
+                  <Route path="/profile" element={<div className="placeholder-page">내 정보 페이지</div>} />
+                  <Route path="/settings" element={<div className="placeholder-page">설정 페이지</div>} />
+                </Routes>
+              </main>
+            </div>
+          </ProtectedRoute>
+>>>>>>> cea883334bf5911fc6abf465d7e817cdae7d5ab5
         }
       />
     </Routes>

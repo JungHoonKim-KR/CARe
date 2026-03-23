@@ -14,10 +14,15 @@ export default function DIDConfirmPage() {
 
   const [form, setForm] = useState({
     name: '',
-    docNo: '',
+    passportNo: '',
     birthDate: '',
     issueDate: '',
     expiryDate: '',
+    // 면허증 분할 필드
+    licenZero: '',
+    licenFirst: '',
+    licenSecond: '',
+    licenThird: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -32,7 +37,7 @@ export default function DIDConfirmPage() {
         ? {
             docType: 'PASSPORT',
             passportName: form.name,
-            passportNo: form.docNo,
+            passportNo: form.passportNo,
             birthDate: form.birthDate.replace(/-/g, ''),
             issueDate: form.issueDate.replace(/-/g, ''),
             expiryDate: form.expiryDate.replace(/-/g, ''),
@@ -40,8 +45,13 @@ export default function DIDConfirmPage() {
         : {
             docType: 'INT_LICENSE',
             name: form.name,
-            licenseNo: form.docNo,
-            birthDate: form.birthDate.replace(/-/g, ''),
+            birthY: form.birthDate.slice(0, 4),
+            birthM: form.birthDate.slice(5, 7),
+            birthD: form.birthDate.slice(8, 10),
+            licenZero: form.licenZero,
+            licenFirst: form.licenFirst,
+            licenSecond: form.licenSecond,
+            licenThird: form.licenThird,
             issueDate: form.issueDate.replace(/-/g, ''),
           }
 
@@ -49,14 +59,30 @@ export default function DIDConfirmPage() {
 
       if (res.verified) {
         localStorage.setItem(`${docType}_verified`, 'true')
-        navigate('/did-card', {
-          state: {
-            name: form.name,
-            docType: res.docType,
-            docId: res.docId,
-            expiryDate: isPassport ? form.expiryDate.replace(/-/g, '') : '',
-          },
-        })
+
+        // 여권이면 DID 카드에 표시할 정보 저장
+        if (isPassport) {
+          localStorage.setItem('did_name', form.name)
+          localStorage.setItem('did_docId', res.docId || '')
+          localStorage.setItem('did_expiry', form.expiryDate.replace(/-/g, ''))
+        }
+
+        const bothDone =
+          localStorage.getItem('passport_verified') === 'true' &&
+          localStorage.getItem('license_verified') === 'true'
+
+        if (bothDone) {
+          // 둘 다 완료 → DID+VC는 백엔드에서 자동 처리 → 카드 페이지로
+          navigate('/did-card', {
+            state: {
+              name: localStorage.getItem('did_name') || form.name,
+              docId: localStorage.getItem('did_docId') || res.docId,
+              expiryDate: localStorage.getItem('did_expiry') || '',
+            },
+          })
+        } else {
+          navigate('/did-auth')
+        }
       } else {
         setError('인증에 실패했습니다. 입력 정보를 다시 확인해 주세요.')
       }
@@ -103,14 +129,23 @@ export default function DIDConfirmPage() {
           />
         </div>
         <div className="did-input-group">
-          <label className="did-input-label">{isPassport ? '여권번호' : '면허증 번호'}</label>
-          <input
-            type="text"
-            className="did-input"
-            placeholder={isPassport ? 'M12345678' : 'IDP-12345678'}
-            value={form.docNo}
-            onChange={setField('docNo')}
-          />
+          <label className="did-input-label">{isPassport ? '여권번호' : '면허증 번호 (4자리-2자리-6자리-2자리)'}</label>
+          {isPassport ? (
+            <input
+              type="text"
+              className="did-input"
+              placeholder="M12345678"
+              value={form.passportNo}
+              onChange={setField('passportNo')}
+            />
+          ) : (
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <input type="text" className="did-input" placeholder="11" value={form.licenZero} onChange={setField('licenZero')} style={{ width: '20%' }} />
+              <input type="text" className="did-input" placeholder="22" value={form.licenFirst} onChange={setField('licenFirst')} style={{ width: '20%' }} />
+              <input type="text" className="did-input" placeholder="123456" value={form.licenSecond} onChange={setField('licenSecond')} style={{ width: '35%' }} />
+              <input type="text" className="did-input" placeholder="78" value={form.licenThird} onChange={setField('licenThird')} style={{ width: '20%' }} />
+            </div>
+          )}
         </div>
         <div className="did-input-group">
           <label className="did-input-label">생년월일</label>

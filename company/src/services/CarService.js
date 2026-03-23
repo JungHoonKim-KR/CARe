@@ -1,76 +1,50 @@
 import api from './api'
 
 class CarService {
-  // 차량 등록
-  async registerCar(data) {
+  async registerCar(companyId, carData) {
     try {
-      console.log('차량 등록 요청:', {
-        modelId: data.modelId,
-        plateNumber: data.plateNumber,
-        images: '4개 파일'
-      })
-
       const formData = new FormData()
-      formData.append('modelId', data.modelId)
-      formData.append('plateNumber', data.plateNumber)
-      formData.append('frontImage', data.frontImage)
-      formData.append('rearImage', data.rearImage)
-      formData.append('leftImage', data.leftImage)
-      formData.append('rightImage', data.rightImage)
 
-      const response = await api.post('/api/cars/register', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
+      formData.append('modelId', carData.modelId)
+      formData.append('plateNumber', carData.plateNumber)
+      formData.append('dailyPrice', String(carData.dailyPrice))
 
-      console.log('✅ 차량 등록 성공:', response.data)
+      formData.append('frontImage', carData.frontImage)
+      formData.append('rearImage', carData.rearImage)
+      formData.append('leftImage', carData.leftImage)
+      formData.append('rightImage', carData.rightImage)
+
+      console.log('===== 차량 등록 요청 시작 =====')
+      console.log('companyId:', companyId)
+      console.log('request url:', `/api/companies/${companyId}/cars`)
+
+      for (const [key, value] of formData.entries()) {
+        console.log('formData:', key, value)
+      }
+
+      const response = await api.post(`/api/companies/${companyId}/cars`, formData)
+
+      console.log('===== 차량 등록 성공 =====')
+      console.log(response.data)
+
       return {
         success: true,
         data: response.data
       }
     } catch (error) {
-      console.error('❌ 차량 등록 에러:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message
-      })
+      console.error('===== 차량 등록 실패 =====')
+      console.error('raw error:', error)
+      console.error('message:', error?.message)
+      console.error('status:', error?.response?.status)
+      console.error('response data:', error?.response?.data)
+      console.error('request url:', error?.config?.url)
 
       return {
         success: false,
-        message: error.response?.data?.message || '차량 등록에 실패했습니다.'
-      }
-    }
-  }
-
-  // 차량 목록 조회
-  async getCarList() {
-    try {
-      const response = await api.get('/api/cars')
-      return {
-        success: true,
-        data: response.data
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || '차량 목록 조회에 실패했습니다.'
-      }
-    }
-  }
-
-  // 차량 상세 조회
-  async getCarDetail(carId) {
-    try {
-      const response = await api.get(`/api/cars/${carId}`)
-      return {
-        success: true,
-        data: response.data
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || '차량 정보 조회에 실패했습니다.'
+        message:
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          '차량 등록에 실패했습니다.'
       }
     }
   }

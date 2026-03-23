@@ -237,10 +237,7 @@ export default function ReservationDetailPage() {
               <span className="info-label">국가</span>
               <span className="info-value">{reservationData.renter.country}</span>
             </div>
-            <div className="info-row">
-              <span className="info-label">연락처</span>
-              <span className="info-value">{reservationData.renter.phone}</span>
-            </div>
+
           </div>
 
           {/* 결제 정보 */}

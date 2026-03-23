@@ -1,0 +1,117 @@
+/* Reservation Table Wrapper */
+.reservation-table-wrapper {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Reservation Table */
+.reservation-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reservation-table thead {
+  background: #f8fafc;
+  border-bottom: 2px solid var(--border);
+}
+
+.reservation-table th {
+  padding: 16px 20px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.reservation-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.reservation-table tbody tr:hover {
+  background: #fafbfc;
+}
+
+.reservation-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.reservation-table td {
+  padding: 16px 20px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+/* Table Cell Styles */
+.reservation-table .car-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.reservation-table .amount {
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-flex;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.badge-blue {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.status-badge.badge-green {
+  background: #dcfce7;
+  color: var(--green);
+}
+
+.status-badge.badge-gray {
+  background: #f1f5f9;
+  color: var(--text-muted);
+}
+
+.status-badge.badge-red {
+  background: #fee2e2;
+  color: var(--red);
+}
+
+/* Empty State */
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.empty-state p {
+  font-size: 15px;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .reservation-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .reservation-table {
+    min-width: 600px;
+  }
+
+  .reservation-table th,
+  .reservation-table td {
+    padding: 12px 16px;
+  }
+}

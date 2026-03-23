@@ -93,6 +93,7 @@ blockchain:
 ai:
   server:
     url: ${AI_SERVER_URL:http://localhost:8000}
+    face-url: ${AI_FACE_URL:http://localhost:8001}
 
 springdoc:
   swagger-ui:

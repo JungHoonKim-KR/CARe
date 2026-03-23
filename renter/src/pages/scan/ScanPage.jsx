@@ -3,17 +3,20 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState } from 'react'
-import { useParams, useLocation }       from 'react-router-dom'
+import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { Scanner }                      from './scanner.js'
 import { ZONES }                        from './zones.js'
 import styles                           from './ScanPage.module.css'
 import { getScanResult }                from '../../api/scan'
+import { completeReservation }         from '../../api/reservation'
 import careLogo                         from '../../assets/care_logo.png'
 import { drawBoxes, clearOverlay, updateARBoxes, startARLoop, stopARLoop, showHistoryOverlay } from './overlay.js'
 export default function ScanPage() {
   const { reservationId } = useParams()
   const location          = useLocation()
+  const navigate          = useNavigate()
   const logType           = location.state?.logType || 'BEFORE'
+  const reservation       = location.state?.reservation
 
   const videoRef   = useRef(null)
   const canvasRef  = useRef(null)
@@ -96,6 +99,7 @@ export default function ScanPage() {
   const [zoneIndex,    setZoneIndex]    = useState(0)
   const [captures,     setCaptures]     = useState({})
   const [isDone,       setIsDone]       = useState(false)
+  const [isSaved,      setIsSaved]      = useState(false)
   const [matchStatus,  setMatchStatus]  = useState('detecting')
   const [matchValue,   setMatchValue]   = useState(0)
   const [showToast,    setShowToast]    = useState(false)
@@ -279,6 +283,27 @@ export default function ScanPage() {
     return currentZone.instruction
   }
 
+  // 저장 완료 화면 (반납 후)
+  if (isSaved) return (
+    <div className={styles.page} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 28, padding: '40px 32px', textAlign: 'center', minHeight: '100vh', background: 'white' }}>
+      <div style={{ width: 96, height: 96, borderRadius: '50%', background: '#F7A633', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 40px rgba(247,166,51,0.38)', animation: 'scanPopIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards' }}>
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none">
+          <path d="M20 6L9 17L4 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 900, color: '#111', margin: 0, letterSpacing: '-0.5px' }}>사진이 안전하게 저장되었습니다</h1>
+        <p style={{ fontSize: 15, color: '#888', lineHeight: 1.75, margin: 0 }}>스캔 결과가 블록체인에 기록됐어요.<br/>이용해 주셔서 감사해요 😊</p>
+      </div>
+      <button
+        onClick={() => navigate('/home')}
+        style={{ width: '100%', maxWidth: 400, background: '#F7A633', color: 'white', border: 'none', borderRadius: 16, padding: 18, fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 16px rgba(247,166,51,0.35)', marginTop: 8 }}
+      >
+        홈으로 돌아가기
+      </button>
+    </div>
+  )
+
   // 완료 화면
   if (isDone) return (
     <div className={styles.page}>
@@ -316,7 +341,14 @@ export default function ScanPage() {
             )
           })}
         </div>
-        <button className={styles.btnDone} onClick={() => console.log('완료:', captures)}>완료</button>
+        <button className={styles.btnDone} onClick={() => {
+          if (logType === 'AFTER') {
+            completeReservation(reservationId).catch(e => console.error('[Scan] 반납완료 실패:', e))
+            setIsSaved(true)
+          } else {
+            navigate('/car-smartkey', { state: { reservation } })
+          }
+        }}>완료</button>
       </div>
     </div>
   )

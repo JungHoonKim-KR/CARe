@@ -97,4 +97,8 @@ public class Reservation extends BaseEntity {
     public void updateStatusToAfterScan() {
         this.status = "AFTER_SCAN";
     }
+
+    public void updateStatusToCompleted() {
+        this.status = "COMPLETED";
+    }
 }

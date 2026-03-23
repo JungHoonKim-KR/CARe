@@ -35,13 +35,13 @@ export default function ScanPage() {
   const [isCapturing,  setIsCapturing]  = useState(false)
   const [allScratches, setAllScratches] = useState([])
   const [activeCard,   setActiveCard]   = useState(null)
+  const [debugLog,     setDebugLog]     = useState('')  // ✅ 모바일 디버그용
 
   const currentZone = ZONES[zoneIndex]
   const history     = allScratches.filter(s => s.carPart === currentZone?.id)
 
-  // isWaiting 플래그 추가
-      const isWaitingRef = useRef(false)
-      const timeoutRef   = useRef(null)
+  const isWaitingRef   = useRef(false)
+  const timeoutRef     = useRef(null)
   const matchStatusRef = useRef(matchStatus)
   useEffect(() => { matchStatusRef.current = matchStatus }, [matchStatus])
   useEffect(() => { setActiveCard(null) }, [zoneIndex])
@@ -68,30 +68,51 @@ export default function ScanPage() {
     const AI_WS_URL = import.meta.env.VITE_AI_WS_URL || `${protocol}//${window.location.hostname}:8000`
     const wsUrl     = `${AI_WS_URL}/api/v1/scratches/ws/detect`
     wsRef.current   = new WebSocket(wsUrl)
-    wsRef.current.onopen    = () => console.log('🟢 [WS] 연결 성공!')
+    wsRef.current.onopen = () => {
+      console.log('🟢 [WS] 연결 성공!')
+      setDebugLog(prev => prev + ' | WS연결OK')
+    }
 
-
-    // onmessage에서 플래그 해제
     wsRef.current.onmessage = (event) => {
-      isWaitingRef.current = false  //
+      isWaitingRef.current = false
       clearTimeout(timeoutRef.current)
       if (matchStatusRef.current === 'captured') return
       const data = JSON.parse(event.data)
-      console.log('WS 응답:', data)
-      if (data.boxes) updateARBoxes(data.boxes)
+
+      if (data.boxes) {
+        const video = videoRef.current
+        const vw = video?.videoWidth  || 640
+        const vh = video?.videoHeight || 360
+        const scale = 640 / Math.max(vw, vh)
+        const capW  = Math.round(vw * scale)
+        const capH  = Math.round(vh * scale)
+
+        // ✅ 실제 캡처 해상도 기준으로 스케일 변환
+        updateARBoxes(data.boxes, capW, capH)
+      }
     }
 
-    // setInterval에서 플래그 체크
     const interval = setInterval(() => {
       if (matchStatusRef.current === 'captured') return
-      if (isWaitingRef.current) return  // ← 추가: 응답 대기 중이면 스킵
+      if (isWaitingRef.current) return
 
       const video = videoRef.current, ws = wsRef.current
       if (!video || !ws || ws.readyState !== WebSocket.OPEN) return
 
+      // ✅ 비디오 실제 비율 유지
+      const vw = video.videoWidth  || 640
+      const vh = video.videoHeight || 360
+
+      // 긴 쪽을 640 기준으로 스케일
+      const scale  = 640 / Math.max(vw, vh)
+      const capW   = Math.round(vw * scale)
+      const capH   = Math.round(vh * scale)
+
       const c = document.createElement('canvas')
-      c.width = 640; c.height = 360
-      c.getContext('2d').drawImage(video, 0, 0, 640, 360)
+      c.width  = capW
+      c.height = capH
+      c.getContext('2d').drawImage(video, 0, 0, capW, capH)
+
       c.toBlob(blob => {
         if (blob && ws.readyState === WebSocket.OPEN) {
           isWaitingRef.current = true
@@ -106,33 +127,41 @@ export default function ScanPage() {
   }, [])
 
   // 카메라
-  // 카메라 — ScanPage.jsx 안의 카메라 useEffect를 이걸로 교체
-    useEffect(() => {
-      let stream = null, cancelled = false
-      navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
+  useEffect(() => {
+    let stream = null, cancelled = false
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } },
+      audio: false,
+    })
+      .then(s => {
+        stream = s
+        if (cancelled) { s.getTracks().forEach(t => t.stop()); return }
+        const video = videoRef.current
+        if (!video) return
+        video.srcObject = s
+
+        // ✅ onloadedmetadata: play만 (모바일은 이 시점에 videoWidth=0일 수 있음)
+        video.onloadedmetadata = () => {
+          const msg = `meta:${video.videoWidth}x${video.videoHeight} ready:${video.readyState}`
+          console.log('📱', msg)
+          setDebugLog(prev => prev + ' | ' + msg)
+          if (!cancelled) video.play().catch(() => {})
+        }
+
+        // ✅ onloadeddata: 실제 프레임 나온 후 AR 시작 — 모바일 핵심 수정
+        video.onloadeddata = () => {
+          const msg = `data:${video.videoWidth}x${video.videoHeight}`
+          console.log('📱', msg)
+          setDebugLog(prev => prev + ' | ' + msg)
+          if (!cancelled) startARLoop(arCanvasRef.current, video)
+        }
       })
-        .then(s => {
-          stream = s
-          if (cancelled) { s.getTracks().forEach(t => t.stop()); return }
-          const video = videoRef.current
-          if (!video) return
-          video.srcObject = s
-
-          // ✅ onloadedmetadata: play만
-          video.onloadedmetadata = () => {
-            if (!cancelled) video.play().catch(() => {})
-          }
-
-          // ✅ onloadeddata: 실제 프레임 나온 후 AR 시작 — 모바일 videoWidth 0 방지
-          video.onloadeddata = () => {
-            if (!cancelled) startARLoop(arCanvasRef.current, video)
-          }
-        })
-        .catch(err => { if (!cancelled) console.error('[ScanPage] 카메라 실패', err) })
-      return () => { cancelled = true; stream?.getTracks().forEach(t => t.stop()) }
-    }, [])
+      .catch(err => {
+        console.error('[ScanPage] 카메라 실패', err)
+        setDebugLog(prev => prev + ' | 카메라실패:' + err.message)
+      })
+    return () => { cancelled = true; stream?.getTracks().forEach(t => t.stop()) }
+  }, [])
 
   // Scanner
   useEffect(() => {
@@ -188,14 +217,15 @@ export default function ScanPage() {
     setCaptures(prev => ({ ...prev, [currentZone.id]: { dataUrl: null, boxes: [] } }))
     handleNext()
   }
-function handleCardClick(i) {
-  const newActive = activeCard === i ? null : i
-  setActiveCard(newActive)
-  if (newActive !== null)
-    showHistoryOverlay(history[newActive], videoRef.current, arCanvasRef.current)  // ← 추가
-  else
-    showHistoryOverlay(null, videoRef.current, arCanvasRef.current)
-}
+  function handleCardClick(i) {
+    const newActive = activeCard === i ? null : i
+    setActiveCard(newActive)
+    if (newActive !== null)
+      showHistoryOverlay(history[newActive], videoRef.current, arCanvasRef.current)
+    else
+      showHistoryOverlay(null, videoRef.current, arCanvasRef.current)
+  }
+
   const totalDefects = Object.values(captures).reduce((a, c) => a + (c.boxes?.length || 0), 0)
 
   function getInstructionHtml() {
@@ -215,7 +245,6 @@ function handleCardClick(i) {
   if (isDone) return (
     <div className={styles.page} style={{ overflowY: 'auto' }}>
       <div className={styles.summary}>
-
         <div className={styles.summaryHero}>
           <div className={styles.summaryCheck}>✓</div>
           <div className={styles.summaryHeroTitle}>스캔 완료</div>
@@ -233,13 +262,11 @@ function handleCardClick(i) {
           </div>
         </div>
 
-        {/* 흠집 있는 구역만 크롭 이미지 표시 */}
         {ZONES.map(z => {
           const cap       = captures[z.id]
           const boxes     = cap?.boxes || []
           const hasDefect = boxes.length > 0
           if (!hasDefect) return null
-
           return (
             <div key={z.id} className={styles.summaryZoneCard}>
               <div className={styles.summaryZoneHeader}>
@@ -257,7 +284,6 @@ function handleCardClick(i) {
           )
         })}
 
-        {/* 흠집 없으면 올클리어 */}
         {totalDefects === 0 && (
           <div className={styles.summaryAllClear}>
             <span style={{ fontSize: 32 }}>🎉</span>
@@ -275,6 +301,18 @@ function handleCardClick(i) {
   // ── 스캔 화면
   return (
     <div className={styles.page}>
+
+      {/* ✅ 모바일 디버그 오버레이 — 확인 후 제거 */}
+      {debugLog ? (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.75)', color: '#00ff88',
+          fontSize: 10, padding: '6px 8px', wordBreak: 'break-all',
+          maxWidth: '100vw', pointerEvents: 'none',
+        }}>
+          {debugLog}
+        </div>
+      ) : null}
 
       <div className={styles.cameraWrap}>
         <video ref={videoRef} className={styles.video} playsInline muted />

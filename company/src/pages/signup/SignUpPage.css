@@ -1,12 +1,11 @@
-.login-container {
+.signup-container {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
   width: 100%;
-  overflow: hidden;
 }
 
 /* Left Side - Image Section */
-.login-image-section {
+.signup-image-section {
   flex: 1;
   background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
               url('/main.jpg');
@@ -18,7 +17,7 @@
   padding: 60px;
 }
 
-.login-logo {
+.signup-logo {
   font-size: 48px;
   font-weight: 700;
   color: white;
@@ -27,36 +26,33 @@
 }
 
 /* Right Side - Form Section */
-.login-form-section {
+.signup-form-section {
   flex: 1;
   background: white;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 40px 40px 60px;
+  padding: 40px;
   overflow-y: auto;
 }
 
-.login-form-wrapper {
+.signup-form-wrapper {
   width: 100%;
   max-width: 440px;
+  padding: 20px 0;
 }
 
-.login-title {
+.signup-title {
   font-size: 32px;
   font-weight: 700;
   color: #1a1a1a;
   margin-bottom: 12px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
 }
 
-.wave-emoji {
-  font-size: 32px;
-}
-
-.login-subtitle {
+.signup-subtitle {
   font-size: 14px;
   color: #64748b;
   line-height: 1.6;
@@ -64,7 +60,7 @@
 }
 
 /* Form Styles */
-.login-form {
+.signup-form {
   margin-bottom: 24px;
 }
 
@@ -83,7 +79,7 @@
 .input-wrapper {
   position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .input-icon {
@@ -95,7 +91,7 @@
 
 .input-wrapper input {
   width: 100%;
-  padding: 14px 16px 14px 48px;
+  padding: 14px 16px 14px 20px;
   border: 2px solid #e2e8f0;
   border-radius: 10px;
   font-size: 14px;
@@ -111,22 +107,6 @@
 .input-wrapper input:focus {
   border-color: #ff6b35;
   box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
-}
-
-.form-footer {
-  text-align: right;
-  margin-bottom: 24px;
-}
-
-.forgot-password {
-  color: #64748b;
-  font-size: 13px;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.forgot-password:hover {
-  color: #ff6b35;
 }
 
 /* Error Message */
@@ -148,7 +128,7 @@
   font-size: 16px;
 }
 
-.login-button {
+.signup-button {
   width: 100%;
   padding: 16px;
   background: #ff6b35;
@@ -163,33 +143,20 @@
   box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
 }
 
-.login-button:hover {
+.signup-button:hover {
   background: #ff5722;
   box-shadow: 0 6px 16px rgba(255, 107, 53, 0.4);
   transform: translateY(-1px);
 }
 
-.login-button:active {
+.signup-button:active {
   transform: translateY(0);
-}
-
-.login-button:disabled {
-  background: #cbd5e0;
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
-}
-
-.login-button:disabled:hover {
-  background: #cbd5e0;
-  box-shadow: none;
-  transform: none;
 }
 
 /* Divider */
 .divider {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   margin: 32px 0;
   color: #94a3b8;
   font-size: 13px;
@@ -208,8 +175,8 @@
   padding: 0 16px;
 }
 
-/* Social Login */
-.social-login {
+/* Social Sign Up */
+.social-signup {
   display: flex;
   gap: 12px;
   justify-content: center;
@@ -223,7 +190,7 @@
   border-radius: 12px;
   background: white;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
@@ -244,22 +211,22 @@
   height: 24px;
 }
 
-/* Register Link */
-.register-link {
+/* Login Link */
+.login-link {
   text-align: center;
   font-size: 13px;
   color: #64748b;
   margin-bottom: 24px;
 }
 
-.register-link a {
+.login-link a {
   color: #F7A633;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.2s;
 }
 
-.register-link a:hover {
+.login-link a:hover {
   color: #00b8d4;
   text-decoration: underline;
 }
@@ -274,29 +241,29 @@
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-  .login-image-section {
+  .signup-image-section {
     display: none;
   }
 
-  .login-form-section {
+  .signup-form-section {
     flex: 1;
   }
 }
 
 @media (max-width: 640px) {
-  .login-form-section {
+  .signup-form-section {
     padding: 20px;
   }
 
-  .login-form-wrapper {
+  .signup-form-wrapper {
     max-width: 100%;
   }
 
-  .login-title {
+  .signup-title {
     font-size: 28px;
   }
 
-  .login-subtitle {
+  .signup-subtitle {
     font-size: 13px;
     margin-bottom: 32px;
   }
@@ -306,7 +273,3 @@
     height: 56px;
   }
 }
-
-
-
-

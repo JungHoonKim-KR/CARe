@@ -25,7 +25,7 @@ pipeline {
         REDIS_CONTAINER = "redis"
 
         // YOLO 서버 전체 URL (예: https://xxxx.trycloudflare.com 또는 http://localhost:8000)
-        AI_YOLO_URL = "${env.AI_YOLO_URL ?: 'http://localhost:8000'}"
+        AI_YOLO_URL = "${(env.AI_YOLO_URL ?: 'http://localhost:8000').trim()}"
     }
 
     stages {

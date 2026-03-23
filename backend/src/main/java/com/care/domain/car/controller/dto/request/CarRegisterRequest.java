@@ -8,6 +8,8 @@ public record CarRegisterRequest(
         int dailyPrice,
         MultipartFile frontImage,
         MultipartFile rearImage,
-        MultipartFile leftImage,
-        MultipartFile rightImage
+        MultipartFile frontLeftImage,
+        MultipartFile frontRightImage,
+        MultipartFile rearLeftImage,
+        MultipartFile rearRightImage
 ) {}

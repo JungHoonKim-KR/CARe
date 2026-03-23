@@ -78,10 +78,12 @@ public class CarService {
 
         // side → MultipartFile 매핑
         Map<Side, MultipartFile> sideImages = new LinkedHashMap<>();
-        sideImages.put(Side.FRONT, request.frontImage());
-        sideImages.put(Side.REAR,  request.rearImage());
-        sideImages.put(Side.LEFT,  request.leftImage());
-        sideImages.put(Side.RIGHT, request.rightImage());
+        sideImages.put(Side.FRONT,       request.frontImage());
+        sideImages.put(Side.REAR,        request.rearImage());
+        sideImages.put(Side.FRONT_LEFT,  request.frontLeftImage());
+        sideImages.put(Side.FRONT_RIGHT, request.frontRightImage());
+        sideImages.put(Side.REAR_LEFT,   request.rearLeftImage());
+        sideImages.put(Side.REAR_RIGHT,  request.rearRightImage());
 
         // 1. OwnedCar 저장 (PENDING)
         OwnedCar car = OwnedCar.create(carId, company, carModel, request.plateNumber(), request.dailyPrice());

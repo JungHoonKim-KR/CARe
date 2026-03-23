@@ -9,9 +9,6 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum ReservationErrorCode implements ErrorCode {
 
-<<<<<<< HEAD
-    RESERVATION_NOT_FOUND("존재하지 않는 예약입니다.", HttpStatus.NOT_FOUND);
-=======
     RESERVATION_NOT_FOUND("존재하지 않는 예약입니다.", HttpStatus.NOT_FOUND),
     CAR_NOT_FOUND("존재하지 않는 차량입니다.", HttpStatus.NOT_FOUND),
     INSURANCE_NOT_FOUND("존재하지 않는 보험입니다.", HttpStatus.NOT_FOUND),
@@ -19,7 +16,6 @@ public enum ReservationErrorCode implements ErrorCode {
     PAYMENT_FAILED("결제에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     INSUFFICIENT_BALANCE("잔액이 부족합니다.", HttpStatus.BAD_REQUEST),
     INVALID_DATE("반납일은 픽업일 이후여야 합니다.", HttpStatus.BAD_REQUEST);
->>>>>>> origin/develop
 
     private final String message;
     private final HttpStatus httpStatus;

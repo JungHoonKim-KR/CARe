@@ -35,6 +35,9 @@ public class Renter extends BaseEntity {
     @Column(name = "did_verified", nullable = false)
     private boolean didVerified = false;
 
+    @Column(name = "vc_cid", length = 255)
+    private String vcCid;
+
     @Column(name = "language_code", length = 10)
     private String languageCode;
 
@@ -58,5 +61,13 @@ public class Renter extends BaseEntity {
     public void updatePrivyWallet(String walletAddress, String privyWalletId) {
         this.walletAddress = walletAddress;
         this.privyWalletId = privyWalletId;
+    }
+
+    public void updateVcCid(String vcCid) {
+        this.vcCid = vcCid;
+    }
+
+    public void updateLanguage(String languageCode) {
+        this.languageCode = languageCode;
     }
 }

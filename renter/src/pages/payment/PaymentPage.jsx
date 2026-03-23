@@ -21,20 +21,21 @@ export default function PaymentPage() {
   const [walletBalance, setWalletBalance] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showChargeModal, setShowChargeModal] = useState(false)
 
   useEffect(() => {
     getTokenBalance().then((data) => setWalletBalance(parseFloat(data.balance))).catch(() => {})
   }, [])
 
   const handlePay = async () => {
-    if (walletBalance < total) {
-      setError('보유 토큰이 부족합니다.')
+    if (walletBalance !== null && walletBalance < total) {
+      setShowChargeModal(true)
       return
     }
     setLoading(true)
     setError('')
     try {
-      const result = await createReservation(carId, insuranceId, total, searchInfo.pickupDate, searchInfo.pickupTime, searchInfo.returnDate, searchInfo.returnTime)
+      const result = await createReservation(carId, insuranceId, searchInfo.pickupDate, searchInfo.pickupTime, searchInfo.returnDate, searchInfo.returnTime)
       navigate('/booking-complete', {
         state: {
           car,
@@ -142,18 +143,49 @@ export default function PaymentPage() {
           </div>
         </div>
 
-        {error && <p className="pay-error">{error}</p>}
-
         <div style={{ height: 120 }} />
       </div>
 
       <div className="pay-btn-area">
+        {error && <p className="pay-error" style={{ margin: '0 0 10px', textAlign: 'center' }}>{error}</p>}
         <button className="pay-btn" onClick={handlePay} disabled={loading}>
           {loading ? '처리 중...' : `${total.toLocaleString()} USDC 결제하기`}
         </button>
       </div>
 
       <BottomNav />
+
+      {showChargeModal && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}
+          onClick={() => setShowChargeModal(false)}
+        >
+          <div
+            style={{ background: 'white', borderRadius: 20, padding: '32px 24px', width: '100%', maxWidth: 360, textAlign: 'center' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ fontSize: 36, marginBottom: 12 }}>💰</div>
+            <h2 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px', color: '#111' }}>보유 토큰이 부족합니다</h2>
+            <p style={{ fontSize: 14, color: '#888', margin: '0 0 24px', lineHeight: 1.6 }}>
+              결제에 필요한 토큰이 부족해요.<br/>충전 후 다시 시도해주세요.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowChargeModal(false)}
+                style={{ flex: 1, padding: '14px 0', borderRadius: 12, border: '1.5px solid #eee', background: 'white', color: '#888', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
+              >
+                취소
+              </button>
+              <button
+                onClick={() => navigate('/wallet/charge')}
+                style={{ flex: 1, padding: '14px 0', borderRadius: 12, border: 'none', background: '#F7A633', color: 'white', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
+              >
+                충전하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-const AI_BASE_URL = import.meta.env.VITE_AI_BASE_URL ?? 'http://localhost:8000'
+const AI_BASE_URL = import.meta.env.VITE_AI_BASE_URL || 'http://localhost:8000'
 
 /**
  * 여권 이미지와 셀피를 비교해 동일인 여부 확인

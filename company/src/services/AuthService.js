@@ -49,6 +49,8 @@ class AuthService {
 
   async login(email, password) {
     try {
+      console.log('🔐 로그인 요청:', { email })
+
       const response = await api.post('/api/auth/company/login', {
         email,
         password

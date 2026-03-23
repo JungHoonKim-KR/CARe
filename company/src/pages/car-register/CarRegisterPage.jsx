@@ -16,14 +16,12 @@ export default function CarRegisterPage() {
     leftImage: null,
     rightImage: null
   })
-
   const [previews, setPreviews] = useState({
     frontImage: null,
     rearImage: null,
     leftImage: null,
     rightImage: null
   })
-
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 

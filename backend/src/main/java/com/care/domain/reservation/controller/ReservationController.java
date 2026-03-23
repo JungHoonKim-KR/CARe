@@ -1,17 +1,10 @@
 package com.care.domain.reservation.controller;
 
-import com.care.domain.reservation.controller.dto.request.ReservationCreateRequest;
-import com.care.domain.reservation.controller.dto.response.ReservationCreateResponse;
 import com.care.domain.reservation.controller.dto.response.ReservationDetailResponse;
 import com.care.domain.reservation.service.ReservationService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,23 +12,6 @@ import java.net.URI;
 public class ReservationController {
 
     private final ReservationService reservationService;
-
-    /**
-     * POST /reservations
-     * 예약 생성 (결제 포함)
-     */
-    @PostMapping
-    public ResponseEntity<ReservationCreateResponse> createReservation(
-            @AuthenticationPrincipal String userId,
-            @Valid @RequestBody ReservationCreateRequest request) {
-        ReservationCreateResponse response = reservationService.createReservation(userId, request);
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{reservationId}")
-                .buildAndExpand(response.reservationId())
-                .toUri();
-        return ResponseEntity.created(location).body(response);
-    }
 
     /**
      * GET /reservations/{reservationId}

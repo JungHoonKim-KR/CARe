@@ -115,21 +115,22 @@
 /* 대여 일정 */
 .schedule-section {
   display: flex;
-  flex-direction: column;
-  gap: 0;
+  flex-direction: row;
+  gap: 24px;
+  align-items: stretch;
 }
 
 .schedule-item {
   display: flex;
-  gap: 20px;
-  padding: 16px 0;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
 }
 
 .schedule-label {
   font-size: 14px;
   color: #6c757d;
   font-weight: 600;
-  min-width: 50px;
 }
 
 .schedule-details {
@@ -149,9 +150,9 @@
 }
 
 .schedule-divider {
-  height: 1px;
+  width: 1px;
   background-color: #e9ecef;
-  margin: 0;
+  align-self: stretch;
 }
 
 /* 이용 상태 */
@@ -210,6 +211,62 @@
   font-size: 13px;
   color: #856404;
   font-weight: 500;
+}
+
+/* Photos Grid */
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.photo-item {
+  aspect-ratio: 16 / 10;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #dee2e6;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.photo-item:hover {
+  transform: scale(1.02);
+}
+
+.photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Dispute Request Button */
+.dispute-request-button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 16px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.25);
+}
+
+.dispute-request-button:hover {
+  background-color: #c82333;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.35);
+  transform: translateY(-1px);
+}
+
+.dispute-request-button:active {
+  transform: scale(0.98);
 }
 
 /* 분쟁 정보 */

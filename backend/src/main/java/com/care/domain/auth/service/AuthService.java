@@ -87,7 +87,6 @@ public class AuthService {
                 request.getName(),
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
-                request.getAirportCode(),
                 request.getLanguageCode(),
                 walletAddress
         );
@@ -141,9 +140,12 @@ public class AuthService {
     }
 
     public void logout(String accessToken, String userId) {
+        // AT blacklist 등록
         String jti = jwtUtil.getJti(accessToken);
         long expiration = jwtUtil.getExpiration(accessToken) - System.currentTimeMillis();
         redisTemplate.opsForValue().set("blacklist:" + jti, "true", expiration, TimeUnit.MILLISECONDS);
+
+        // RT 삭제
         redisTemplate.delete("refresh:" + userId);
     }
 }

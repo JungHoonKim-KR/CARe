@@ -47,15 +47,4 @@ public class ScanController {
         List<ScanResponseDto> result = scanService.getScanResult(reservationId, logType);
         return ResponseEntity.ok(result);
     }
-
-    @GetMapping("/{reservationId}/result")
-    public ResponseEntity<List<ScanResponseDto>> getScanResult(
-            @PathVariable String reservationId,
-            @RequestParam String logType,
-            @RequestParam(required = false) String zone) {
-        if (zone != null) {
-            return ResponseEntity.ok(scanService.getScanResultByZone(reservationId, logType, zone));
-        }
-        return ResponseEntity.ok(scanService.getScanResult(reservationId, logType));
-    }
 }

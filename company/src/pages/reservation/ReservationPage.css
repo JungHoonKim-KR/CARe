@@ -8,6 +8,7 @@
   box-sizing: border-box;
 }
 
+/* Page Header */
 .page-header {
   margin-bottom: 32px;
 }
@@ -16,17 +17,27 @@
   font-size: 28px;
   font-weight: 700;
   color: var(--text);
-  margin-bottom: 8px;
+  margin: 0 0 8px 0;
   letter-spacing: -0.5px;
 }
 
 .page-subtitle {
   font-size: 14px;
   color: var(--text-muted);
+  margin: 0;
 }
 
-@media (max-width: 1024px) {
+/* Responsive */
+@media (max-width: 768px) {
   .reservation-page {
-    padding: 24px 20px;
+    padding: 20px;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
   }
 }

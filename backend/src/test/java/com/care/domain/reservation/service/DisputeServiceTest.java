@@ -4,21 +4,16 @@ import com.care.domain.car.entity.OwnedCar;
 import com.care.domain.company.entity.Company;
 import com.care.domain.reservation.controller.dto.request.DisputeCreateRequest;
 import com.care.domain.reservation.controller.dto.request.DisputeDefenseRequest;
-import com.care.domain.reservation.controller.dto.request.DisputeSettleRequest;
 import com.care.domain.reservation.controller.dto.response.DisputeCreateResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDefenseResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDetailResponse;
-import com.care.domain.reservation.controller.dto.response.DisputeSettleResponse;
 import com.care.domain.reservation.entity.Dispute;
 import com.care.domain.reservation.entity.Reservation;
 import com.care.domain.reservation.entity.Scratch;
 import com.care.domain.reservation.repository.DisputeRepository;
 import com.care.domain.reservation.repository.ReservationRepository;
-import com.care.domain.reservation.repository.SettlementRepository;
 import com.care.domain.renter.entity.Renter;
 import com.care.domain.scan.repository.ScratchRepository;
-import com.care.global.blockchain.CareTokenService;
-import com.care.global.blockchain.DisputeSettlementService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +28,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -49,15 +43,6 @@ class DisputeServiceTest {
 
     @Mock
     private ScratchRepository scratchRepository;
-
-    @Mock
-    private SettlementRepository settlementRepository;
-
-    @Mock
-    private DisputeSettlementService disputeSettlementService;
-
-    @Mock
-    private CareTokenService careTokenService;
 
     @InjectMocks
     private DisputeService disputeService;
@@ -161,69 +146,6 @@ class DisputeServiceTest {
                 .hasMessageContaining("조회 권한");
     }
 
-    @Test
-    void 분쟁_정산_COMPLETED_성공_자동이체_렌터에서_회사로() throws Exception {
-        // given
-        Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
-        DisputeSettleRequest request = new DisputeSettleRequest();
-        setField(request, "finalAmount", 120000L);
-        setField(request, "status", "COMPLETED");
-
-        given(disputeRepository.findByDisputeId("dispute-1")).willReturn(Optional.of(dispute));
-        given(settlementRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
-        given(disputeSettlementService.recordSettlement(any(), anyLong())).willReturn("0xrecord");
-        given(careTokenService.transfer("0xrenter", "0xcompany", 120000d)).willReturn("0xusdc");
-
-        // when
-        DisputeSettleResponse response = disputeService.settleDispute("company-1", "dispute-1", request);
-
-        // then
-        assertThat(response.finalAmount()).isEqualTo(120000L);
-        assertThat(response.status()).isEqualTo("COMPLETED");
-        assertThat(response.txHash()).isEqualTo("0xusdc");
-        verify(disputeSettlementService).recordSettlement(any(), anyLong());
-        verify(careTokenService).transfer("0xrenter", "0xcompany", 120000d);
-        verify(targetScratch).clearDisputed();
-    }
-
-    @Test
-    void 분쟁_정산_REFUNDED_성공_자동이체_회사에서_렌터로() throws Exception {
-        // given
-        Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
-        DisputeSettleRequest request = new DisputeSettleRequest();
-        setField(request, "finalAmount", 10000L);
-        setField(request, "status", "REFUNDED");
-
-        given(disputeRepository.findByDisputeId("dispute-2")).willReturn(Optional.of(dispute));
-        given(settlementRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
-        given(disputeSettlementService.recordSettlement(any(), anyLong())).willReturn("0xrecord2");
-        given(careTokenService.transfer("0xcompany", "0xrenter", 10000d)).willReturn("0xrefund");
-
-        // when
-        DisputeSettleResponse response = disputeService.settleDispute("company-1", "dispute-2", request);
-
-        // then
-        assertThat(response.status()).isEqualTo("REFUNDED");
-        assertThat(response.txHash()).isEqualTo("0xrefund");
-        verify(careTokenService).transfer("0xcompany", "0xrenter", 10000d);
-    }
-
-    @Test
-    void 분쟁_정산_실패_Pending_상태요청() {
-        // given
-        Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
-        DisputeSettleRequest request = new DisputeSettleRequest();
-        setField(request, "finalAmount", 1000L);
-        setField(request, "status", "PENDING");
-
-        given(disputeRepository.findByDisputeId("dispute-3")).willReturn(Optional.of(dispute));
-
-        // when & then
-        assertThatThrownBy(() -> disputeService.settleDispute("company-1", "dispute-3", request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("PENDING");
-    }
-
     private Reservation mockReservation(String reservationId, String companyId, String renterId) {
         Reservation reservationMock = org.mockito.Mockito.mock(Reservation.class);
         OwnedCar ownedCarMock = org.mockito.Mockito.mock(OwnedCar.class);
@@ -234,10 +156,8 @@ class DisputeServiceTest {
         lenient().when(reservationMock.getOwnedCar()).thenReturn(ownedCarMock);
         lenient().when(ownedCarMock.getCompany()).thenReturn(companyMock);
         lenient().when(companyMock.getCompanyId()).thenReturn(companyId);
-        lenient().when(companyMock.getWalletAddress()).thenReturn("0xcompany");
         lenient().when(reservationMock.getRenter()).thenReturn(renterMock);
         lenient().when(renterMock.getUserId()).thenReturn(renterId);
-        lenient().when(renterMock.getWalletAddress()).thenReturn("0xrenter");
 
         return reservationMock;
     }

@@ -1,6 +1,5 @@
 import { useState, useReducer, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import careLogo from '../../assets/care_logo.png'
 import mapIcon from '../../assets/map_icon.png'
 import carIcon from '../../assets/car_icon.png'
@@ -60,6 +59,8 @@ const initialFormState = {
 
 const formReducer = (state, action) => {
   switch (action.type) {
+    case 'SET_FIELD':
+      return { ...state, [action.field]: action.value }
     case 'SET_FIELDS':
       return { ...state, ...action.fields }
     case 'RESET':
@@ -71,7 +72,6 @@ const formReducer = (state, action) => {
 
 export default function HomePage() {
   const navigate = useNavigate()
-  const { t, i18n } = useTranslation()
 
   const didVerified =
     localStorage.getItem('passport_verified') === 'true' &&
@@ -86,36 +86,25 @@ export default function HomePage() {
     }
   }
 
-  const CAR_TYPES = [
-    { key: '', label: t('home.carTypeAll') },
-    { key: '소형', label: t('home.carTypeSmall') },
-    { key: '중형', label: t('home.carTypeMedium') },
-    { key: '대형', label: t('home.carTypeLarge') },
-    { key: 'SUV', label: 'SUV' },
-    { key: '밴', label: t('home.carTypeVan') },
-    { key: '럭셔리', label: t('home.carTypeLuxury') },
-  ]
-
-  const LANG_LABELS = { ko: '한국어', en: 'English', zh: '中文', ja: '日本語', fr: 'Français' }
-
   const [showDidAlert, setShowDidAlert] = useState(false)
+
+  useEffect(() => {
+    const alreadyShown = sessionStorage.getItem('did_alert_shown')
+    if (!didVerified && !alreadyShown) {
+      const t = setTimeout(() => {
+        setShowDidAlert(true)
+        sessionStorage.setItem('did_alert_shown', 'true')
+      }, 800)
+      return () => clearTimeout(t)
+    }
+  }, [])
+
   const [countrySheet, setCountrySheet] = useState(false)
   const [airportSheet, setAirportSheet] = useState(false)
   const [carTypeSheet, setCarTypeSheet] = useState(false)
   const [dateModal, setDateModal] = useState(null)
   const [countrySearch, setCountrySearch] = useState('')
   const [airportSearch, setAirportSearch] = useState('')
-
-  useEffect(() => {
-    const alreadyShown = sessionStorage.getItem('did_alert_shown')
-    if (!didVerified && !alreadyShown) {
-      const timer = setTimeout(() => {
-        setShowDidAlert(true)
-        sessionStorage.setItem('did_alert_shown', 'true')
-      }, 800)
-      return () => clearTimeout(timer)
-    }
-  }, [])
 
   const filteredCountries = COUNTRIES.filter(
     (c) =>
@@ -166,8 +155,6 @@ export default function HomePage() {
     })
   }
 
-  const carTypeLabel = CAR_TYPES.find((c) => c.key === form.carType)?.label || ''
-
   return (
     <div className="home-container">
       {/* DID 미인증 알림 */}
@@ -175,39 +162,36 @@ export default function HomePage() {
         <div className="did-alert-overlay" onClick={() => setShowDidAlert(false)}>
           <div className="did-alert-box" onClick={(e) => e.stopPropagation()}>
             <div className="did-alert-icon">🪪</div>
-            <p className="did-alert-title">{t('home.didAlert.title')}</p>
-            <p className="did-alert-desc">{t('home.didAlert.desc').split('\n').map((line, i) => (
-              <span key={i}>{line}{i === 0 && <br />}</span>
-            ))}</p>
+            <p className="did-alert-title">개인정보 인증을 안 하셨네요!</p>
+            <p className="did-alert-desc">3분 안에 하실 수 있어요.<br />지금 바로 신원 인증 하러 가실래요?</p>
             <div className="did-alert-btns">
               <button
                 className="did-alert-confirm"
                 onClick={() => { setShowDidAlert(false); navigate('/did-auth') }}
               >
-                {t('home.didAlert.confirm')}
+                하러가기
               </button>
               <button
                 className="did-alert-cancel"
                 onClick={() => setShowDidAlert(false)}
               >
-                {t('home.didAlert.cancel')}
+                나중에
               </button>
             </div>
           </div>
         </div>
       )}
-
       {/* 헤더 */}
       <header className="home-header">
         <img src={careLogo} alt="CARe" className="home-logo" />
         <div className="home-header-right">
-          <button className="lang-btn" onClick={() => navigate('/language')}>
+          <button className="lang-btn">
             <span className="lang-icon">🌐</span>
-            <span>{LANG_LABELS[i18n.language] || i18n.language}</span>
+            <span>한국어</span>
           </button>
           <span
             className={`did-badge ${didVerified ? 'did-badge--verified' : 'did-badge--pending'}`}
-            onClick={() => navigate(didVerified ? '/did-card' : '/did-auth', didVerified ? { state: { name: localStorage.getItem('did_name') || '', docId: localStorage.getItem('did_docId') || 'did:care:renter:verified', expiryDate: localStorage.getItem('did_expiry') || '' } } : undefined)}
+            onClick={() => navigate(didVerified ? '/wallet' : '/did-auth')}
             style={{ cursor: 'pointer' }}
           >
             {didVerified ? '인증완료' : t('home.unverified')}
@@ -218,16 +202,16 @@ export default function HomePage() {
       {/* 카테고리 아이콘 */}
       <div className="category-row">
         <button className="category-item" onClick={() => setCountrySheet(true)}>
-          <img src={mapIcon} alt={t('home.country')} />
-          <span>{t('home.country')}</span>
+          <img src={mapIcon} alt="국가" />
+          <span>국가</span>
         </button>
         <button className="category-item" onClick={() => setCarTypeSheet(true)}>
-          <img src={carIcon} alt={t('home.carKind')} />
-          <span>{t('home.carKind')}</span>
+          <img src={carIcon} alt="차종" />
+          <span>차종</span>
         </button>
         <button className="category-item">
-          <img src={companyIcon} alt={t('home.company')} />
-          <span>{t('home.company')}</span>
+          <img src={companyIcon} alt="업체" />
+          <span>업체</span>
         </button>
       </div>
 
@@ -236,7 +220,7 @@ export default function HomePage() {
         <button className="search-field" onClick={() => setCountrySheet(true)}>
           <span className="field-icon">📍</span>
           <span className={form.country ? 'field-value' : 'field-placeholder'}>
-            {form.country || t('home.pickupCountry')}
+            {form.country || '픽업 국가명'}
           </span>
         </button>
 
@@ -247,7 +231,7 @@ export default function HomePage() {
         >
           <span className="field-icon">📍</span>
           <span className={form.location ? 'field-value' : 'field-placeholder'}>
-            {form.location || t('home.pickupLocation')}
+            {form.location || '픽업 위치'}
           </span>
         </button>
 
@@ -255,9 +239,9 @@ export default function HomePage() {
           <button className="search-field date-field" onClick={() => setDateModal('pickup')}>
             <span className="field-icon">📅</span>
             <div className="date-content">
-              <span className="date-label">{t('home.pickupDate')}</span>
+              <span className="date-label">픽업 날짜</span>
               <span className={form.pickupDate ? 'field-value' : 'field-placeholder'}>
-                {form.pickupDate || t('home.selectDate')}
+                {form.pickupDate || '날짜 선택'}
               </span>
             </div>
           </button>
@@ -279,9 +263,9 @@ export default function HomePage() {
           <button className="search-field date-field" onClick={() => setDateModal('return')}>
             <span className="field-icon">📅</span>
             <div className="date-content">
-              <span className="date-label">{t('home.returnDate')}</span>
+              <span className="date-label">반납 날짜</span>
               <span className={form.returnDate ? 'field-value' : 'field-placeholder'}>
-                {form.returnDate || t('home.selectDate')}
+                {form.returnDate || '날짜 선택'}
               </span>
             </div>
           </button>
@@ -302,7 +286,7 @@ export default function HomePage() {
         <button className="search-field" onClick={() => setCarTypeSheet(true)}>
           <span className="field-icon">🚗</span>
           <span className={form.carType ? 'field-value' : 'field-placeholder'}>
-            {carTypeLabel || t('home.carType')}
+            {form.carType || '차량 종류'}
           </span>
         </button>
 
@@ -312,22 +296,22 @@ export default function HomePage() {
             checked={form.showAll}
             onChange={(e) => setForm((p) => ({ ...p, showAll: e.target.checked }))}
           />
-          <span>{t('home.showAll')}</span>
+          <span>가능한 모든 차를 보고 싶어요</span>
         </label>
 
         <button className="btn btn-primary search-btn" onClick={handleSearch}>
-          {t('home.search')}
+          검색
         </button>
       </div>
 
       {/* 국가 선택 바텀시트 */}
       <BottomSheet open={countrySheet} onClose={() => { setCountrySheet(false); setCountrySearch('') }}>
-        <h3 className="sheet-title">{t('home.countrySheet')}</h3>
+        <h3 className="sheet-title">어느 나라에 여행가시나요?</h3>
         <div className="sheet-search">
           <span className="sheet-search-icon">🔍</span>
           <input
             className="sheet-input"
-            placeholder={t('home.searchCountry')}
+            placeholder="국가 검색"
             value={countrySearch}
             onChange={(e) => setCountrySearch(e.target.value)}
             autoFocus
@@ -335,7 +319,7 @@ export default function HomePage() {
         </div>
         <button className="location-btn">
           <span className="location-icon">🎯</span>
-          <span>{t('home.myLocation')}</span>
+          <span>내 위치</span>
         </button>
         <hr className="sheet-divider" />
         <ul className="sheet-list">
@@ -353,12 +337,12 @@ export default function HomePage() {
 
       {/* 공항 선택 바텀시트 */}
       <BottomSheet open={airportSheet} onClose={() => { setAirportSheet(false); setAirportSearch('') }}>
-        <h3 className="sheet-title">{t('home.airportSheet')}</h3>
+        <h3 className="sheet-title">어느 공항에서 픽업하나요?</h3>
         <div className="sheet-search">
           <span className="sheet-search-icon">🔍</span>
           <input
             className="sheet-input"
-            placeholder={t('home.searchAirport')}
+            placeholder="공항 검색"
             value={airportSearch}
             onChange={(e) => setAirportSearch(e.target.value)}
             autoFocus
@@ -366,7 +350,7 @@ export default function HomePage() {
         </div>
         <button className="location-btn">
           <span className="location-icon">🎯</span>
-          <span>{t('home.myLocation')}</span>
+          <span>내 위치</span>
         </button>
         <hr className="sheet-divider" />
         <ul className="sheet-list">
@@ -384,16 +368,16 @@ export default function HomePage() {
 
       {/* 차종 선택 바텀시트 */}
       <BottomSheet open={carTypeSheet} onClose={() => setCarTypeSheet(false)}>
-        <h3 className="sheet-title">{t('home.carTypeSheet')}</h3>
+        <h3 className="sheet-title">차량 종류를 선택하세요</h3>
         <ul className="sheet-list">
-          {CAR_TYPES.map((item) => (
+          {CAR_TYPES.map((t) => (
             <li
-              key={item.key}
-              className={`sheet-list-item car-type-item${form.carType === item.key ? ' selected' : ''}`}
-              onClick={() => { setForm((p) => ({ ...p, carType: item.key })); setCarTypeSheet(false) }}
+              key={t}
+              className={`sheet-list-item car-type-item${form.carType === t ? ' selected' : ''}`}
+              onClick={() => { setForm((p) => ({ ...p, carType: t === '전체' ? '' : t })); setCarTypeSheet(false) }}
             >
               <span className="list-icon">🚗</span>
-              <p className="list-main">{item.label}</p>
+              <p className="list-main">{t}</p>
             </li>
           ))}
         </ul>
@@ -402,7 +386,7 @@ export default function HomePage() {
       {/* 날짜 선택 모달 */}
       <DatePickerModal
         open={!!dateModal}
-        label={dateModal === 'pickup' ? t('home.pickupDate') : t('home.returnDate')}
+        label={dateModal === 'pickup' ? '픽업 날짜' : '반납 날짜'}
         onClose={() => setDateModal(null)}
         onSelect={selectDate}
       />

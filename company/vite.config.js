@@ -26,7 +26,6 @@ const serveGlbPlugin = {
 
 export default defineConfig({
   plugins: [react(), serveGlbPlugin],
-  base: '/company/',
   server: {
     port: 3000,
     fs: { allow: [path.resolve(__dirname, '..')] },

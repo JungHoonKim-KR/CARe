@@ -171,11 +171,3 @@
 }
 
 .pay-btn:active { opacity: 0.85; }
-
-.pay-error {
-  color: #e53e3e;
-  font-size: 13px;
-  text-align: center;
-  padding: 0 20px 8px;
-  margin: 0;
-}

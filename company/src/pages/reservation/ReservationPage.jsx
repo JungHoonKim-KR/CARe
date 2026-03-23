@@ -82,8 +82,10 @@ export default function ReservationPage() {
   return (
     <div className="reservation-page">
       <div className="page-header">
-        <h1 className="page-title">예약 관리</h1>
-        <p className="page-subtitle">예약 현황을 확인하고 관리하세요</p>
+        <div className="header-content">
+          <h1 className="page-title">예약 관리</h1>
+          <p className="page-subtitle">예약 현황을 확인하고 관리하세요</p>
+        </div> 
       </div>
 
       <TabFilter tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />

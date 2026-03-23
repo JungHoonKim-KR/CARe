@@ -10,6 +10,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+>>>>>>> origin/develop
 @Entity
 @Table(name = "reservation")
 @Getter
@@ -48,6 +49,12 @@ public class Reservation extends BaseEntity {
     @Column(name = "after_scan_tx_hash", length = 100)
     private String afterScanTxHash;
 
+<<<<<<< HEAD
+    public enum DepositStatus {
+        SAFE, LOCKED, DEDUCTED
+    }
+    // DepositStatus enum 아래에 추가
+=======
     @Column(name = "payment_tx_hash", length = 100)
     private String paymentTxHash;
 
@@ -82,6 +89,7 @@ public class Reservation extends BaseEntity {
         return r;
     }
 
+>>>>>>> origin/develop
     public void updateStatusToInUse() {
         this.status = "IN_USE";
     }

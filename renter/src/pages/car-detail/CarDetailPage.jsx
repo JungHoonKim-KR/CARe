@@ -1,9 +1,35 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import careLogo from '../../assets/care_logo.png'
 import BottomNav from '../../components/BottomNav'
-import api from '../../api/auth'
 import './CarDetailPage.css'
+
+const INSURANCE_PLANS = [
+  {
+    id: 'basic',
+    label: '베이직',
+    price: 45,
+    coverage: '차량손해면책',
+    deductible: '자기부담금 T500,000',
+    icon: '⏱',
+  },
+  {
+    id: 'standard',
+    label: '스탠다드',
+    price: 80,
+    coverage: '제3자 책임보험',
+    deductible: '자기부담금 T300,000',
+    icon: '🗓',
+  },
+  {
+    id: 'premium',
+    label: '프리미엄',
+    price: 125,
+    coverage: '완전 면책',
+    deductible: '자기부담금 T0',
+    icon: '⭐',
+  },
+]
 
 const TERMS = [
   { id: 'service',   label: '렌터카 서비스 이용 약관', required: true },
@@ -26,32 +52,19 @@ export default function CarDetailPage() {
   const car        = state?.car        || {}
   const searchInfo = state?.searchInfo || {}
 
-  const [imgIdx, setImgIdx]               = useState(0)
-  const [insurance, setInsurance]         = useState(null)
-  const [insurancePlans, setInsurancePlans] = useState([])
-  const [favorite, setFavorite]           = useState(false)
-  const [allChecked, setAllChecked]       = useState(false)
-  const [termChecks, setTermChecks]       = useState(
+  const [imgIdx, setImgIdx]         = useState(0)
+  const [insurance, setInsurance]   = useState('basic')
+  const [favorite, setFavorite]     = useState(false)
+  const [allChecked, setAllChecked] = useState(false)
+  const [termChecks, setTermChecks] = useState(
     Object.fromEntries(TERMS.map((t) => [t.id, false]))
   )
-  const [expandedTerm, setExpandedTerm]   = useState(null)
+  const [expandedTerm, setExpandedTerm] = useState(null)
   const [showTranslation, setShowTranslation] = useState(false)
 
-  useEffect(() => {
-    const companyId = car.companyId
-    if (!companyId) return
-    api.get(`/api/insurances?companyId=${companyId}`)
-      .then(res => {
-        const plans = res.data
-        setInsurancePlans(plans)
-        if (plans.length > 0) setInsurance(plans[0].insuranceId)
-      })
-      .catch(() => {})
-  }, [car.companyId])
-
-  const selectedPlan = insurancePlans.find((p) => p.insuranceId === insurance) || insurancePlans[0]
+  const selectedPlan = INSURANCE_PLANS.find((p) => p.id === insurance)
   const basePrice    = car.pricePerDay || 1033
-  const totalPrice   = basePrice + (selectedPlan?.price || 0)
+  const totalPrice   = basePrice + selectedPlan.price
 
   const toggleAll = () => {
     const next = !allChecked
@@ -75,8 +88,6 @@ export default function CarDetailPage() {
     navigate('/payment', {
       state: {
         car,
-        carId: car.carId,
-        insuranceId: selectedPlan?.insuranceId,
         searchInfo,
         insurance: selectedPlan,
         rentalPrice: basePrice,
@@ -152,15 +163,17 @@ export default function CarDetailPage() {
         <div className="cd-section">
           <p className="cd-sec-title">보험</p>
           <div className="cd-ins-row">
-            {insurancePlans.map(plan => (
+            {INSURANCE_PLANS.map(plan => (
               <button
-                key={plan.insuranceId}
-                className={`cd-ins-card${insurance === plan.insuranceId ? ' sel' : ''}`}
-                onClick={() => setInsurance(plan.insuranceId)}
+                key={plan.id}
+                className={`cd-ins-card${insurance === plan.id ? ' sel' : ''}`}
+                onClick={() => setInsurance(plan.id)}
               >
-                <p className="cd-ins-lbl">{plan.name}</p>
+                <span className="cd-ins-ico">{plan.icon}</span>
+                <p className="cd-ins-lbl">{plan.label}</p>
                 <p className="cd-ins-price">{plan.price}T</p>
-                <p className="cd-ins-cov">{plan.description}</p>
+                <p className="cd-ins-cov">{plan.coverage}</p>
+                <p className="cd-ins-ded">{plan.deductible}</p>
               </button>
             ))}
           </div>

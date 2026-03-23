@@ -26,9 +26,6 @@ public class Renter extends BaseEntity {
     @Column(name = "wallet_address", length = 100, unique = true)
     private String walletAddress;
 
-    @Column(name = "privy_wallet_id", length = 100)
-    private String privyWalletId;
-
     @Column(name = "did_uri", length = 100)
     private String didUri;
 

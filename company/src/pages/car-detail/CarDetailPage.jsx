@@ -1,10 +1,12 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import NFTModal from '../../components/NFTModal'
 import './CarDetailPage.css'
 
 export default function CarDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams()
+  const [isNFTModalOpen, setIsNFTModalOpen] = useState(false)
 
 
   // 백엔드 연동 시
@@ -111,7 +113,16 @@ export default function CarDetailPage() {
               <div className="car-basic-info">
                 <div className="car-title-row">
                   <h2 className="car-name">{carData.name}</h2>
-                  <span className="status-badge">{carData.status}</span>
+                  <div className="badge-group">
+                    <span className="status-badge">{carData.status}</span>
+                    <button
+                      className="nft-badge"
+                      onClick={() => setIsNFTModalOpen(true)}
+                      title="NFT 정보 보기"
+                    >
+                      NFT
+                    </button>
+                  </div>
                 </div>
                 <p className="car-plate">{carData.plateNumber}</p>
                 <div className="car-specs">
@@ -152,7 +163,7 @@ export default function CarDetailPage() {
               <p className="description-text">{carData.description}</p>
             </div>
           </div>
-
+{/* 
           <div className="card nft-info-card">
             <h3 className="card-title">NFT 정보</h3>
             <div className="nft-info-row">
@@ -163,7 +174,7 @@ export default function CarDetailPage() {
               <span className="nft-label">발행일</span>
               <span className="nft-value">{nftInfo.issueDate}</span>
             </div>
-          </div>
+          </div> */}
 
           <div className="card defect-log-card">
             <h3 className="card-title">초기 결함 로그 (AI 탐지)</h3>
@@ -224,6 +235,12 @@ export default function CarDetailPage() {
           </div>
         </div>
       </div>
+
+      <NFTModal
+        isOpen={isNFTModalOpen}
+        onClose={() => setIsNFTModalOpen(false)}
+        nftData={nftInfo}
+      />
     </div>
   )
 }

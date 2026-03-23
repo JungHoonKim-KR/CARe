@@ -264,5 +264,9 @@
   font-family: 'Pretendard', sans-serif; font-size: 14px; font-weight: 600;
   cursor: pointer; transition: all 0.15s;
 }
+<<<<<<< HEAD
+.btnDone:hover { background: #4338ca; }
+=======
 .btnDone:hover { opacity: 0.9; }
 .btnDone:active { transform: scale(0.97); }
+>>>>>>> origin/develop

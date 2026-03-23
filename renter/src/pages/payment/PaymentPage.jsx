@@ -1,8 +1,13 @@
+<<<<<<< HEAD
+import { useNavigate, useLocation } from 'react-router-dom'
+import BottomNav from '../../components/BottomNav'
+=======
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import BottomNav from '../../components/BottomNav'
 import { createReservation } from '../../api/reservation'
 import { getTokenBalance } from '../../api/auth'
+>>>>>>> origin/develop
 import './PaymentPage.css'
 
 export default function PaymentPage() {
@@ -10,14 +15,17 @@ export default function PaymentPage() {
   const { state } = useLocation()
 
   const car         = state?.car         || {}
-  const carId       = state?.carId       || car.id || car.carId || ''
-  const insuranceId = state?.insuranceId || ''
   const searchInfo  = state?.searchInfo  || {}
   const insurance   = state?.insurance   || { label: '스탠다드', price: 80 }
   const rentalPrice = state?.rentalPrice || 1033
   const deposit     = state?.deposit     || 300
   const total       = state?.total       || rentalPrice + insurance.price + deposit
 
+<<<<<<< HEAD
+  const walletBalance = 20000
+
+  const handlePay = () => {
+=======
   const [walletBalance, setWalletBalance] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -27,10 +35,16 @@ export default function PaymentPage() {
   }, [])
 
   const handlePay = async () => {
+>>>>>>> origin/develop
     if (walletBalance < total) {
-      setError('보유 토큰이 부족합니다.')
+      alert('보유 토큰이 부족합니다.')
       return
     }
+<<<<<<< HEAD
+    navigate('/booking-complete', {
+      state: { car, searchInfo, total, rentalPrice, insurance, deposit },
+    })
+=======
     setLoading(true)
     setError('')
     try {
@@ -53,9 +67,10 @@ export default function PaymentPage() {
     } finally {
       setLoading(false)
     }
+>>>>>>> origin/develop
   }
 
-  const pickupLabel = searchInfo.pickupDate
+  const pickupLabel  = searchInfo.pickupDate
     ? `${searchInfo.pickupDate}(${dow(searchInfo.pickupDate)}) 오전 ${searchInfo.pickupTime || '10:00'}`
     : '2026.3.13(금) 오전 10:00'
 
@@ -83,6 +98,7 @@ export default function PaymentPage() {
 
       <div className="pay-scroll">
 
+        {/* ── 토큰 결제 ──────────────────────── */}
         <p className="pay-sec-title">토큰 결제</p>
 
         <div className="pay-wallet-card">
@@ -101,6 +117,7 @@ export default function PaymentPage() {
           </div>
         </div>
 
+        {/* ── 예약 상세 ──────────────────────── */}
         <div className="pay-info-card">
           <p className="pay-card-title">예약 상세</p>
           <div className="pay-row">
@@ -121,6 +138,7 @@ export default function PaymentPage() {
           </div>
         </div>
 
+        {/* ── 결제 상세 ──────────────────────── */}
         <div className="pay-info-card">
           <p className="pay-card-title">결제 상세</p>
           <div className="pay-row">
@@ -142,14 +160,13 @@ export default function PaymentPage() {
           </div>
         </div>
 
-        {error && <p className="pay-error">{error}</p>}
-
         <div style={{ height: 120 }} />
       </div>
 
+      {/* 결제 버튼 */}
       <div className="pay-btn-area">
-        <button className="pay-btn" onClick={handlePay} disabled={loading}>
-          {loading ? '처리 중...' : `${total.toLocaleString()} USDC 결제하기`}
+        <button className="pay-btn" onClick={handlePay}>
+          {total.toLocaleString()} USDC 결제하기
         </button>
       </div>
 
@@ -161,6 +178,7 @@ export default function PaymentPage() {
 function dow(dateStr) {
   if (!dateStr) return ''
   try {
-    return ['일','월','화','수','목','금','토'][new Date(dateStr).getDay()]
+    const d = new Date(dateStr)
+    return ['일','월','화','수','목','금','토'][d.getDay()]
   } catch { return '' }
 }

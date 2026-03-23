@@ -88,12 +88,6 @@ public class ScanService {
             scratches.add(scratchRepository.save(scratch));
         }
 
-        if (logType.equals("BEFORE")) {
-            reservation.updateStatusToInUse();
-        } else {
-            reservation.updateStatusToAfterScan();
-        }
-
         log.info("[Scan] 흠집 {}개 저장 - reservationId: {}, zone: {}",
                 scratches.size(), reservationId, zone);
         return ScanResponseDto.fromList(scratches);
@@ -126,13 +120,7 @@ public class ScanService {
             return res.getBody() != null ? res.getBody() : Collections.emptyMap();
         } catch (Exception e) {
             log.error("[Scan] FastAPI 호출 실패: {}", e.getMessage());
-            throw new RuntimeException("흠집 감지 서버 호출 실패: " + e.getMessage());
+            return Collections.emptyMap();
         }
-    }
-    @Transactional(readOnly = true)
-    public List<ScanResponseDto> getScanResultByZone(String reservationId, String logType, String zone) {
-        List<Scratch> scratches = scratchRepository
-                .findByReservation_ReservationIdAndLogTypeAndCarPart(reservationId, logType, zone);
-        return ScanResponseDto.fromList(scratches);
     }
 }

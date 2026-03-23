@@ -12,8 +12,6 @@ export default function LoginPage() {
     email: '',
     password: ''
   })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -21,7 +19,6 @@ export default function LoginPage() {
       ...prev,
       [name]: value
     }))
-    if (error) setError('')
   }
 
   const handleSubmit = async (e) => {
@@ -68,6 +65,7 @@ export default function LoginPage() {
             <div className="form-group">
               <label htmlFor="email">Email Id</label>
               <div className="input-wrapper">
+                <span className="input-icon">📧</span>
                 <input
                   type="email"
                   id="email"
@@ -83,6 +81,7 @@ export default function LoginPage() {
             <div className="form-group">
               <label htmlFor="password">Password</label>
               <div className="input-wrapper">
+                <span className="input-icon">🔒</span>
                 <input
                   type="password"
                   id="password"
@@ -149,7 +148,7 @@ export default function LoginPage() {
           </div> */}
 
           <p className="register-link">
-            회원이 아니신가요? <a href="/company/register">회원가입</a>
+            회원이 아니신가요? <a href="/register">회원가입</a>
           </p>
 
           <p className="copyright">

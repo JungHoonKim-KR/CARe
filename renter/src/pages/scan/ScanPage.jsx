@@ -18,14 +18,84 @@ export default function ScanPage() {
   const logType           = location.state?.logType || 'BEFORE'
   const reservation       = location.state?.reservation
 
-  const videoRef    = useRef(null)
-  const canvasRef   = useRef(null)
-  const scannerRef  = useRef(null)
-  const wheelLRef   = useRef(null)
-  const wheelRRef   = useRef(null)
-  const arCanvasRef = useRef(null)
-  const wsRef       = useRef(null)
+  const videoRef   = useRef(null)
+  const canvasRef  = useRef(null)
+  const scannerRef = useRef(null)
+  const wheelLRef  = useRef(null)
+  const wheelRRef  = useRef(null)
+  const arCanvasRef = useRef(null) // 🌟 추가된 부분: 실시간 AR 네모 전용 도화지
+    const wsRef      = useRef(null) // 🌟 추가된 부분: 웹소켓 객체 저장용
 
+<<<<<<< HEAD
+  const [zoneIndex,   setZoneIndex]   = useState(0)
+  const [captures,    setCaptures]    = useState({})
+  const [isDone,      setIsDone]      = useState(false)
+  const [matchStatus, setMatchStatus] = useState('detecting')
+  const [matchValue,  setMatchValue]  = useState(0)
+  const [showToast,   setShowToast]   = useState(false)
+
+  const currentZone = ZONES[zoneIndex]
+
+  const matchStatusRef = useRef(matchStatus)
+    useEffect(() => {
+      matchStatusRef.current = matchStatus
+    }, [matchStatus])
+// ─────────────────────────────────────────────────────────────
+  // 🌟 [신규] FastAPI 웹소켓 연결 및 실시간 프레임 전송 로직
+  // ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    // 1. 웹소켓 연결 (FastAPI 주소 확인)
+    wsRef.current = new WebSocket('ws://localhost:8000/api/v1/scratches/ws/detect')
+
+    wsRef.current.onopen = () => console.log('🟢 [WS] AR 웹소켓 연결 성공!')
+
+    // 2. FastAPI에서 흠집 좌표가 날아올 때
+    wsRef.current.onmessage = (event) => {
+      // 이미 스캔(촬영)이 완료된 상태면 AR 네모를 그리지 않음
+      if (matchStatusRef.current === 'matched') {
+        clearOverlay(arCanvasRef.current)
+        return
+      }
+
+      const data = JSON.parse(event.data)
+      console.log('📬 [WS] 서버에서 넘어온 데이터:', data)
+
+      if (data.boxes && arCanvasRef.current && videoRef.current) {
+          console.log('🎨 [WS] AR 박스 그리기 실행! 박스 좌표:', data.boxes)
+        drawARBoxes(arCanvasRef.current, videoRef.current, data.boxes)
+      }
+    }
+
+    // 3. 0.2초(200ms)마다 프론트 카메라 화면을 캡처해서 웹소켓으로 쏘기
+    const interval = setInterval(() => {
+      if (matchStatusRef.current === 'matched') return
+
+      const video = videoRef.current
+      const ws = wsRef.current
+
+      if (!video || !ws || ws.readyState !== WebSocket.OPEN) return
+
+      // 원본 비율을 유지하되 압축해서 전송 (빠른 통신을 위해)
+      const tempCanvas = document.createElement('canvas')
+      tempCanvas.width = video.videoWidth || 1280
+      tempCanvas.height = video.videoHeight || 720
+      const tempCtx = tempCanvas.getContext('2d')
+      tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height)
+
+      // Blob으로 변환하여 웹소켓 전송 (0.5는 화질 50%를 의미 - 속도 최적화)
+      tempCanvas.toBlob((blob) => {
+        if (blob) ws.send(blob)
+      }, 'image/jpeg', 0.5)
+    }, 200)
+
+    // 컴포넌트 언마운트 시 정리
+    return () => {
+      clearInterval(interval)
+      if (wsRef.current) wsRef.current.close()
+    }
+  }, [])
+
+=======
   const [zoneIndex,    setZoneIndex]    = useState(0)
   const [captures,     setCaptures]     = useState({})
   const [isDone,       setIsDone]       = useState(false)
@@ -54,6 +124,7 @@ export default function ScanPage() {
   }, [])
 
   // 폰트 로드
+>>>>>>> origin/develop
   useEffect(() => {
     const link = document.createElement('link')
     link.href  = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Pretendard:wght@300;400;500;600;700&display=swap'
@@ -88,6 +159,7 @@ export default function ScanPage() {
   }, [])
 
   // 카메라
+>>>>>>> origin/develop
   useEffect(() => {
     let stream = null, cancelled = false
     navigator.mediaDevices.getUserMedia({
@@ -111,12 +183,23 @@ export default function ScanPage() {
     return () => { cancelled = true; stream?.getTracks().forEach(t => t.stop()) }
   }, [])
 
+<<<<<<< HEAD
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    setMatchStatus('detecting')
+    setMatchValue(0)
+    clearOverlay(canvasRef.current)
+    clearOverlay(arCanvasRef.current)
+=======
   // Scanner
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
     setMatchStatus('detecting'); setMatchValue(0); setCanCapture(false); setIsCapturing(false)
     clearOverlay(canvasRef.current); clearOverlay(arCanvasRef.current)
+>>>>>>> origin/develop
 
     const scanner = new Scanner(video, reservationId, logType)
     scannerRef.current = scanner
@@ -157,6 +240,7 @@ export default function ScanPage() {
     setIsCapturing(true); setCanCapture(false)
     await scannerRef.current.capture()
   }
+>>>>>>> origin/develop
   function handleNext() {
     if (zoneIndex < ZONES.length - 1) setZoneIndex(zoneIndex + 1)
     else setIsDone(true)
@@ -179,6 +263,13 @@ export default function ScanPage() {
     }
   const totalDefects = Object.values(captures).reduce((a, c) => a + (c.boxes?.length || 0), 0)
 
+<<<<<<< HEAD
+  if (isDone) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.header}>
+          <span className={styles.headerLogo}>CARCHECK</span>
+=======
   function getInstructionHtml() {
     if (matchStatus === 'captured') {
       const cap   = captures[currentZone?.id]
@@ -221,6 +312,7 @@ export default function ScanPage() {
           <div className={styles.summaryCheck}>✓</div>
           <div className={styles.summaryHeroTitle}>스캔 완료</div>
           <div className={styles.summaryHeroSub}>모든 구역이 안전하게 기록되었습니다</div>
+>>>>>>> origin/develop
         </div>
         <div className={styles.summaryStats}>
           <div className={styles.statCard}>
@@ -261,16 +353,56 @@ export default function ScanPage() {
     </div>
   )
 
+<<<<<<< HEAD
+  return (
+    <div className={styles.page}>
+
+      <div className={styles.header}>
+        <span className={styles.headerLogo}>CARCHECK</span>
+        <span className={styles.headerStep}>{zoneIndex + 1} / {ZONES.length} 구역</span>
+      </div>
+
+      <div className={styles.stepbar}>
+        {ZONES.map((z, i) => {
+          const cap = captures[z.id]
+          let cls   = ''
+          if (i < zoneIndex && cap) cls = (cap.boxes?.length > 0) ? styles.defect : styles.done
+          else if (i === zoneIndex) cls = styles.active
+          return (
+            <div key={z.id} className={`${styles.step} ${cls}`}>
+              <div className={styles.stepTrack} />
+              <div className={styles.stepLabel}>{z.label}</div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className={styles.zoneHeader}>
+        <div>
+          <div className={styles.zoneLabel}>촬영 구역</div>
+          <div className={styles.zoneTitle}>{currentZone.name}</div>
+        </div>
+        <div className={`${styles.statusBadge} ${styles[matchStatus]}`}>
+          <div className={styles.badgeDot} />
+          <span>{matchStatus === 'detecting' ? '인식 중...' : '인식 완료'}</span>
+        </div>
+      </div>
+
+      <div className={styles.viewWrap}>
+=======
   // 스캔 화면
   return (
     <div className={styles.page}>
 
       {/* 카메라 + 오버레이 */}
       <div className={styles.cameraWrap}>
+>>>>>>> origin/develop
         <video ref={videoRef} className={styles.video} playsInline muted />
         <canvas ref={arCanvasRef} className={styles.overlay} style={{ zIndex: 1 }} />
-        <canvas ref={canvasRef}   className={styles.overlay} style={{ zIndex: 2 }} />
-        <div className={styles.scanLine} />
+                <canvas ref={canvasRef} className={styles.overlay} style={{ zIndex: 2 }} />
+
+<<<<<<< HEAD
+                <div className={styles.scanLine} />
 
         {/* 헤더 — 로고 + 구역 진행 */}
         <div className={styles.header}>
@@ -286,6 +418,7 @@ export default function ScanPage() {
         {/* 번호판 가이드 */}
         {currentZone.type === 'plate' && matchStatus !== 'captured' && (
           <div className={`${styles.guidePlate} ${styles[matchStatus] || styles.detecting}`}>
+>>>>>>> origin/develop
             <div className={styles.guidePlateInner}>
               <div className={`${styles.plateCorner} ${styles.tl}`} />
               <div className={`${styles.plateCorner} ${styles.tr}`} />
@@ -296,22 +429,39 @@ export default function ScanPage() {
           </div>
         )}
 
-        {/* 바퀴 가이드 */}
-        {currentZone.type === 'wheel' && matchStatus !== 'captured' && (
+        {currentZone.type === 'wheel' && (
           <>
             {currentZone.wheelSide === 'left' && (
+<<<<<<< HEAD
+              <div className={`${styles.guideWheel} ${styles.left} ${styles[matchStatus]}`}>
+                <div className={styles.wheelCircle}>
+                  <div className={styles.wheelHub} />
+                </div>
+=======
               <div className={`${styles.guideWheel} ${styles.left} ${styles[matchStatus] || styles.detecting}`}>
                 <div className={styles.wheelCircle}><div className={styles.wheelHub} /></div>
+>>>>>>> origin/develop
                 <div className={styles.wheelProgress} ref={wheelLRef}>
-                  <svg viewBox="0 0 96 96"><circle cx="48" cy="48" r="44" /></svg>
+                  <svg viewBox="0 0 96 96">
+                    <circle cx="48" cy="48" r="44" />
+                  </svg>
                 </div>
               </div>
             )}
             {currentZone.wheelSide === 'right' && (
+<<<<<<< HEAD
+              <div className={`${styles.guideWheel} ${styles.right} ${styles[matchStatus]}`}>
+                <div className={styles.wheelCircle}>
+                  <div className={styles.wheelHub} />
+                </div>
+=======
               <div className={`${styles.guideWheel} ${styles.right} ${styles[matchStatus] || styles.detecting}`}>
                 <div className={styles.wheelCircle}><div className={styles.wheelHub} /></div>
+>>>>>>> origin/develop
                 <div className={styles.wheelProgress} ref={wheelRRef}>
-                  <svg viewBox="0 0 96 96"><circle cx="48" cy="48" r="44" /></svg>
+                  <svg viewBox="0 0 96 96">
+                    <circle cx="48" cy="48" r="44" />
+                  </svg>
                 </div>
               </div>
             )}
@@ -375,6 +525,23 @@ export default function ScanPage() {
           {history.length === 0
             ? <div className={styles.historyEmpty}>이 구역의 이전 흠집 기록이 없어요</div>
             : history.map((h, i) => (
+<<<<<<< HEAD
+                <div key={i} className={styles.historyCard}>
+                  <div className={styles.historyCardImg}>
+                    <div
+                      className={styles.defectMark}
+                      style={{
+                        left:   `${18 + i * 8}%`,
+                        top:    `${22 + i * 6}%`,
+                        width:  '26%',
+                        height: '28%',
+                      }}
+                    />
+                  </div>
+                  <div className={styles.historyCardInfo}>
+                    <div className={styles.historyCardDate}>{h.date}</div>
+                    <div className={styles.historyCardCount}>흠집 {h.count}개</div>
+=======
                 <div
                   key={i}
                   className={`${styles.historyCard} ${activeCard === i ? styles.active : ''}`}
@@ -386,6 +553,7 @@ export default function ScanPage() {
                       {h.createdAt ? new Date(h.createdAt).toLocaleDateString('ko-KR') : '-'}
                     </div>
                     <div className={styles.historyCardCount}>흠집 감지됨</div>
+>>>>>>> origin/develop
                   </div>
                 </div>
               ))

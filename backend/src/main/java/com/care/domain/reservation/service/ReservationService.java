@@ -1,35 +1,24 @@
 package com.care.domain.reservation.service;
 
-import com.care.domain.car.entity.OwnedCar;
-import com.care.domain.car.repository.OwnedCarRepository;
-import com.care.domain.company.entity.Company;
-import com.care.domain.company.entity.Insurance;
-import com.care.domain.company.repository.InsuranceRepository;
-import com.care.domain.renter.entity.Renter;
-import com.care.domain.renter.repository.RenterRepository;
-import com.care.domain.reservation.controller.dto.request.ReservationCreateRequest;
-import com.care.domain.reservation.controller.dto.response.ReservationCreateResponse;
 import com.care.domain.reservation.controller.dto.response.ReservationDetailResponse;
 import com.care.domain.reservation.controller.dto.response.ReservationSummaryResponse;
-import com.care.domain.reservation.entity.Reservation;
 import com.care.domain.reservation.exception.ReservationErrorCode;
 import com.care.domain.reservation.repository.ReservationRepository;
-import com.care.global.blockchain.CareTokenService;
 import com.care.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
+<<<<<<< HEAD
+=======
     private final OwnedCarRepository ownedCarRepository;
     private final InsuranceRepository insuranceRepository;
     private final RenterRepository renterRepository;
@@ -83,6 +72,7 @@ public class ReservationService {
 
         return ReservationCreateResponse.from(reservation);
     }
+>>>>>>> origin/develop
 
     @Transactional(readOnly = true)
     public List<ReservationSummaryResponse> getRenterReservations(String renterId) {

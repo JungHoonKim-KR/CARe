@@ -4,9 +4,9 @@ import com.care.domain.reservation.entity.Scratch;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
 @Getter
 @Builder
 public class ScanResponseDto {
@@ -21,7 +21,6 @@ public class ScanResponseDto {
     private String proofIpfsCid;
     private boolean isManual;
     private boolean isDisputed;
-    private LocalDateTime createdAt;
 
     public static ScanResponseDto from(Scratch scratch) {
         return ScanResponseDto.builder()
@@ -35,7 +34,6 @@ public class ScanResponseDto {
                 .proofIpfsCid(scratch.getProofIpfsCid())
                 .isManual(scratch.isManual())
                 .isDisputed(scratch.isDisputed())
-                .createdAt(scratch.getCreatedAt())
                 .build();
     }
 

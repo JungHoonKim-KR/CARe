@@ -9,6 +9,7 @@ export default function DIDConfirmPage() {
   const { state } = useLocation()
   const image = state?.image
   const docType = state?.docType || 'passport'
+
   const isPassport = docType === 'passport'
   const ocrData = state?.ocrData
 
@@ -90,7 +91,6 @@ export default function DIDConfirmPage() {
       const res = await renterLicense(payload)
 
       if (res.verified) {
-        // 인증 결과 저장
         localStorage.setItem(`${docType}_verified`, 'true')
 
         // 여권이면 DID 카드에 표시할 정보 저장

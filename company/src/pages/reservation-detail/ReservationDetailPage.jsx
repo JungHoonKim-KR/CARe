@@ -15,10 +15,12 @@ export default function ReservationDetailPage() {
     pickup: {
       date: '2026.02.25 11:00',
       location: '서울 강남구 테헤란로 123',
+      completed: true, // 픽업 완료 여부
     },
     dropoff: {
       date: '2026.02.28 11:00',
       location: '서울 강남구 테헤란로 123',
+      completed: true, // 반납 완료 여부
     },
     renter: {
       name: '최지호',
@@ -109,33 +111,47 @@ export default function ReservationDetailPage() {
             {/* 픽업/반납 상태 박스 */}
             <div className="usage-status-grid">
               {/* 픽업 정보 */}
-              <div className="status-box pickup">
+              <div className={`status-box pickup ${reservationData.pickup.completed ? 'completed' : ''}`}>
                 <div className="status-header">
                   <span className="status-check">
-                    <span className="check-icon">✓</span> 픽업
+                    {reservationData.pickup.completed && <span className="check-icon">✓</span>} 픽업
                   </span>
-                  <button className="view-photos-btn">
-                    <span className="camera-icon">📷</span> 사진 보기
-                  </button>
+                  {reservationData.pickup.completed && (
+                    <button className="view-photos-btn">
+                      <span className="camera-icon">📷</span> 사진 보기
+                    </button>
+                  )}
                 </div>
-                <div className="status-detail">
-                  기존 결함: {reservationData.defects.pickup}건 (AI 탐지)
-                </div>
+                {reservationData.pickup.completed && (
+                  <>
+                    <div className="status-datetime">{reservationData.pickup.date}</div>
+                    <div className="status-detail">
+                      기존 결함: {reservationData.defects.pickup}건 (AI 탐지)
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* 반납 정보 */}
-              <div className="status-box return">
+              <div className={`status-box return ${reservationData.dropoff.completed ? 'completed' : ''}`}>
                 <div className="status-header">
                   <span className="status-check">
-                    <span className="check-icon">✓</span> 반납
+                    {reservationData.dropoff.completed && <span className="check-icon">✓</span>} 반납
                   </span>
-                  <button className="view-photos-btn">
-                    <span className="camera-icon">📷</span> 사진 보기
-                  </button>
+                  {reservationData.dropoff.completed && (
+                    <button className="view-photos-btn">
+                      <span className="camera-icon">📷</span> 사진 보기
+                    </button>
+                  )}
                 </div>
-                <div className="status-detail">
-                  결함: {reservationData.defects.dropoff}건 (AI 탐지)
-                </div>
+                {reservationData.dropoff.completed && (
+                  <>
+                    <div className="status-datetime">{reservationData.dropoff.date}</div>
+                    <div className="status-detail">
+                      결함: {reservationData.defects.dropoff}건 (AI 탐지)
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

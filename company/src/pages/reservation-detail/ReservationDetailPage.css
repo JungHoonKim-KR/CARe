@@ -176,14 +176,10 @@
   padding: 20px;
   background-color: #fafafa;
   border-radius: 12px;
-  border: 2px solid #28a745;
+  border: 2px solid #dee2e6;
 }
 
-.status-box.pickup {
-  border-color: #28a745;
-}
-
-.status-box.return {
+.status-box.completed {
   border-color: #28a745;
 }
 
@@ -228,6 +224,13 @@
 
 .camera-icon {
   font-size: 14px;
+}
+
+.status-datetime {
+  font-size: 14px;
+  color: #212529;
+  font-weight: 600;
+  padding-left: 24px;
 }
 
 .status-detail {

@@ -7,7 +7,8 @@ import './ReservationListPage.css'
 const STATUS_LABEL = {
   RESERVED:   { text: '예약완료', color: '#5B8DEF' },
   IN_USE:     { text: '이용중',   color: '#4CAF50' },
-  AFTER_SCAN: { text: '반납완료', color: '#888'    },
+  AFTER_SCAN: { text: '스캔완료', color: '#888'    },
+  COMPLETED:  { text: '반납완료', color: '#888'    },
   CANCELLED:  { text: '취소됨',   color: '#FF4D4F' },
 }
 

@@ -50,10 +50,19 @@ class CarServiceTest {
 
     private static final String COMPANY_ID = "company-test-1";
     private static final String MODEL_ID = "model-test-1";
+    private static final int DAILY_PRICE = 120000;
 
     @BeforeEach
     void setUp() {
-        Company company = Company.of(COMPANY_ID, "테스트렌터카", "test@company.com", "hashedpw", "ko", null);
+        Company company = Company.of(
+            COMPANY_ID,
+            "테스트렌터카",
+            "test@company.com",
+            "hashedpw",
+            "ICN",
+            "ko",
+            null
+        );
         companyRepository.save(company);
 
         CarModel carModel = CarModel.create(MODEL_ID, "현대", "아이오닉5", "전기", CarSize.MEDIUM);
@@ -75,14 +84,21 @@ class CarServiceTest {
         assertThat(response.carId()).isNotBlank();
         assertThat(response.plateNumber()).isEqualTo("12가3456");
         assertThat(response.status()).isEqualTo("PENDING");
-        assertThat(response.imageUrls()).containsKeys("FRONT", "REAR", "LEFT", "RIGHT");
+        assertThat(response.imageUrls()).containsKeys(
+            "FRONT",
+            "REAR",
+            "FRONT_LEFT",
+            "FRONT_RIGHT",
+            "REAR_LEFT",
+            "REAR_RIGHT"
+        );
 
         OwnedCar saved = ownedCarRepository.findById(response.carId()).orElseThrow();
         assertThat(saved.getStatus()).isEqualTo(OwnedCar.Status.PENDING);
         assertThat(saved.getNftTokenId()).isNull();
 
         List<?> images = carImageRepository.findByCarCarId(response.carId());
-        assertThat(images).hasSize(4);
+        assertThat(images).hasSize(6);
     }
 
     @Test
@@ -107,6 +123,6 @@ class CarServiceTest {
 
     private CarRegisterRequest makeRequest(String modelId, String plateNumber) {
         MockMultipartFile img = new MockMultipartFile("image", "car.jpg", "image/jpeg", new byte[]{1, 2, 3});
-        return new CarRegisterRequest(modelId, plateNumber, img, img, img, img);
+        return new CarRegisterRequest(modelId, plateNumber, DAILY_PRICE, img, img, img, img, img, img);
     }
 }

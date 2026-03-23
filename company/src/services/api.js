@@ -40,7 +40,7 @@ api.interceptors.response.use(
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('companyId')
-      window.location.href = '/company/login'
+      window.location.href = '/login'
     }
 
     return Promise.reject(error)

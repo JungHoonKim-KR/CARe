@@ -49,6 +49,31 @@ class ReservationService {
   }
 
   /**
+   * 예약 생성
+   */
+  async createReservation(data) {
+    try {
+      const response = await api.post('/api/reservations', {
+        carId: data.carId,
+        insuranceId: data.insuranceId,
+        pickupDate: data.pickupDate,
+        returnDate: data.returnDate
+      })
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      console.error('예약 생성 실패:', error)
+      return {
+        success: false,
+        message: error?.response?.data?.message || '예약 생성에 실패했습니다.'
+      }
+    }
+  }
+
+  /**
    * 예약 승인
    */
   async approveReservation(reservationId) {

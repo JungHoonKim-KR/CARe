@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { ocrPassport, ocrLicense } from '../../api/ocr'
 import './DIDCameraPage.css'
 
 export default function DIDCameraPage() {
@@ -11,6 +12,7 @@ export default function DIDCameraPage() {
   const streamRef = useRef(null)
   const [ready, setReady] = useState(false)
   const [cameraError, setCameraError] = useState(false)
+  const [ocrLoading, setOcrLoading] = useState(false)
 
   const startCamera = useCallback(async () => {
     try {
@@ -40,7 +42,7 @@ export default function DIDCameraPage() {
     return () => stopCamera()
   }, [startCamera, stopCamera])
 
-  const capturePhoto = () => {
+  const capturePhoto = async () => {
     const video = videoRef.current
     const canvas = canvasRef.current
     if (!video || !canvas) return
@@ -51,7 +53,20 @@ export default function DIDCameraPage() {
     const imageData = canvas.toDataURL('image/jpeg', 0.92)
 
     stopCamera()
-    navigate('/did-confirm', { state: { image: imageData, docType } })
+    setOcrLoading(true)
+
+    let ocrData = null
+    try {
+      ocrData = docType === 'license'
+        ? await ocrLicense(imageData)
+        : await ocrPassport(imageData)
+    } catch {
+      // OCR 실패해도 confirm 페이지로 이동 (수동 입력)
+    } finally {
+      setOcrLoading(false)
+    }
+
+    navigate('/did-confirm', { state: { image: imageData, docType, ocrData } })
   }
 
   return (
@@ -93,12 +108,20 @@ export default function DIDCameraPage() {
       {/* Hidden canvas */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
 
+      {/* OCR 로딩 오버레이 */}
+      {ocrLoading && (
+        <div className="did-ocr-loading">
+          <div className="did-ocr-spinner" />
+          <p>정보 인식 중...</p>
+        </div>
+      )}
+
       {/* Shutter button */}
       <div className="did-camera-footer">
         <button
           className="did-shutter-btn"
           onClick={capturePhoto}
-          disabled={!ready && !cameraError}
+          disabled={(!ready && !cameraError) || ocrLoading}
         >
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
             <path d="M12 4L10.17 6H6C4.9 6 4 6.9 4 8V24C4 25.1 4.9 26 6 26H26C27.1 26 28 25.1 28 24V8C28 6.9 27.1 6 26 6H21.83L20 4H12Z" fill="#F7A633"/>

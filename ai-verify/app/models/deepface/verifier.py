@@ -6,16 +6,10 @@ from deepface import DeepFace
 def verify(
     img1_path: Path | str,
     img2_path: Path | str,
-    model_name: str = "Facenet",
-    detector_backend: str = "opencv",
+    model_name: str = "VGG-Face",
+    detector_backend: str = "retinaface",
     enforce_detection: bool = False,
 ) -> dict:
-    """
-    두 이미지를 비교하여 동일인 여부를 반환합니다.
-
-    Returns:
-        verified, distance, threshold, model
-    """
     result = DeepFace.verify(
         img1_path=str(img1_path),
         img2_path=str(img2_path),

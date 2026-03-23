@@ -31,7 +31,7 @@ public class SmartKeyService {
         Renter renter = renterRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        if (!renter.isDidVerified()) {
+        if (!renter.isDidVerified()) { // DID_VERIFIED = TRUE 인지 확인
             throw new IllegalStateException("신원 인증이 완료되지 않았습니다. 여권 및 면허증 인증을 먼저 완료해주세요.");
         }
 

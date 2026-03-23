@@ -11,8 +11,6 @@ public class CompanyProfileResponse {
     private final String email;
     private final String bizNumber;
     private final String walletAddress;
-    private final String didUri;
-    private final boolean didVerified;
     private final String countryCode;
     private final String city;
     private final String detailAddress;
@@ -24,8 +22,6 @@ public class CompanyProfileResponse {
         this.email = company.getEmail();
         this.bizNumber = company.getBizNumber();
         this.walletAddress = company.getWalletAddress();
-        this.didUri = company.getDidUri();
-        this.didVerified = company.isDidVerified();
         this.countryCode = company.getCountryCode();
         this.city = company.getCity();
         this.detailAddress = company.getDetailAddress();

@@ -32,12 +32,6 @@ public class Company extends BaseEntity {
     @Column(name = "privy_wallet_id", length = 100)
     private String privyWalletId;
 
-    @Column(name = "did_uri", length = 100)
-    private String didUri;
-
-    @Column(name = "did_verified", nullable = false)
-    private boolean didVerified = false;
-
     @Column(name = "country_code", length = 2)
     private String countryCode;
 
@@ -62,9 +56,7 @@ public class Company extends BaseEntity {
         company.email = email;
         company.passwordHash = passwordHash;
         company.airportCode = airportCode;
-        company.languageCode = languageCode;
         company.walletAddress = walletAddress;
-        company.didVerified = false;
         return company;
     }
 
@@ -73,17 +65,12 @@ public class Company extends BaseEntity {
         this.bizNumber = bizNo;
     }
 
-    public void assignWallet(String walletAddress) {
-        this.walletAddress = walletAddress;
-    }
-
-    public void updateDid(String didUri) {
-        this.didUri = didUri;
-        this.didVerified = true;
-    }
-
     public void updatePrivyWallet(String walletAddress, String privyWalletId) {
         this.walletAddress = walletAddress;
         this.privyWalletId = privyWalletId;
+    }
+
+    public void updateLanguage(String languageCode) {
+        this.languageCode = languageCode;
     }
 }

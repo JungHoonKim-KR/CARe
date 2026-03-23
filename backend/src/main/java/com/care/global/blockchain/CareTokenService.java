@@ -18,6 +18,8 @@ import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.tx.response.PollingTransactionReceiptProcessor;
 import org.web3j.utils.Numeric;
 
 import java.math.BigInteger;
@@ -60,6 +62,7 @@ public class CareTokenService {
         );
         String txHash = sendFunction(function);
         log.info("[CareToken] faucet {} CARE → {} txHash: {}", amount, toAddress, txHash);
+        waitForReceipt(txHash);
         return txHash;
     }
 
@@ -121,6 +124,17 @@ public class CareTokenService {
         log.info("[CareToken] faucet {} CARE → {} txHash: {}", amount, toAddress, mintTxHash);
 
         return mintTxHash;
+    }
+
+    // ── 트랜잭션 채굴 대기 (최대 60초) ───────────────────────────────────────
+    private TransactionReceipt waitForReceipt(String txHash) throws Exception {
+        PollingTransactionReceiptProcessor processor =
+                new PollingTransactionReceiptProcessor(web3j, 2000, 30);
+        TransactionReceipt receipt = processor.waitForTransactionReceipt(txHash);
+        if (!"0x1".equals(receipt.getStatus())) {
+            throw new RuntimeException("[CareToken] TX reverted: " + txHash);
+        }
+        return receipt;
     }
 
     // ── 내부: Raw Transaction 서명 후 전송 ──────────────────────────────────

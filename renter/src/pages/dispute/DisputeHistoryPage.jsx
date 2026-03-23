@@ -213,6 +213,7 @@ export default function DisputeHistoryPage() {
                 <div className="dh-item-body">
                   {item.cropS3Url ? (
                     <>
+                      {/* 수정된 부분: 불필요한 플레이스홀더 제거, 실제 이미지와 검증 뱃지만 노출 */}
                       <img
                         src={item.cropS3Url}
                         alt="흠집 사진"
@@ -227,7 +228,7 @@ export default function DisputeHistoryPage() {
                               stroke="#F7A633" strokeWidth="2" strokeLinejoin="round"/>
                           </svg>
                           <span className="dh-blockchain-text">
-                            blockchain verified · {item.proofIpfsCid.slice(0, 10)}...
+                            검증 완료 · {item.proofIpfsCid.slice(0, 10)}...
                           </span>
                         </div>
                       )}

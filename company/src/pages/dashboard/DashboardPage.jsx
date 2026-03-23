@@ -1,10 +1,15 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import StatCard from '../../components/StatCard'
 import ReservationList from '../../components/ReservationList'
+import ReservationService from '../../services/ReservationService'
+import AuthService from '../../services/AuthService'
 import './DashboardPage.css'
 
 export default function DashboardPage() {
+  const [recentReservations, setRecentReservations] = useState([])
+  const [loading, setLoading] = useState(true)
+
   const stats = [
     {
       title: '총 수익',
@@ -26,48 +31,68 @@ export default function DashboardPage() {
     },
   ]
 
-  // 백엔드 연동 시
-  // const [recentReservations, setRecentReservations] = useState([])
-  // const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    fetchRecentReservations()
+  }, [])
 
-  // useEffect(() => {
-  //   fetchRecentReservations()
-  // }, [])
+  const fetchRecentReservations = async () => {
+    const companyId = AuthService.getCompanyId()
+    if (!companyId) {
+      setLoading(false)
+      return
+    }
 
-  const recentReservations = [
-    {
-      id: 1,
-      carName: '현대 아반떼',
-      customerName: '김철수',
-      date: '2026.03.05',
-      amount: '150,000원',
-      status: '이용중',
-    },
-    {
-      id: 2,
-      carName: '기아 K5',
-      customerName: '이영희',
-      date: '2026.03.07',
-      amount: '180,000원',
-      status: '예약완료',
-    },
-    {
-      id: 3,
-      carName: 'BMW 320i',
-      customerName: '박민수',
-      date: '2026.03.04',
-      amount: '360,000원',
-      status: '반납완료',
-    },
-    {
-      id: 4,
-      carName: '현대 싼타페',
-      customerName: '최지은',
-      date: '2026.02.28',
-      amount: '240,000원',
-      status: '분쟁중',
-    },
-  ]
+    try {
+      const result = await ReservationService.getReservations(companyId, {
+        page: 0,
+        size: 5 // 최근 5개만
+      })
+
+      if (result.success) {
+        // API 응답 데이터를 UI 형식으로 변환
+        // 페이지네이션 응답인 경우 content 필드 사용
+        const reservationData = Array.isArray(result.data)
+          ? result.data
+          : (result.data.content || [])
+
+        const formattedReservations = reservationData.slice(0, 4).map(reservation => ({
+          id: reservation.reservationId,
+          carName: `${reservation.car.brand} ${reservation.car.modelName}`,
+          customerName: reservation.renter.name,
+          date: formatDate(reservation.pickupDate),
+          amount: reservation.insurance ? `${reservation.insurance.price.toLocaleString()}원` : '-',
+          status: getStatusLabel(reservation.status)
+        }))
+
+        setRecentReservations(formattedReservations)
+      }
+    } catch (err) {
+      console.error('최근 예약 조회 에러:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatDate = (isoDate) => {
+    if (!isoDate) return '-'
+    const date = new Date(isoDate)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}.${month}.${day}`
+  }
+
+  const getStatusLabel = (status) => {
+    const statusMap = {
+      'PENDING': '예약대기',
+      'CONFIRMED': '예약완료',
+      'IN_PROGRESS': '이용중',
+      'COMPLETED': '반납완료',
+      'DISPUTE': '분쟁중',
+      'CANCELLED': '취소됨'
+    }
+    return statusMap[status] || status
+  }
 
   return (
     <div className="dashboard-page">
@@ -92,7 +117,17 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        <ReservationList reservations={recentReservations} />
+        {loading ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+            <p>예약 목록을 불러오는 중...</p>
+          </div>
+        ) : recentReservations.length > 0 ? (
+          <ReservationList reservations={recentReservations} />
+        ) : (
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+            <p>최근 예약이 없습니다.</p>
+          </div>
+        )}
       </div>
     </div>
   )

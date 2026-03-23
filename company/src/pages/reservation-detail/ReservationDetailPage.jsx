@@ -102,60 +102,69 @@ export default function ReservationDetailPage() {
 
           {/* 이용 상태 */}
           <div className="info-card">
-            <h3 className="card-title">이용 상태</h3>
+            <h3 className="card-title">
+              <span className="title-icon">📋</span> 이용 상태
+            </h3>
+
+            {/* 픽업/반납 상태 박스 */}
             <div className="usage-status-grid">
               {/* 픽업 정보 */}
-              <div className="status-box">
+              <div className="status-box pickup">
                 <div className="status-header">
-                  <span className="status-check">✓ 픽업</span>
-                  <button className="view-photos-btn">사진 보기</button>
+                  <span className="status-check">
+                    <span className="check-icon">✓</span> 픽업
+                  </span>
+                  <button className="view-photos-btn">
+                    <span className="camera-icon">📷</span> 사진 보기
+                  </button>
                 </div>
-                <div className="status-detail">기존 결함: {reservationData.defects.pickup}건 (AI 탐지)</div>
-                <button
-                  className="ai-report-btn"
-                  onClick={() => navigate(`/ai-report/${id}-pickup`)}
-                >
-                  📊 AI 리포트 보기
-                </button>
+                <div className="status-detail">
+                  기존 결함: {reservationData.defects.pickup}건 (AI 탐지)
+                </div>
               </div>
 
               {/* 반납 정보 */}
-              <div className="status-box">
+              <div className="status-box return">
                 <div className="status-header">
-                  <span className="status-check">✓ 반납</span>
-                  <button className="view-photos-btn">사진 보기</button>
-                </div>
-                <div className="status-detail">결함: {reservationData.defects.dropoff}건 (AI 탐지)</div>
-
-                {/* 새로운 결함 강조 */}
-                {reservationData.defects.newDefects > 0 && (
-                  <div className="defect-highlight">
-                    ⚠️ 새로운 결함 {reservationData.defects.newDefects}건 발견
-                  </div>
-                )}
-
-                <button
-                  className="ai-report-btn"
-                  onClick={() => navigate(`/ai-report/${id}-return`)}
-                >
-                  📊 AI 리포트 보기
-                </button>
-
-                {/* 분쟁 정보 버튼 */}
-                {reservationData.dispute && (
-                  <button
-                    className="dispute-info-btn"
-                    onClick={() => navigate(`/disputes/${id}`)}
-                  >
-                    <span className="dispute-icon">⚠️</span>
-                    <div className="dispute-info">
-                      <span className="dispute-label">분쟁 진행중</span>
-                      <span className="dispute-amount">{reservationData.dispute.claimAmount.toLocaleString()}원 청구</span>
-                    </div>
-                    <span className="arrow">→</span>
+                  <span className="status-check">
+                    <span className="check-icon">✓</span> 반납
+                  </span>
+                  <button className="view-photos-btn">
+                    <span className="camera-icon">📷</span> 사진 보기
                   </button>
-                )}
+                </div>
+                <div className="status-detail">
+                  결함: {reservationData.defects.dropoff}건 (AI 탐지)
+                </div>
               </div>
+            </div>
+
+            {/* 새로운 결함 강조 표시 */}
+            {reservationData.defects.newDefects > 0 && (
+              <div className="defect-alert-banner">
+                ⚠️ 새로운 결함 {reservationData.defects.newDefects}건 발견
+              </div>
+            )}
+
+            {/* 액션 버튼 그룹 */}
+            <div className="action-buttons-group">
+              {/* 분쟁 정보 버튼 */}
+              {reservationData.dispute && (
+                <button
+                  className="dispute-button"
+                  onClick={() => navigate(`/disputes/${id}`)}
+                >
+                  분쟁 정보 확인하기
+                </button>
+              )}
+
+              {/* AI 리포트 버튼 */}
+              <button
+                className="ai-report-button"
+                onClick={() => navigate(`/ai-report/${id}`)}
+              >
+                AI 리포트 확인하기
+              </button>
             </div>
           </div>
         </div>

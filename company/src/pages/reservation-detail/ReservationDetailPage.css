@@ -155,21 +155,36 @@
   align-self: stretch;
 }
 
+/* 카드 제목 아이콘 */
+.title-icon {
+  font-size: 18px;
+  margin-right: 4px;
+}
+
 /* 이용 상태 - 가로 배치 */
 .usage-status-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .status-box {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 16px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
+  padding: 20px;
+  background-color: #fafafa;
+  border-radius: 12px;
+  border: 2px solid #28a745;
+}
+
+.status-box.pickup {
+  border-color: #28a745;
+}
+
+.status-box.return {
+  border-color: #28a745;
 }
 
 .status-header {
@@ -179,114 +194,105 @@
 }
 
 .status-check {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: #212529;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.check-icon {
+  font-size: 18px;
+  color: #28a745;
 }
 
 .view-photos-btn {
   background: none;
-  border: 1px solid #dee2e6;
+  border: none;
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 13px;
-  color: #495057;
+  color: #6c757d;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .view-photos-btn:hover {
-  background-color: white;
-  border-color: #adb5bd;
+  background-color: #e9ecef;
+  color: #212529;
+}
+
+.camera-icon {
+  font-size: 14px;
 }
 
 .status-detail {
   font-size: 13px;
   color: #6c757d;
+  padding-left: 24px;
 }
 
-/* 결함 강조 표시 */
-.defect-highlight {
-  padding: 10px 12px;
+/* 결함 경고 배너 */
+.defect-alert-banner {
+  padding: 12px 16px;
   background-color: #fff3cd;
   border: 1px solid #ffeeba;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: 8px;
+  font-size: 14px;
   color: #856404;
   font-weight: 600;
   text-align: center;
+  margin-bottom: 16px;
 }
 
-/* AI 리포트 버튼 */
-.ai-report-btn {
-  width: 100%;
-  padding: 10px 16px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 8px;
-}
-
-.ai-report-btn:hover {
-  background-color: #0056b3;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
-}
-
-/* 분쟁 정보 버튼 */
-.dispute-info-btn {
-  width: 100%;
-  padding: 12px 16px;
-  background-color: #fff;
-  border: 2px solid #dc3545;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 12px;
-  display: flex;
-  align-items: center;
+/* 액션 버튼 그룹 */
+.action-buttons-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-.dispute-info-btn:hover {
-  background-color: #fff5f5;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);
-}
-
-.dispute-icon {
-  font-size: 20px;
-}
-
-.dispute-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.dispute-info .dispute-label {
-  font-size: 13px;
-  color: #dc3545;
-  font-weight: 600;
-}
-
-.dispute-info .dispute-amount {
+/* 분쟁 정보 버튼 */
+.dispute-button {
+  padding: 14px 20px;
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
   font-size: 14px;
-  color: #721c24;
-  font-weight: 700;
+  font-weight: 600;
+  color: #212529;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.dispute-info-btn .arrow {
-  font-size: 18px;
-  color: #dc3545;
-  font-weight: bold;
+.dispute-button:hover {
+  background-color: #f8f9fa;
+  border-color: #adb5bd;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* AI 리포트 버튼 */
+.ai-report-button {
+  padding: 14px 20px;
+  background-color: #dc3545;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ai-report-button:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
 }
 
 /* 분쟁 정보 */

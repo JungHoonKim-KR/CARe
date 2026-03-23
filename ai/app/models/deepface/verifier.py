@@ -6,8 +6,8 @@ from deepface import DeepFace
 def verify(
     img1_path: Path | str,
     img2_path: Path | str,
-    model_name: str = "VGG-Face",
-    detector_backend: str = "retinaface",
+    model_name: str = "Facenet",
+    detector_backend: str = "opencv",
     enforce_detection: bool = False,
 ) -> dict:
     """

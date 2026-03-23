@@ -10,18 +10,51 @@ export default function DIDConfirmPage() {
   const image = state?.image
   const docType = state?.docType || 'passport'
   const isPassport = docType === 'passport'
+  const ocrData = state?.ocrData
 
-  const [form, setForm] = useState({
-    name: '',
-    passportNo: '',
-    birthDate: '',
-    issueDate: '',
-    expiryDate: '',
-    // 면허증 분할 필드
-    licenZero: '',
-    licenFirst: '',
-    licenSecond: '',
-    licenThird: '',
+  const parseLicenseNumber = (licenseNum) => {
+    if (!licenseNum) return { licenZero: '', licenFirst: '', licenSecond: '', licenThird: '' }
+    const parts = licenseNum.split('-')
+    return {
+      licenZero: parts[0] || '',
+      licenFirst: parts[1] || '',
+      licenSecond: parts[2] || '',
+      licenThird: parts[3] || '',
+    }
+  }
+
+  const [form, setForm] = useState(() => {
+    const base = {
+      name: '',
+      passportNo: '',
+      birthDate: '',
+      issueDate: '',
+      expiryDate: '',
+      licenZero: '',
+      licenFirst: '',
+      licenSecond: '',
+      licenThird: '',
+    }
+    if (!ocrData) return base
+    if (isPassport) {
+      return {
+        ...base,
+        name: [ocrData.surname, ocrData.given_names].filter(Boolean).join(' '),
+        passportNo: ocrData.passport_no || '',
+        birthDate: ocrData.date_of_birth || '',
+        issueDate: ocrData.date_of_issue || '',
+        expiryDate: ocrData.date_of_expiry || '',
+      }
+    } else {
+      return {
+        ...base,
+        name: ocrData.name || '',
+        birthDate: ocrData.date_of_birth || '',
+        issueDate: ocrData.date_of_issue || '',
+        expiryDate: ocrData.date_of_expiry || '',
+        ...parseLicenseNumber(ocrData.license_number),
+      }
+    }
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -116,6 +149,10 @@ export default function DIDConfirmPage() {
       <button className="did-retake-btn" onClick={() => navigate('/did-camera', { state: { docType } })}>
         다시 촬영하기
       </button>
+
+      {ocrData && !ocrData.parse_error && (
+        <p className="did-ocr-notice">정보가 자동으로 입력되었어요. 틀린 내용이 있으면 수정해 주세요.</p>
+      )}
 
       <div className="did-confirm-form">
         <div className="did-input-group">

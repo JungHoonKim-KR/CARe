@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import StatCard from '../../components/StatCard'
 import ReservationList from '../../components/ReservationList'
 import ReservationService from '../../services/ReservationService'
-import AuthService from '../../services/AuthService'
 import './DashboardPage.css'
 
 export default function DashboardPage() {
@@ -36,14 +35,8 @@ export default function DashboardPage() {
   }, [])
 
   const fetchRecentReservations = async () => {
-    const companyId = AuthService.getCompanyId()
-    if (!companyId) {
-      setLoading(false)
-      return
-    }
-
     try {
-      const result = await ReservationService.getReservations(companyId, {
+      const result = await ReservationService.getReservations({
         page: 0,
         size: 5 // 최근 5개만
       })
@@ -57,10 +50,10 @@ export default function DashboardPage() {
 
         const formattedReservations = reservationData.slice(0, 4).map(reservation => ({
           id: reservation.reservationId,
-          carName: `${reservation.car.brand} ${reservation.car.modelName}`,
-          customerName: reservation.renter.name,
+          carName: `${reservation.brand} ${reservation.modelName}`,
+          customerName: '-', // API에서 제공하지 않음
           date: formatDate(reservation.pickupDate),
-          amount: reservation.insurance ? `${reservation.insurance.price.toLocaleString()}원` : '-',
+          amount: '-', // 총 금액 정보 없음
           status: getStatusLabel(reservation.status)
         }))
 

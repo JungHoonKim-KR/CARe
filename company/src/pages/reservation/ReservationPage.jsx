@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import TabFilter from '../../components/TabFilter'
 import ReservationTable from '../../components/ReservationTable'
 import ReservationService from '../../services/ReservationService'
-import AuthService from '../../services/AuthService'
 import './ReservationPage.css'
 
 export default function ReservationPage() {
@@ -25,13 +24,6 @@ export default function ReservationPage() {
     setLoading(true)
     setError('')
 
-    const companyId = AuthService.getCompanyId()
-    if (!companyId) {
-      setError('회사 정보를 찾을 수 없습니다.')
-      setLoading(false)
-      return
-    }
-
     try {
       // activeTab에 따른 status 매핑
       let statusFilter = null
@@ -43,7 +35,7 @@ export default function ReservationPage() {
         statusFilter = 'DISPUTE'
       }
 
-      const result = await ReservationService.getReservations(companyId, {
+      const result = await ReservationService.getReservations({
         status: statusFilter,
         page: 0,
         size: 100
@@ -58,14 +50,14 @@ export default function ReservationPage() {
 
         const formattedReservations = reservationData.map(reservation => ({
           id: reservation.reservationId,
-          carName: `${reservation.car.brand} ${reservation.car.modelName}`,
-          carType: reservation.car.plateNumber,
-          renterName: reservation.renter.name,
-          renterCountry: reservation.renter.email,
+          carName: `${reservation.brand} ${reservation.modelName}`,
+          carType: reservation.plateNumber,
+          renterName: '-', // API에서 제공하지 않음
+          renterCountry: reservation.insuranceName || '-',
           startDate: formatDate(reservation.pickupDate),
           endDate: formatDate(reservation.returnDate),
           location: '-', // API에서 제공하지 않는 경우
-          amount: reservation.insurance ? `${reservation.insurance.price.toLocaleString()}원` : '-',
+          amount: '-', // 총 금액 정보가 없음
           status: getStatusLabel(reservation.status),
           category: getCategoryFromStatus(reservation.status)
         }))

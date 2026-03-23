@@ -2,13 +2,13 @@ import api from './api'
 
 class ReservationService {
   /**
-   * 예약 목록 조회 (업체별)
+   * 예약 목록 조회 (현재 로그인한 업체)
    */
-  async getReservations(companyId, params = {}) {
+  async getReservations(params = {}) {
     try {
       const { status, page = 0, size = 20 } = params
-      
-      let url = `/api/companies/${companyId}/reservations?page=${page}&size=${size}`
+
+      let url = `/api/companies/me/reservations?page=${page}&size=${size}`
       if (status) {
         url += `&status=${status}`
       }

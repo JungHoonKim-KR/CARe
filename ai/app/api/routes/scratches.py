@@ -33,7 +33,7 @@ async def websocket_detect(websocket: WebSocket):
                 start = time.time()
                 # 3. AI 모델 추론 시작! (conf=0.25는 "25% 이상 확신하면 흠집으로 인정해라"라는 뜻)
                 # 흠집을 너무 못 찾으면 0.1로 내리고, 너무 잡다한 걸 다 잡으면 0.5로 올리면 됩니다.
-                results = model.predict(source=img, conf=0.25, verbose=False)
+                results = model.predict(source=img, conf=0.01, verbose=False)
                 print(f"[YOLO-WS] 추론 시간: {(time.time() - start)*1000:.1f}ms | 탐지 수: {sum(len(r.boxes) for r in results)}")
 
 

@@ -39,6 +39,9 @@ export default function ScanPage() {
   const currentZone = ZONES[zoneIndex]
   const history     = allScratches.filter(s => s.carPart === currentZone?.id)
 
+  // isWaiting 플래그 추가
+      const isWaitingRef = useRef(false)
+      const timeoutRef   = useRef(null)
   const matchStatusRef = useRef(matchStatus)
   useEffect(() => { matchStatusRef.current = matchStatus }, [matchStatus])
   useEffect(() => { setActiveCard(null) }, [zoneIndex])
@@ -66,48 +69,70 @@ export default function ScanPage() {
     const wsUrl     = `${AI_WS_URL}/api/v1/scratches/ws/detect`
     wsRef.current   = new WebSocket(wsUrl)
     wsRef.current.onopen    = () => console.log('🟢 [WS] 연결 성공!')
+
+
+    // onmessage에서 플래그 해제
     wsRef.current.onmessage = (event) => {
+      isWaitingRef.current = false  //
+      clearTimeout(timeoutRef.current)
       if (matchStatusRef.current === 'captured') return
       const data = JSON.parse(event.data)
+      console.log('WS 응답:', data)
       if (data.boxes) updateARBoxes(data.boxes)
     }
+
+    // setInterval에서 플래그 체크
     const interval = setInterval(() => {
       if (matchStatusRef.current === 'captured') return
+      if (isWaitingRef.current) return  // ← 추가: 응답 대기 중이면 스킵
+
       const video = videoRef.current, ws = wsRef.current
       if (!video || !ws || ws.readyState !== WebSocket.OPEN) return
+
       const c = document.createElement('canvas')
       c.width = 640; c.height = 360
       c.getContext('2d').drawImage(video, 0, 0, 640, 360)
       c.toBlob(blob => {
-        if (blob && ws.readyState === WebSocket.OPEN) ws.send(blob)
+        if (blob && ws.readyState === WebSocket.OPEN) {
+          isWaitingRef.current = true
+          ws.send(blob)
+          timeoutRef.current = setTimeout(() => {
+            isWaitingRef.current = false
+          }, 2000)
+        }
       }, 'image/jpeg', 0.3)
     }, 400)
     return () => { clearInterval(interval); stopARLoop(); if (wsRef.current) wsRef.current.close() }
   }, [])
 
   // 카메라
-  useEffect(() => {
-    let stream = null, cancelled = false
-    navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: 1280, height: 720 },
-      audio: false,
-    })
-      .then(s => {
-        stream = s
-        if (cancelled) { s.getTracks().forEach(t => t.stop()); return }
-        const video = videoRef.current
-        if (!video) return
-        video.srcObject = s
-        video.onloadedmetadata = () => {
-          if (!cancelled) {
-            video.play().catch(() => {})
-            startARLoop(arCanvasRef.current, video)
-          }
-        }
+  // 카메라 — ScanPage.jsx 안의 카메라 useEffect를 이걸로 교체
+    useEffect(() => {
+      let stream = null, cancelled = false
+      navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
       })
-      .catch(err => { if (!cancelled) console.error('[ScanPage] 카메라 실패', err) })
-    return () => { cancelled = true; stream?.getTracks().forEach(t => t.stop()) }
-  }, [])
+        .then(s => {
+          stream = s
+          if (cancelled) { s.getTracks().forEach(t => t.stop()); return }
+          const video = videoRef.current
+          if (!video) return
+          video.srcObject = s
+
+          // ✅ onloadedmetadata: play만
+          video.onloadedmetadata = () => {
+            if (!cancelled) video.play().catch(() => {})
+          }
+
+          // ✅ onloadeddata: 실제 프레임 나온 후 AR 시작 — 모바일 videoWidth 0 방지
+          video.onloadeddata = () => {
+            if (!cancelled) startARLoop(arCanvasRef.current, video)
+          }
+        })
+        .catch(err => { if (!cancelled) console.error('[ScanPage] 카메라 실패', err) })
+      return () => { cancelled = true; stream?.getTracks().forEach(t => t.stop()) }
+    }, [])
 
   // Scanner
   useEffect(() => {
@@ -163,13 +188,14 @@ export default function ScanPage() {
     setCaptures(prev => ({ ...prev, [currentZone.id]: { dataUrl: null, boxes: [] } }))
     handleNext()
   }
-  function handleCardClick(i) {
-    const newActive = activeCard === i ? null : i
-    setActiveCard(newActive)
-    if (newActive !== null) showHistoryOverlay(history[newActive], videoRef.current)
-    else showHistoryOverlay(null, videoRef.current)
-  }
-
+function handleCardClick(i) {
+  const newActive = activeCard === i ? null : i
+  setActiveCard(newActive)
+  if (newActive !== null)
+    showHistoryOverlay(history[newActive], videoRef.current, arCanvasRef.current)  // ← 추가
+  else
+    showHistoryOverlay(null, videoRef.current, arCanvasRef.current)
+}
   const totalDefects = Object.values(captures).reduce((a, c) => a + (c.boxes?.length || 0), 0)
 
   function getInstructionHtml() {

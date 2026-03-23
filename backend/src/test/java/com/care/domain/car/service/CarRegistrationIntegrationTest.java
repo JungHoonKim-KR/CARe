@@ -49,6 +49,7 @@ class CarRegistrationIntegrationTest {
 
     private static final String MODEL_ID = "model-integration-1";
     private static final String TEST_EMAIL = "integration-test@company.com";
+    private static final int DAILY_PRICE = 150000;
 
     @Autowired CarImageRepository carImageRepository;
 
@@ -92,7 +93,7 @@ class CarRegistrationIntegrationTest {
         // [2] 지갑 할당 (회원가입 후 블록체인 키 연동)
         // ──────────────────────────────────────────
         String walletAddress = Credentials.create(companyPrivateKey).getAddress();
-        company.assignWallet(walletAddress);
+        company.updatePrivyWallet(walletAddress, null);
         companyRepository.save(company);
 
         System.out.println("[2] 지갑 할당 완료");
@@ -110,10 +111,22 @@ class CarRegistrationIntegrationTest {
 
         MockMultipartFile front = new MockMultipartFile("frontImage", "FRONT.png", "image/png", imageBytes);
         MockMultipartFile rear  = new MockMultipartFile("rearImage",  "REAR.png",  "image/png", imageBytes);
-        MockMultipartFile left  = new MockMultipartFile("leftImage",  "LEFT.png",  "image/png", imageBytes);
-        MockMultipartFile right = new MockMultipartFile("rightImage", "RIGHT.png", "image/png", imageBytes);
+        MockMultipartFile frontLeft = new MockMultipartFile("frontLeftImage", "FRONT_LEFT.png", "image/png", imageBytes);
+        MockMultipartFile frontRight = new MockMultipartFile("frontRightImage", "FRONT_RIGHT.png", "image/png", imageBytes);
+        MockMultipartFile rearLeft = new MockMultipartFile("rearLeftImage", "REAR_LEFT.png", "image/png", imageBytes);
+        MockMultipartFile rearRight = new MockMultipartFile("rearRightImage", "REAR_RIGHT.png", "image/png", imageBytes);
 
-        CarRegisterRequest carRequest = new CarRegisterRequest(MODEL_ID, "99나9999", front, rear, left, right);
+        CarRegisterRequest carRequest = new CarRegisterRequest(
+            MODEL_ID,
+            "99나9999",
+            DAILY_PRICE,
+            front,
+            rear,
+            frontLeft,
+            frontRight,
+            rearLeft,
+            rearRight
+        );
 
         // ──────────────────────────────────────────
         // [4] 차량 등록 (S3 + IPFS 업로드 → DB 저장 → 이벤트 발행)
@@ -130,7 +143,14 @@ class CarRegistrationIntegrationTest {
         System.out.println("===========================================");
 
         assertThat(response.status()).isEqualTo("PENDING");
-        assertThat(response.imageUrls()).containsKeys("FRONT", "REAR", "LEFT", "RIGHT");
+        assertThat(response.imageUrls()).containsKeys(
+            "FRONT",
+            "REAR",
+            "FRONT_LEFT",
+            "FRONT_RIGHT",
+            "REAR_LEFT",
+            "REAR_RIGHT"
+        );
         response.imageUrls().values().forEach(url -> assertThat(url).startsWith("https://"));
 
         // ──────────────────────────────────────────

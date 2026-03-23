@@ -1,47 +1,137 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import ReservationService from '../../services/ReservationService'
 import './ReservationDetailPage.css'
 
 export default function ReservationDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams()
+  const [reservationData, setReservationData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  // Mock data - replace with API call
-  const reservationData = {
-    carName: '현대 쏘나타',
-    carType: 'SUV · 2024년식',
-    plateNumber: '12가 3456',
-    status: '분쟁중',
-    pickup: {
-      date: '2026.02.25 11:00',
-      location: '서울 강남구 테헤란로 123',
-      completed: true, // 픽업 완료 여부
-    },
-    dropoff: {
-      date: '2026.02.28 11:00',
-      location: '서울 강남구 테헤란로 123',
-      completed: true, // 반납 완료 여부
-    },
-    renter: {
-      name: '최지호',
-      country: '대한민국',
-      phone: '+82-10-1234-5678',
-    },
-    payment: {
-      rentalFee: 240000,
-      insurance: 30000,
-      deposit: 100000,
-      total: 370000,
-    },
-    defects: {
-      pickup: 2,
-      dropoff: 4,
-      newDefects: 2,
-    },
-    dispute: {
-      reason: '반납 시 새로운 스크래치 발견',
-      claimAmount: 150000,
-    },
+  useEffect(() => {
+    fetchReservationDetail()
+  }, [id])
+
+  const fetchReservationDetail = async () => {
+    setLoading(true)
+    setError('')
+
+    try {
+      const result = await ReservationService.getReservationDetail(id)
+
+      if (result.success) {
+        const data = result.data
+
+        // API 응답 데이터를 UI 형식으로 변환
+        const formattedData = {
+          carName: `${data.car.brand} ${data.car.modelName}`,
+          carType: '-', // API에서 제공하지 않음
+          plateNumber: data.car.plateNumber,
+          status: getStatusLabel(data.status),
+          pickup: {
+            date: formatDateTime(data.pickupDate),
+            location: '-', // API에서 제공하지 않음
+            completed: isPickupCompleted(data.status),
+          },
+          dropoff: {
+            date: formatDateTime(data.returnDate),
+            location: '-', // API에서 제공하지 않음
+            completed: isReturnCompleted(data.status),
+          },
+          renter: {
+            name: data.renter.name,
+            country: '-', // API에서 제공하지 않음
+            email: data.renter.email,
+          },
+          payment: {
+            rentalFee: 0, // API에서 제공하지 않음
+            insurance: data.insurance.price,
+            deposit: 0, // API에서 제공하지 않음
+            total: 0, // API에서 제공하지 않음
+          },
+          defects: {
+            pickup: 0, // beforeScanTxHash로 조회 필요
+            dropoff: 0, // afterScanTxHash로 조회 필요
+            newDefects: 0,
+          },
+          dispute: data.status === 'DISPUTE' ? {
+            reason: '-',
+            claimAmount: 0,
+          } : null,
+          smartContractAddress: data.smartContractAddress,
+          depositStatus: data.depositStatus,
+          beforeScanTxHash: data.beforeScanTxHash,
+          afterScanTxHash: data.afterScanTxHash,
+        }
+
+        setReservationData(formattedData)
+      } else {
+        setError(result.message)
+      }
+    } catch (err) {
+      console.error('예약 상세 조회 에러:', err)
+      setError('예약 정보를 불러오는데 실패했습니다.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatDateTime = (isoDate) => {
+    if (!isoDate) return '-'
+    const date = new Date(isoDate)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    return `${year}.${month}.${day} ${hours}:${minutes}`
+  }
+
+  const getStatusLabel = (status) => {
+    const statusMap = {
+      'PENDING': '예약대기',
+      'CONFIRMED': '예약완료',
+      'IN_PROGRESS': '이용중',
+      'COMPLETED': '반납완료',
+      'DISPUTE': '분쟁중',
+      'CANCELLED': '취소됨'
+    }
+    return statusMap[status] || status
+  }
+
+  const isPickupCompleted = (status) => {
+    return ['IN_PROGRESS', 'COMPLETED', 'DISPUTE'].includes(status)
+  }
+
+  const isReturnCompleted = (status) => {
+    return ['COMPLETED', 'DISPUTE'].includes(status)
+  }
+
+  if (loading) {
+    return (
+      <div className="reservation-detail-page">
+        <div className="loading-container">
+          <p>예약 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="reservation-detail-page">
+        <div className="error-container">
+          <p>{error}</p>
+          <button onClick={() => navigate(-1)}>돌아가기</button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!reservationData) {
+    return null
   }
 
   return (

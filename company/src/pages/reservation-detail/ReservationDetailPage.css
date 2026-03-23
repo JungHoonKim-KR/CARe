@@ -4,6 +4,50 @@
   min-height: 100vh;
 }
 
+.loading-container,
+.error-container {
+  padding: 60px 20px;
+  text-align: center;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+  margin: 40px auto;
+  max-width: 600px;
+}
+
+.loading-container p {
+  font-size: 15px;
+  color: #6c757d;
+  margin: 0;
+}
+
+.error-container {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.error-container p {
+  font-size: 15px;
+  color: #dc2626;
+  margin: 0 0 20px 0;
+}
+
+.error-container button {
+  padding: 10px 20px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.error-container button:hover {
+  background-color: #c82333;
+}
+
 .page-header {
   display: flex;
   align-items: center;

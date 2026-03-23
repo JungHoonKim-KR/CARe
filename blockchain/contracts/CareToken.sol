@@ -17,6 +17,11 @@ contract CareToken is ERC20, Ownable {
         _transfer(address(this), to, amount);
     }
 
+    /// @notice 서버 관리자가 특정 지갑의 토큰을 차감
+    function burn(address from, uint256 amount) external onlyOwner {
+        _burn(from, amount);
+    }
+
     function decimals() public pure override returns (uint8) {
         return 6;
     }

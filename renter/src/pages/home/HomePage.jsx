@@ -210,7 +210,7 @@ export default function HomePage() {
             onClick={() => navigate(didVerified ? '/did-card' : '/did-auth', didVerified ? { state: { name: localStorage.getItem('did_name') || '', docId: localStorage.getItem('did_docId') || 'did:care:renter:verified', expiryDate: localStorage.getItem('did_expiry') || '' } } : undefined)}
             style={{ cursor: 'pointer' }}
           >
-            {didVerified ? 'DID' : t('home.unverified')}
+            {didVerified ? '인증완료' : t('home.unverified')}
           </span>
         </div>
       </header>

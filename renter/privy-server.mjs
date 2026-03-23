@@ -16,13 +16,18 @@ import { dirname, join } from 'path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, '../.env') });
 
+//VITE_ 접두어 버전도 매핑
+if (!process.env.PRIVY_APP_ID && process.env.VITE_PRIVY_APP_ID) {
+  process.env.PRIVY_APP_ID = process.env.VITE_PRIVY_APP_ID
+}
+
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 // Privy 공식 SDK 초기화
 const privy = new PrivyClient({
-  appId: process.env.VITE_PRIVY_APP_ID,
+  appId: process.env.VITE_PRIVY_APP_ID || process.env.PRIVY_APP_ID,
   appSecret: process.env.PRIVY_APP_SECRET,
 });
 

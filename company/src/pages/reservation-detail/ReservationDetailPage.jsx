@@ -199,8 +199,8 @@ export default function ReservationDetailPage() {
               <span className="info-value">{reservationData.renter.country}</span>
             </div>
             <div className="info-row">
-              <span className="info-label">연락처</span>
-              <span className="info-value">{reservationData.renter.phone}</span>
+              <span className="info-label">이메일</span>
+              <span className="info-value">{reservationData.renter.email}</span>
             </div>
           </div>
 

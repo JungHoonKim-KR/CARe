@@ -103,47 +103,61 @@ export default function ReservationDetailPage() {
           {/* 이용 상태 */}
           <div className="info-card">
             <h3 className="card-title">이용 상태</h3>
-            <div className="usage-status">
-              <div className="status-item">
+            <div className="usage-status-grid">
+              {/* 픽업 정보 */}
+              <div className="status-box">
                 <div className="status-header">
                   <span className="status-check">✓ 픽업</span>
                   <button className="view-photos-btn">사진 보기</button>
                 </div>
                 <div className="status-detail">기존 결함: {reservationData.defects.pickup}건 (AI 탐지)</div>
+                <button
+                  className="ai-report-btn"
+                  onClick={() => navigate(`/ai-report/${id}-pickup`)}
+                >
+                  📊 AI 리포트 보기
+                </button>
               </div>
-              <div className="status-item">
+
+              {/* 반납 정보 */}
+              <div className="status-box">
                 <div className="status-header">
                   <span className="status-check">✓ 반납</span>
                   <button className="view-photos-btn">사진 보기</button>
                 </div>
                 <div className="status-detail">결함: {reservationData.defects.dropoff}건 (AI 탐지)</div>
-              </div>
-            </div>
-            {reservationData.defects.newDefects > 0 && (
-              <div className="defect-alert">
-                ⚠️ 새로운 결함 {reservationData.defects.newDefects}건 발견
-              </div>
-            )}
-          </div>
 
-          {/* 분쟁 정보 */}
-          {reservationData.dispute && (
-            <div className="info-card dispute-card">
-              <h3 className="card-title dispute-title">
-                <span className="icon">⚠️</span> 분쟁 정보
-              </h3>
-              <div className="dispute-content">
-                <div className="dispute-row">
-                  <span className="dispute-label">분쟁 사유</span>
-                  <span className="dispute-reason">{reservationData.dispute.reason}</span>
-                </div>
-                <div className="dispute-row">
-                  <span className="dispute-label">청구 금액</span>
-                  <span className="dispute-amount">{reservationData.dispute.claimAmount.toLocaleString()}원</span>
-                </div>
+                {/* 새로운 결함 강조 */}
+                {reservationData.defects.newDefects > 0 && (
+                  <div className="defect-highlight">
+                    ⚠️ 새로운 결함 {reservationData.defects.newDefects}건 발견
+                  </div>
+                )}
+
+                <button
+                  className="ai-report-btn"
+                  onClick={() => navigate(`/ai-report/${id}-return`)}
+                >
+                  📊 AI 리포트 보기
+                </button>
+
+                {/* 분쟁 정보 버튼 */}
+                {reservationData.dispute && (
+                  <button
+                    className="dispute-info-btn"
+                    onClick={() => navigate(`/disputes/${id}`)}
+                  >
+                    <span className="dispute-icon">⚠️</span>
+                    <div className="dispute-info">
+                      <span className="dispute-label">분쟁 진행중</span>
+                      <span className="dispute-amount">{reservationData.dispute.claimAmount.toLocaleString()}원 청구</span>
+                    </div>
+                    <span className="arrow">→</span>
+                  </button>
+                )}
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         <div className="right-column">

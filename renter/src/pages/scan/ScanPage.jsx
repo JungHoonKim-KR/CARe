@@ -9,7 +9,7 @@ import { ZONES }                        from './zones.js'
 import styles                           from './ScanPage.module.css'
 import { getScanResult }                from '../../api/scan'
 import careLogo                         from '../../assets/care_logo.png'
-import { drawBoxes, clearOverlay, updateARBoxes, startARLoop, stopARLoop, showHistoryOverlay } from './overlay.js'
+import { clearOverlay, updateARBoxes, startARLoop, stopARLoop, showHistoryOverlay } from './overlay.js'
 
 export default function ScanPage() {
   const { reservationId } = useParams()
@@ -121,8 +121,8 @@ export default function ScanPage() {
             isWaitingRef.current = false
           }, 2000)
         }
-      }, 'image/jpeg', 0.3)
-    }, 400)
+      }, 'image/jpeg', 0.6)
+    }, 200)
     return () => { clearInterval(interval); stopARLoop(); if (wsRef.current) wsRef.current.close() }
   }, [])
 
@@ -185,10 +185,13 @@ export default function ScanPage() {
     scanner.onCapture = (zoneId, dataUrl, boxes) => {
       setCaptures(prev => ({ ...prev, [zoneId]: { dataUrl, boxes } }))
       setMatchStatus('captured'); setCanCapture(false); setIsCapturing(false)
+      // scanner.onCapture 안에 추가
+      if (boxes.length > 0 && navigator.vibrate) {
+        navigator.vibrate(200)  // ✅ 흠집 발견 시 진동
+      }
       stopARLoop()
       clearOverlay(arCanvasRef.current)
       if (canvasRef.current && videoRef.current)
-        drawBoxes(canvasRef.current, videoRef.current, boxes)
       if (boxes.length > 0) { setShowToast(true); setTimeout(() => setShowToast(false), 2000) }
     }
     scanner.setZone(currentZone)

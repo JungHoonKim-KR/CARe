@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import passportIcon from '../../assets/passport_icon.png'
-import { renterLicense, renterDID } from '../../api/auth'
+import { renterLicense } from '../../api/auth'
 import './DIDConfirmPage.css'
 
 export default function DIDConfirmPage() {
@@ -10,13 +10,51 @@ export default function DIDConfirmPage() {
   const image = state?.image
   const docType = state?.docType || 'passport'
   const isPassport = docType === 'passport'
+  const ocrData = state?.ocrData
 
-  const [form, setForm] = useState({
-    name: '',
-    docNo: '',
-    birthDate: '',
-    issueDate: '',
-    expiryDate: '',
+  const parseLicenseNumber = (licenseNum) => {
+    if (!licenseNum) return { licenZero: '', licenFirst: '', licenSecond: '', licenThird: '' }
+    const parts = licenseNum.split('-')
+    return {
+      licenZero: parts[0] || '',
+      licenFirst: parts[1] || '',
+      licenSecond: parts[2] || '',
+      licenThird: parts[3] || '',
+    }
+  }
+
+  const [form, setForm] = useState(() => {
+    const base = {
+      name: '',
+      passportNo: '',
+      birthDate: '',
+      issueDate: '',
+      expiryDate: '',
+      licenZero: '',
+      licenFirst: '',
+      licenSecond: '',
+      licenThird: '',
+    }
+    if (!ocrData) return base
+    if (isPassport) {
+      return {
+        ...base,
+        name: [ocrData.surname, ocrData.given_names].filter(Boolean).join(' '),
+        passportNo: ocrData.passport_no || '',
+        birthDate: ocrData.date_of_birth || '',
+        issueDate: ocrData.date_of_issue || '',
+        expiryDate: ocrData.date_of_expiry || '',
+      }
+    } else {
+      return {
+        ...base,
+        name: ocrData.name || '',
+        birthDate: ocrData.date_of_birth || '',
+        issueDate: ocrData.date_of_issue || '',
+        expiryDate: ocrData.date_of_expiry || '',
+        ...parseLicenseNumber(ocrData.license_number),
+      }
+    }
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -31,7 +69,7 @@ export default function DIDConfirmPage() {
         ? {
             docType: 'PASSPORT',
             passportName: form.name,
-            passportNo: form.docNo,
+            passportNo: form.passportNo,
             birthDate: form.birthDate.replace(/-/g, ''),
             issueDate: form.issueDate.replace(/-/g, ''),
             expiryDate: form.expiryDate.replace(/-/g, ''),
@@ -39,8 +77,13 @@ export default function DIDConfirmPage() {
         : {
             docType: 'INT_LICENSE',
             name: form.name,
-            licenseNo: form.docNo,
-            birthDate: form.birthDate.replace(/-/g, ''),
+            birthY: form.birthDate.slice(0, 4),
+            birthM: form.birthDate.slice(5, 7),
+            birthD: form.birthDate.slice(8, 10),
+            licenZero: form.licenZero,
+            licenFirst: form.licenFirst,
+            licenSecond: form.licenSecond,
+            licenThird: form.licenThird,
             issueDate: form.issueDate.replace(/-/g, ''),
           }
 
@@ -62,8 +105,7 @@ export default function DIDConfirmPage() {
           localStorage.getItem('license_verified') === 'true'
 
         if (bothDone) {
-          // 둘 다 완료 → 블록체인 DID 등록 후 카드 페이지로
-          try { await renterDID() } catch (e) { console.warn('[DID] 블록체인 등록 실패:', e) }
+          // 둘 다 완료 → DID+VC는 백엔드에서 자동 처리 → 카드 페이지로
           navigate('/did-card', {
             state: {
               name: localStorage.getItem('did_name') || form.name,
@@ -72,7 +114,6 @@ export default function DIDConfirmPage() {
             },
           })
         } else {
-          // 하나만 완료 → 다시 목록 화면으로
           navigate('/did-auth')
         }
       } else {
@@ -109,6 +150,10 @@ export default function DIDConfirmPage() {
         다시 촬영하기
       </button>
 
+      {ocrData && !ocrData.parse_error && (
+        <p className="did-ocr-notice">정보가 자동으로 입력되었어요. 틀린 내용이 있으면 수정해 주세요.</p>
+      )}
+
       <div className="did-confirm-form">
         <div className="did-input-group">
           <label className="did-input-label">이름 (영문)</label>
@@ -121,14 +166,23 @@ export default function DIDConfirmPage() {
           />
         </div>
         <div className="did-input-group">
-          <label className="did-input-label">{isPassport ? '여권번호' : '면허증 번호'}</label>
-          <input
-            type="text"
-            className="did-input"
-            placeholder={isPassport ? 'M12345678' : 'IDP-12345678'}
-            value={form.docNo}
-            onChange={setField('docNo')}
-          />
+          <label className="did-input-label">{isPassport ? '여권번호' : '면허증 번호 (4자리-2자리-6자리-2자리)'}</label>
+          {isPassport ? (
+            <input
+              type="text"
+              className="did-input"
+              placeholder="M12345678"
+              value={form.passportNo}
+              onChange={setField('passportNo')}
+            />
+          ) : (
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <input type="text" className="did-input" placeholder="11" value={form.licenZero} onChange={setField('licenZero')} style={{ width: '20%' }} />
+              <input type="text" className="did-input" placeholder="22" value={form.licenFirst} onChange={setField('licenFirst')} style={{ width: '20%' }} />
+              <input type="text" className="did-input" placeholder="123456" value={form.licenSecond} onChange={setField('licenSecond')} style={{ width: '35%' }} />
+              <input type="text" className="did-input" placeholder="78" value={form.licenThird} onChange={setField('licenThird')} style={{ width: '20%' }} />
+            </div>
+          )}
         </div>
         <div className="did-input-group">
           <label className="did-input-label">생년월일</label>

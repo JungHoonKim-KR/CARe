@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import careLogo from '../../assets/care_logo.png'
+import { getCarScratches, submitDefense } from '../../api/reservation'
 import './DisputeHistoryPage.css'
 
 const PARTS = [
@@ -11,52 +12,79 @@ const PARTS = [
   { id: 'RIGHT', label: '우측' },
 ]
 
-const MOCK_HISTORY = [
-  { id: 14, date: '2025년 3월 13일 11:57 am', desc: '우측 도어 패널 스크래치',    location: 'RIGHT', hasPhoto: true,  isNew: true  },
-  { id: 13, date: '2025년 3월 11일 09:30 am', desc: '전면 범퍼 경미한 흠집',     location: 'FRONT', hasPhoto: true,  isNew: false },
-  { id: 12, date: '2025년 3월 10일 02:15 pm', desc: '좌측 사이드 미러 긁힘',     location: 'LEFT',  hasPhoto: false, isNew: false },
-  { id: 11, date: '2025년 3월 08일 11:00 am', desc: '후면 범퍼 미세 흠집',       location: 'REAR',  hasPhoto: false, isNew: false },
-  { id: 10, date: '2025년 3월 07일 04:22 pm', desc: '전면 유리 소형 크랙',       location: 'FRONT', hasPhoto: true,  isNew: false },
-  { id:  9, date: '2025년 3월 05일 01:10 pm', desc: '우측 휀더 경미한 스크래치', location: 'RIGHT', hasPhoto: false, isNew: false },
-  { id:  8, date: '2025년 3월 03일 03:45 pm', desc: '좌측 도어 하단 긁힘',       location: 'LEFT',  hasPhoto: true,  isNew: false },
-]
+function getPartKey(carPart) {
+  if (!carPart) return 'FRONT'
+  const upper = carPart.toUpperCase()
+  if (upper.includes('FRONT')) return 'FRONT'
+  if (upper.includes('REAR') || upper.includes('BACK')) return 'REAR'
+  if (upper.includes('LEFT')) return 'LEFT'
+  if (upper.includes('RIGHT')) return 'RIGHT'
+  return 'FRONT'
+}
+
+function formatDate(val) {
+  if (!val) return ''
+  if (Array.isArray(val)) {
+    const [y, mo, d] = val
+    return `${y}년 ${mo}월 ${d}일`
+  }
+  const d = new Date(val)
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`
+}
 
 export default function DisputeHistoryPage() {
   const navigate = useNavigate()
   const { state } = useLocation()
   const reservation = state?.reservation
+  const disputeId = state?.disputeId
 
+  const [scratches, setScratches] = useState([])
+  const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [activePart, setActivePart] = useState('all')
   const [expanded, setExpanded] = useState(null)
-  const [selected, setSelected] = useState(new Set())
+  const [selectedLogId, setSelectedLogId] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+
+  useEffect(() => {
+    const reservationId = reservation?.reservationId
+    if (!reservationId) { setLoading(false); return }
+    getCarScratches(reservationId)
+      .then((data) => setScratches(Array.isArray(data) ? data : []))
+      .catch(() => setScratches([]))
+      .finally(() => setLoading(false))
+  }, [reservation?.reservationId])
 
   const filtered = useMemo(() => {
-    return MOCK_HISTORY.filter(item => {
-      const matchPart = activePart === 'all' || item.location === activePart
-      const matchQuery = !query || item.desc.includes(query) || item.date.includes(query)
+    return scratches.filter(item => {
+      const partKey = getPartKey(item.carPart)
+      const matchPart = activePart === 'all' || partKey === activePart
+      const matchQuery = !query || (item.carPart || '').includes(query)
       return matchPart && matchQuery
     })
-  }, [activePart, query])
+  }, [scratches, activePart, query])
 
-  const toggle = (id) => {
-    setSelected(prev => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
-  }
-
-  const handleSubmit = () => {
-    setSubmitted(true)
-    setTimeout(() => {
-      if (reservation?.reservationId) {
-        localStorage.removeItem(`disputePending_${reservation.reservationId}`)
-        localStorage.removeItem(`disputeDate_${reservation.reservationId}`)
-      }
-      navigate('/my-car')
-    }, 2200)
+  const handleSubmit = async () => {
+    if (!selectedLogId) return
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      await submitDefense(reservation.reservationId, disputeId, selectedLogId)
+      setSubmitted(true)
+      setTimeout(() => {
+        if (reservation?.reservationId) {
+          localStorage.removeItem(`disputePending_${reservation.reservationId}`)
+          localStorage.removeItem(`disputeDate_${reservation.reservationId}`)
+        }
+        navigate('/my-car')
+      }, 2200)
+    } catch (err) {
+      setSubmitError(err.response?.data?.message || '제출에 실패했어요. 다시 시도해주세요.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (submitted) return (
@@ -69,7 +97,7 @@ export default function DisputeHistoryPage() {
       </div>
       <h2 className="dh-submit-title">증거를 제출했어요!</h2>
       <p className="dh-submit-desc">
-        선택한 {selected.size}건의 흠집 기록을<br/>
+        선택한 흠집 기록을<br/>
         임대인에게 전송했어요.<br/>
         검토 후 분쟁 결과를 알려드려요.
       </p>
@@ -78,7 +106,6 @@ export default function DisputeHistoryPage() {
 
   return (
     <div className="dh-page">
-      {/* 헤더 */}
       <header className="dh-header">
         <button className="dh-back" onClick={() => navigate(-1)}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -91,7 +118,6 @@ export default function DisputeHistoryPage() {
       </header>
 
       <div className="dh-scroll">
-        {/* 타이틀 */}
         <div className="dh-title-area">
           <h1 className="dh-title">이전 흠집 기록</h1>
           <p className="dh-subtitle">
@@ -99,15 +125,6 @@ export default function DisputeHistoryPage() {
           </p>
         </div>
 
-        {/* 새 흠집 안내 */}
-        <div className="dh-new-alert">
-          <div className="dh-new-alert-dot" />
-          <p className="dh-new-alert-text">
-            <strong>14번째 흠집</strong>은 이전 기록에 없던 새 흠집이에요
-          </p>
-        </div>
-
-        {/* 검색 */}
         <div className="dh-search-wrap">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <circle cx="11" cy="11" r="8" stroke="#bbb" strokeWidth="2"/>
@@ -115,7 +132,7 @@ export default function DisputeHistoryPage() {
           </svg>
           <input
             className="dh-search-input"
-            placeholder="흠집 내용, 날짜로 검색"
+            placeholder="차량 부위로 검색"
             value={query}
             onChange={e => setQuery(e.target.value)}
           />
@@ -128,7 +145,6 @@ export default function DisputeHistoryPage() {
           )}
         </div>
 
-        {/* 부위별 필터 탭 */}
         <div className="dh-filter-row">
           {PARTS.map(part => (
             <button
@@ -141,120 +157,112 @@ export default function DisputeHistoryPage() {
           ))}
         </div>
 
-        {/* 결과 없음 */}
-        {filtered.length === 0 && (
-          <div className="dh-empty">
-            <p>검색 결과가 없어요</p>
-          </div>
+        {loading && <div className="dh-empty"><p>흠집 기록을 불러오는 중...</p></div>}
+
+        {!loading && filtered.length === 0 && (
+          <div className="dh-empty"><p>흠집 기록이 없어요</p></div>
         )}
 
-        {/* 아코디언 목록 */}
         <div className="dh-list">
-          {filtered.map(item => (
+          {filtered.map((item, idx) => (
             <div
-              key={item.id}
-              className={`dh-item${item.isNew ? ' dh-item-new' : ''}${selected.has(item.id) ? ' dh-item-selected' : ''}`}
+              key={item.logId}
+              className={`dh-item${selectedLogId === item.logId ? ' dh-item-selected' : ''}`}
             >
               <div className="dh-item-header">
-                {/* 체크박스 (새 흠집은 선택 불가) */}
-                {!item.isNew ? (
-                  <button
-                    className={`dh-checkbox${selected.has(item.id) ? ' checked' : ''}`}
-                    onClick={() => toggle(item.id)}
-                  >
-                    {selected.has(item.id) && (
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
-                        <path d="M20 6L9 17L4 12" stroke="white" strokeWidth="3"
-                          strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
-                  </button>
-                ) : (
-                  <div className="dh-checkbox-placeholder" />
-                )}
+                <button
+                  className={`dh-checkbox${selectedLogId === item.logId ? ' checked' : ''}`}
+                  onClick={() => setSelectedLogId(prev => prev === item.logId ? null : item.logId)}
+                >
+                  {selectedLogId === item.logId && (
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17L4 12" stroke="white" strokeWidth="3"
+                        strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
 
-                {/* 텍스트 클릭 → 아코디언 */}
                 <button
                   className="dh-item-info"
-                  onClick={() => setExpanded(expanded === item.id ? null : item.id)}
+                  onClick={() => setExpanded(expanded === item.logId ? null : item.logId)}
                 >
                   <div className="dh-item-top">
-                    <span className="dh-item-num">{item.id}번째 흠집</span>
-                    {item.isNew && <span className="dh-new-badge">NEW</span>}
-                    <span className={`dh-location-badge loc-${item.location.toLowerCase()}`}>
-                      {PARTS.find(p => p.id === item.location)?.label}
+                    <span className="dh-item-num">{idx + 1}번째 흠집</span>
+                    <span className={`dh-location-badge loc-${getPartKey(item.carPart).toLowerCase()}`}>
+                      {PARTS.find(p => p.id === getPartKey(item.carPart))?.label}
                     </span>
                   </div>
                   <div className="dh-item-bottom">
-                    <span className="dh-item-desc">{item.desc}</span>
-                    <span className="dh-item-date">{item.date}</span>
+                    <span className="dh-item-desc">{item.carPart}</span>
+                    <span className="dh-item-date">{formatDate(item.createdAt)}</span>
                   </div>
                 </button>
 
                 <svg
                   width="18" height="18" viewBox="0 0 24 24" fill="none"
-                  className={`dh-chevron${expanded === item.id ? ' open' : ''}`}
+                  className={`dh-chevron${expanded === item.logId ? ' open' : ''}`}
                   style={{ flexShrink: 0, cursor: 'pointer' }}
-                  onClick={() => setExpanded(expanded === item.id ? null : item.id)}
+                  onClick={() => setExpanded(expanded === item.logId ? null : item.logId)}
                 >
                   <path d="M6 9l6 6 6-6" stroke="#ccc" strokeWidth="2"
                     strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
 
-              {/* 아코디언 본문 */}
-              {expanded === item.id && (
+              {expanded === item.logId && (
                 <div className="dh-item-body">
-                  {item.hasPhoto ? (
+                  {item.cropS3Url ? (
                     <>
-                      <div className="dh-photo-placeholder">
-                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                          <rect x="3" y="5" width="18" height="14" rx="2"
-                            stroke="#ddd" strokeWidth="1.5"/>
-                          <circle cx="12" cy="12" r="3" stroke="#ddd" strokeWidth="1.5"/>
-                          <circle cx="17.5" cy="7.5" r="1" fill="#ddd"/>
-                        </svg>
-                        <p className="dh-photo-label">흠집 사진</p>
-                      </div>
-                      <div className="dh-blockchain-row">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                          <path d="M12 2L3 7L12 12L21 7L12 2Z" stroke="#F7A633"
-                            strokeWidth="2" strokeLinejoin="round"/>
-                          <path d="M3 17L12 22L21 17M3 12L12 17L21 12"
-                            stroke="#F7A633" strokeWidth="2" strokeLinejoin="round"/>
-                        </svg>
-                        <span className="dh-blockchain-text">blockchain verified · 0x34e...698d</span>
-                      </div>
+                      {/* 수정된 부분: 불필요한 플레이스홀더 제거, 실제 이미지와 검증 뱃지만 노출 */}
+                      <img
+                        src={item.cropS3Url}
+                        alt="흠집 사진"
+                        style={{ width: '100%', borderRadius: 8, marginBottom: 8 }}
+                      />
+                      {item.proofIpfsCid && (
+                        <div className="dh-blockchain-row">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L3 7L12 12L21 7L12 2Z" stroke="#F7A633"
+                              strokeWidth="2" strokeLinejoin="round"/>
+                            <path d="M3 17L12 22L21 17M3 12L12 17L21 12"
+                              stroke="#F7A633" strokeWidth="2" strokeLinejoin="round"/>
+                          </svg>
+                          <span className="dh-blockchain-text">
+                            검증 완료 · {item.proofIpfsCid.slice(0, 10)}...
+                          </span>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <p className="dh-no-photo">사진 기록 없음</p>
                   )}
-                  {!item.isNew && (
-                    <button
-                      className={`dh-select-btn${selected.has(item.id) ? ' selected' : ''}`}
-                      onClick={() => toggle(item.id)}
-                    >
-                      {selected.has(item.id) ? '✓ 증거로 선택됨' : '증거로 선택하기'}
-                    </button>
-                  )}
+                  <button
+                    className={`dh-select-btn${selectedLogId === item.logId ? ' selected' : ''}`}
+                    onClick={() => setSelectedLogId(prev => prev === item.logId ? null : item.logId)}
+                  >
+                    {selectedLogId === item.logId ? '✓ 증거로 선택됨' : '증거로 선택하기'}
+                  </button>
                 </div>
               )}
             </div>
           ))}
         </div>
 
+        {submitError && (
+          <p style={{ color: '#FF4D4F', textAlign: 'center', padding: '8px 16px' }}>{submitError}</p>
+        )}
+
         <div style={{ height: 140 }} />
       </div>
 
-      {/* 하단 영역 */}
       <div className="dh-footer">
-        {selected.size > 0 ? (
-          <button className="dh-submit-btn" onClick={handleSubmit}>
+        {selectedLogId ? (
+          <button className="dh-submit-btn" onClick={handleSubmit} disabled={submitting}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="white"
                 strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            {selected.size}건 선택 · 증거로 제출하기
+            {submitting ? '제출 중...' : '증거로 제출하기'}
           </button>
         ) : (
           <button className="dh-main-btn" onClick={() => {

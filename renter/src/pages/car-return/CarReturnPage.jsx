@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import carIconCute from '../../assets/car_icon_cute.png'
 import carIconFront from '../../assets/car_icon_front.png'
+import { scanAfter, completeReservation } from '../../api/reservation'
 import './CarReturnPage.css'
 
 const PANELS = [
@@ -85,14 +86,18 @@ export default function CarReturnPage() {
   }
 
   const submitReturn = () => {
-    setStep('submitting')
-    setTimeout(() => {
-      if (reservation?.reservationId) {
-        localStorage.setItem(`disputePending_${reservation.reservationId}`, 'true')
-        localStorage.setItem(`disputeDate_${reservation.reservationId}`, reservation.endDate || '')
-      }
-      setStep('done')
-    }, 2000)
+    const rid = reservation?.reservationId
+    if (rid) {
+      localStorage.setItem(`disputePending_${rid}`, 'true')
+      localStorage.setItem(`disputeDate_${rid}`, reservation.endDate || '')
+    }
+    setStep('done')
+    if (rid) {
+      // 반납 완료 상태 변경 + 사진 업로드 백그라운드 처리
+      completeReservation(rid).catch(e => console.error('[Return] 반납 완료 API 실패:', e))
+      Promise.all(PANELS.map(p => scanAfter(rid, p.id, photos[p.id])))
+        .catch(e => console.error('[Return] 스캔 업로드 실패:', e))
+    }
   }
 
   // ─── 인트로 ───────────────────────────────────────────────────
@@ -258,39 +263,21 @@ export default function CarReturnPage() {
   // ─── 완료 ────────────────────────────────────────────────────
   if (step === 'done') return (
     <div className="cr-done-page">
-      <div className="cr-done-icon">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+      <div className="cr-done-icon cr-done-icon--animate">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none">
           <path d="M20 6L9 17L4 12" stroke="white" strokeWidth="2.5"
             strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </div>
-      <h1 className="cr-done-title">반납 완료!</h1>
-      <p className="cr-done-desc">
-        4방향 사진이 블록체인에 저장됐어요.<br/>
-        임대인에게 반납 알림이 전송됐어요.
-      </p>
-      <div className="cr-done-photos">
-        {PANELS.map(p => (
-          <div key={p.id} className="cr-done-photo-thumb">
-            {photos[p.id] ? (
-              <img src={photos[p.id]} alt={p.label} />
-            ) : (
-              <div className="cr-done-photo-empty" />
-            )}
-            <span>{p.label}</span>
-          </div>
-        ))}
+      <div className="cr-done-text-group">
+        <h1 className="cr-done-title">반납이 완료되었습니다</h1>
+        <p className="cr-done-desc">
+          사진이 블록체인에 안전하게 저장됐어요.<br/>
+          이용해 주셔서 감사합니다.
+        </p>
       </div>
-      <div className="cr-done-notice">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
-            stroke="#5B8DEF" strokeWidth="2"/>
-          <path d="M12 8v4M12 16h.01" stroke="#5B8DEF" strokeWidth="2" strokeLinecap="round"/>
-        </svg>
-        <span>분쟁 발생 시 앱으로 알려드려요</span>
-      </div>
-      <button className="cr-done-btn" onClick={() => navigate('/my-car')}>
-        확인
+      <button className="cr-done-btn" onClick={() => navigate('/landing')}>
+        홈으로 돌아가기
       </button>
     </div>
   )

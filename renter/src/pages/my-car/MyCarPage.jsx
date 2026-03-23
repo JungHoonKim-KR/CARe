@@ -87,7 +87,6 @@ export default function MyCarPage() {
         )
         const active = sorted.find((r) => r.status === 'IN_USE')
           || sorted.find((r) => r.status === 'RESERVED')
-          || sorted[0]
         if (active) {
           setReservation(active)
           const pending = localStorage.getItem(`disputePending_${active.reservationId}`) === 'true'

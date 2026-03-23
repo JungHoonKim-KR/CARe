@@ -48,11 +48,12 @@ export default function SignUpPage() {
 
     try {
       const result = await AuthService.register({
-        companyName: formData.companyName,
+        name: formData.companyName,
         airportCode: formData.airportCode,
         languageCode: formData.languageCode,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        bizNumber: formData.businessNumber
       })
 
       if (result.success) {

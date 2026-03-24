@@ -486,6 +486,54 @@
   margin: 0;
 }
 
+.dispute-create-box {
+  margin-bottom: 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+}
+
+.dispute-create-title {
+  margin: 0 0 6px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2f3640;
+}
+
+.dispute-create-meta {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.dispute-input {
+  width: 100%;
+  border: 1px solid #d6dbe1;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.dispute-reason {
+  resize: vertical;
+  min-height: 70px;
+}
+
+.create-error {
+  margin: 0;
+  color: #b02a37;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.create-loading {
+  margin: 0;
+  color: #495057;
+  font-size: 12px;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .report-content {

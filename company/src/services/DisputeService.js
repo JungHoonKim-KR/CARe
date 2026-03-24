@@ -74,10 +74,9 @@ class DisputeService {
   async createDispute(reservationId, data) {
     try {
       const response = await api.post(`/api/reservations/${reservationId}/disputes`, {
+        targetLogId: data.targetLogId,
         reason: data.reason,
-        description: data.description,
-        claimAmount: data.claimAmount,
-        evidenceImages: data.evidenceImages || []
+        claimAmount: data.claimAmount
       })
 
       return {

@@ -25,17 +25,23 @@ export default function ScanPage() {
   const arCanvasRef = useRef(null)
   const wsRef       = useRef(null)
 
-  const [zoneIndex,    setZoneIndex]    = useState(0)
-  const [captures,     setCaptures]     = useState({})
-  const [isDone,       setIsDone]       = useState(false)
-  const [matchStatus,  setMatchStatus]  = useState('detecting')
-  const [matchValue,   setMatchValue]   = useState(0)
-  const [showToast,    setShowToast]    = useState(false)
-  const [canCapture,   setCanCapture]   = useState(false)
-  const [isCapturing,  setIsCapturing]  = useState(false)
-  const [allScratches, setAllScratches] = useState([])
-  const [activeCard,   setActiveCard]   = useState(null)
-  const [debugLog,     setDebugLog]     = useState('')  // ✅ 모바일 디버그용
+  const [zoneIndex,       setZoneIndex]       = useState(0)
+  const [captures,        setCaptures]        = useState({})
+  const [isDone,          setIsDone]          = useState(false)
+  const [matchStatus,     setMatchStatus]     = useState('detecting')
+  const [matchValue,      setMatchValue]      = useState(0)
+  const [showToast,       setShowToast]       = useState(false)
+  const [canCapture,      setCanCapture]      = useState(false)
+  const [isCapturing,     setIsCapturing]     = useState(false)
+  const [allScratches,    setAllScratches]    = useState([])
+  const [activeCard,      setActiveCard]      = useState(null)
+  // ── 가이드 멘트 오버레이
+  const [showGuideOverlay,  setShowGuideOverlay]  = useState(false)
+  const [overlayHidden,     setOverlayHidden]     = useState(false)
+  const [showScanStartToast, setShowScanStartToast] = useState(false)
+  const [autoNextCountdown,  setAutoNextCountdown]  = useState(0)
+  const autoNextTimerRef = useRef(null)
+  const [modalImg, setModalImg] = useState(null)  // 확대 모달용
 
   const currentZone = ZONES[zoneIndex]
   const history     = allScratches.filter(s => s.carPart === currentZone?.id)
@@ -46,12 +52,65 @@ export default function ScanPage() {
   useEffect(() => { matchStatusRef.current = matchStatus }, [matchStatus])
   useEffect(() => { setActiveCard(null) }, [zoneIndex])
 
-  // 마운트 시 전체 흠집 조회
+  // 구역 변경 시 가이드 오버레이 초기화
+  const overlayVisibleRef = useRef(false)
+  const overlayShownAtRef = useRef(0)          // 오버레이가 실제로 뜬 시각
+  const OVERLAY_MIN_SHOW  = 3000               // 최소 3초는 유지
+
+  useEffect(() => {
+    if (currentZone?.type === 'wheel') {
+      setOverlayHidden(false)
+      setShowGuideOverlay(false)
+      setShowScanStartToast(false)
+      overlayVisibleRef.current = false
+      overlayShownAtRef.current = 0
+      const t = setTimeout(() => {
+        setShowGuideOverlay(true)
+        overlayVisibleRef.current = true
+        overlayShownAtRef.current = Date.now()
+      }, 150)
+      return () => clearTimeout(t)
+    } else {
+      setShowGuideOverlay(false)
+      overlayVisibleRef.current = false
+    }
+  }, [zoneIndex])
+
+  // matchValue > 5 이면 오버레이 페이드아웃 — 단 최소 유지 시간 지난 후에만
+  useEffect(() => {
+    if (matchValue > 5 && overlayVisibleRef.current) {
+      const elapsed = Date.now() - overlayShownAtRef.current
+      const delay   = Math.max(0, OVERLAY_MIN_SHOW - elapsed)
+      setTimeout(() => {
+        if (!overlayVisibleRef.current) return
+        overlayVisibleRef.current = false
+        setOverlayHidden(true)
+        setTimeout(() => setShowGuideOverlay(false), 650)
+      }, delay)
+    }
+  }, [matchValue])
+
+  // matched 되면 "흠집 탐지 시작!" 토스트
+  useEffect(() => {
+    if (matchStatus === 'matched') {
+      setShowScanStartToast(true)
+      setTimeout(() => setShowScanStartToast(false), 1800)
+    }
+  }, [matchStatus])
+
+  // 마운트 시 전체 흠집 조회 (BEFORE + AFTER)
   useEffect(() => {
     if (!reservationId) return
-    getScanResult(reservationId, 'BEFORE')
-      .then(data => setAllScratches(Array.isArray(data) ? data : []))
-      .catch(() => setAllScratches([]))
+    Promise.all([
+      getScanResult(reservationId, 'BEFORE').catch(() => []),
+      getScanResult(reservationId, 'AFTER').catch(() => []),
+    ]).then(([before, after]) => {
+      const merged = [
+        ...(Array.isArray(before) ? before : []),
+        ...(Array.isArray(after)  ? after  : []),
+      ]
+      setAllScratches(merged)
+    })
   }, [])
 
   // 폰트 로드
@@ -70,7 +129,6 @@ export default function ScanPage() {
     wsRef.current   = new WebSocket(wsUrl)
     wsRef.current.onopen = () => {
       console.log('🟢 [WS] 연결 성공!')
-      setDebugLog(prev => prev + ' | WS연결OK')
     }
 
     wsRef.current.onmessage = (event) => {
@@ -83,11 +141,22 @@ export default function ScanPage() {
         const video = videoRef.current
         const vw = video?.videoWidth  || 640
         const vh = video?.videoHeight || 360
-        const scale = 640 / Math.max(vw, vh)
-        const capW  = Math.round(vw * scale)
-        const capH  = Math.round(vh * scale)
-
-        // ✅ 실제 캡처 해상도 기준으로 스케일 변환
+        const isPortrait  = window.innerHeight > window.innerWidth
+        const needsRotate = isPortrait && vw > vh
+        let capW, capH
+        if (needsRotate) {
+          const scale = 640 / Math.max(vh, vw)
+          capW = Math.round(vh * scale)
+          capH = Math.round(vw * scale)
+        } else if (isPortrait) {
+          const scale = 640 / vw
+          capW = 640
+          capH = Math.round(vh * scale)
+        } else {
+          const scale = 640 / Math.max(vw, vh)
+          capW = Math.round(vw * scale)
+          capH = Math.round(vh * scale)
+        }
         updateARBoxes(data.boxes, capW, capH)
       }
     }
@@ -99,19 +168,42 @@ export default function ScanPage() {
       const video = videoRef.current, ws = wsRef.current
       if (!video || !ws || ws.readyState !== WebSocket.OPEN) return
 
-      // ✅ 비디오 실제 비율 유지
       const vw = video.videoWidth  || 640
       const vh = video.videoHeight || 360
+      const isPortrait   = window.innerHeight > window.innerWidth
+      const needsRotate  = isPortrait && vw > vh
 
-      // 긴 쪽을 640 기준으로 스케일
-      const scale  = 640 / Math.max(vw, vh)
-      const capW   = Math.round(vw * scale)
-      const capH   = Math.round(vh * scale)
+      // 세로 모드: width를 640 기준으로 → AI가 가로 비율로 받도록
+      // 가로 모드: 긴 쪽을 640 기준으로
+      let capW, capH
+      if (needsRotate) {
+        const scale = 640 / Math.max(vh, vw)
+        capW = Math.round(vh * scale)
+        capH = Math.round(vw * scale)
+      } else if (isPortrait) {
+        // 세로 모드 — width 기준 640으로 키워서 가로 비율처럼 전송
+        const scale = 640 / vw
+        capW = 640
+        capH = Math.round(vh * scale)
+      } else {
+        const scale = 640 / Math.max(vw, vh)
+        capW = Math.round(vw * scale)
+        capH = Math.round(vh * scale)
+      }
 
       const c = document.createElement('canvas')
       c.width  = capW
       c.height = capH
-      c.getContext('2d').drawImage(video, 0, 0, capW, capH)
+      const ctx = c.getContext('2d')
+
+      if (needsRotate) {
+        // 중심 기준 -90도 회전
+        ctx.translate(capW / 2, capH / 2)
+        ctx.rotate(-Math.PI / 2)
+        ctx.drawImage(video, -capH / 2, -capW / 2, capH, capW)
+      } else {
+        ctx.drawImage(video, 0, 0, capW, capH)
+      }
 
       c.toBlob(blob => {
         if (blob && ws.readyState === WebSocket.OPEN) {
@@ -140,25 +232,18 @@ export default function ScanPage() {
         if (!video) return
         video.srcObject = s
 
-        // ✅ onloadedmetadata: play만 (모바일은 이 시점에 videoWidth=0일 수 있음)
         video.onloadedmetadata = () => {
-          const msg = `meta:${video.videoWidth}x${video.videoHeight} ready:${video.readyState}`
-          console.log('📱', msg)
-          setDebugLog(prev => prev + ' | ' + msg)
+          console.log('📱', `meta:${video.videoWidth}x${video.videoHeight}`)
           if (!cancelled) video.play().catch(() => {})
         }
 
-        // ✅ onloadeddata: 실제 프레임 나온 후 AR 시작 — 모바일 핵심 수정
         video.onloadeddata = () => {
-          const msg = `data:${video.videoWidth}x${video.videoHeight}`
-          console.log('📱', msg)
-          setDebugLog(prev => prev + ' | ' + msg)
+          console.log('📱', `data:${video.videoWidth}x${video.videoHeight}`)
           if (!cancelled) startARLoop(arCanvasRef.current, video)
         }
       })
       .catch(err => {
         console.error('[ScanPage] 카메라 실패', err)
-        setDebugLog(prev => prev + ' | 카메라실패:' + err.message)
       })
     return () => { cancelled = true; stream?.getTracks().forEach(t => t.stop()) }
   }, [])
@@ -185,14 +270,25 @@ export default function ScanPage() {
     scanner.onCapture = (zoneId, dataUrl, boxes) => {
       setCaptures(prev => ({ ...prev, [zoneId]: { dataUrl, boxes } }))
       setMatchStatus('captured'); setCanCapture(false); setIsCapturing(false)
-      // scanner.onCapture 안에 추가
-      if (boxes.length > 0 && navigator.vibrate) {
-        navigator.vibrate(200)  // ✅ 흠집 발견 시 진동
-      }
+      if (boxes.length > 0 && navigator.vibrate) navigator.vibrate(200)
       stopARLoop()
       clearOverlay(arCanvasRef.current)
-      if (canvasRef.current && videoRef.current)
       if (boxes.length > 0) { setShowToast(true); setTimeout(() => setShowToast(false), 2000) }
+
+      // 1.5초 후 자동으로 다음 구역 이동
+      setAutoNextCountdown(2)
+      let count = 1
+      const tick = setInterval(() => {
+        count--
+        setAutoNextCountdown(count)
+        if (count <= 0) {
+          clearInterval(tick)
+          setAutoNextCountdown(0)
+          if (zoneIndex < ZONES.length - 1) setZoneIndex(zi => zi + 1)
+          else setIsDone(true)
+        }
+      }, 750)
+      autoNextTimerRef.current = tick
     }
     scanner.setZone(currentZone)
     scanner.startMatching()
@@ -213,12 +309,17 @@ export default function ScanPage() {
     await scannerRef.current.capture()
   }
   function handleNext() {
+    if (autoNextTimerRef.current) { clearInterval(autoNextTimerRef.current); autoNextTimerRef.current = null }
+    setAutoNextCountdown(0)
     if (zoneIndex < ZONES.length - 1) setZoneIndex(zoneIndex + 1)
     else setIsDone(true)
   }
   function handleSkip() {
+    if (autoNextTimerRef.current) { clearInterval(autoNextTimerRef.current); autoNextTimerRef.current = null }
+    setAutoNextCountdown(0)
     setCaptures(prev => ({ ...prev, [currentZone.id]: { dataUrl: null, boxes: [] } }))
-    handleNext()
+    if (zoneIndex < ZONES.length - 1) setZoneIndex(zoneIndex + 1)
+    else setIsDone(true)
   }
   function handleCardClick(i) {
     const newActive = activeCard === i ? null : i
@@ -244,9 +345,35 @@ export default function ScanPage() {
     return currentZone.instruction
   }
 
+  // wheelPosition 기반 위치 클래스 결정
+  function getWheelPositionClass() {
+    const pos = currentZone.wheelPosition
+    if (pos === 'bottom-left')  return styles.wheelBottomLeft
+    if (pos === 'bottom-right') return styles.wheelBottomRight
+    // 폴백 — wheelSide
+    return currentZone.wheelSide === 'left' ? styles.left : styles.right
+  }
+
+  // 화살표 방향 (가이드 오버레이에서 바퀴 위치 가리킴)
+  function getArrowDirection() {
+    const pos = currentZone.wheelPosition || (currentZone.wheelSide === 'left' ? 'bottom-right' : 'bottom-left')
+    return pos === 'bottom-left' ? 'Left' : 'Right'
+  }
+
   // ── 완료 화면
   if (isDone) return (
     <div className={styles.page} style={{ overflowY: 'auto' }}>
+
+      {/* 이미지 확대 모달 */}
+      {modalImg && (
+        <div className={styles.imgModal} onClick={() => setModalImg(null)}>
+          <div className={styles.imgModalBox} onClick={e => e.stopPropagation()}>
+            <button className={styles.imgModalClose} onClick={() => setModalImg(null)}>✕</button>
+            <img src={modalImg} alt="원본" className={styles.imgModalImg} />
+          </div>
+        </div>
+      )}
+
       <div className={styles.summary}>
         <div className={styles.summaryHero}>
           <div className={styles.summaryCheck}>✓</div>
@@ -277,11 +404,19 @@ export default function ScanPage() {
                 <span className={styles.summaryZoneCount}>흠집 {boxes.length}개</span>
               </div>
               <div className={styles.summaryZoneScroll}>
-                {boxes.map((box, i) => (
-                  box.cropS3Url
-                    ? <img key={i} src={box.cropS3Url} alt={`흠집 ${i + 1}`} className={styles.summaryCropImg} />
-                    : <div key={i} className={styles.summaryCropImgEmpty} />
-                ))}
+                {boxes.map((box, i) => {
+                  const src     = box.cropS3Url || cap?.dataUrl || null
+                  const fullSrc = box.originalS3Url || cap?.dataUrl || src
+                  return src
+                    ? <img
+                        key={i} src={src} alt={`흠집 ${i + 1}`}
+                        className={styles.summaryCropImg}
+                        onClick={() => setModalImg(fullSrc)}
+                      />
+                    : <div key={i} className={styles.summaryCropImgEmpty}>
+                        <span style={{fontSize:11,color:'#bbb'}}>이미지 없음</span>
+                      </div>
+                })}
               </div>
             </div>
           )
@@ -313,21 +448,11 @@ export default function ScanPage() {
     </div>
   )
 
+  const arrowDir = getArrowDirection()
+
   // ── 스캔 화면
   return (
     <div className={styles.page}>
-
-      {/* ✅ 모바일 디버그 오버레이 — 확인 후 제거 */}
-      {debugLog ? (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, zIndex: 9999,
-          background: 'rgba(0,0,0,0.75)', color: '#00ff88',
-          fontSize: 10, padding: '6px 8px', wordBreak: 'break-all',
-          maxWidth: '100vw', pointerEvents: 'none',
-        }}>
-          {debugLog}
-        </div>
-      ) : null}
 
       <div className={styles.cameraWrap}>
         <video ref={videoRef} className={styles.video} playsInline muted />
@@ -344,6 +469,41 @@ export default function ScanPage() {
           ✓ 흠집이 저장되었습니다
         </div>
 
+        {/* ── 바퀴 가이드 멘트 오버레이 */}
+        {currentZone.type === 'wheel' && showGuideOverlay && (
+          <div className={`${styles.guideOverlay} ${overlayHidden ? styles.hidden : ''}`}>
+            <div className={styles.guideOverlayInner}>
+
+              {/* 바퀴 아이콘 */}
+              <div className={styles.guideOverlayIcon}>
+                <svg className={styles.guideOverlayIconSvg} viewBox="0 0 40 40" fill="none">
+                  <circle cx="20" cy="20" r="17" stroke="rgba(247,166,51,0.9)" strokeWidth="2"/>
+                  <circle cx="20" cy="20" r="6"  stroke="rgba(247,166,51,0.9)" strokeWidth="1.5"/>
+                  <line x1="20" y1="3"  x2="20" y2="37" stroke="rgba(247,166,51,0.5)" strokeWidth="1"/>
+                  <line x1="3"  y1="20" x2="37" y2="20" stroke="rgba(247,166,51,0.5)" strokeWidth="1"/>
+                  <line x1="7"  y1="7"  x2="33" y2="33" stroke="rgba(247,166,51,0.3)" strokeWidth="1"/>
+                  <line x1="33" y1="7"  x2="7"  y2="33" stroke="rgba(247,166,51,0.3)" strokeWidth="1"/>
+                </svg>
+              </div>
+
+              <div className={styles.guideOverlayTitle}>{currentZone.label}를<br/>가이드에 맞춰주세요</div>
+              <div className={styles.guideOverlaySubtitle}>원형 가이드 안에 바퀴를 위치시키면<br/>자동으로 흠집 탐지가 시작됩니다</div>
+
+              {/* 방향 화살표 */}
+              <div className={`${styles.guideOverlayArrow} ${styles[`guideOverlayArrow${arrowDir}`]}`}>
+                <div className={styles.guideOverlayArrowLine} />
+                <div className={styles.guideOverlayArrowHead} />
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* 흠집 탐지 시작 토스트 */}
+        <div className={`${styles.scanStartToast} ${showScanStartToast ? styles.visible : ''}`}>
+          🔍 흠집 탐지 시작
+        </div>
+
         {currentZone.type === 'plate' && matchStatus !== 'captured' && (
           <div className={`${styles.guidePlate} ${styles[matchStatus] || styles.detecting}`}>
             <div className={styles.guidePlateInner}>
@@ -356,25 +516,30 @@ export default function ScanPage() {
           </div>
         )}
 
+        {currentZone.type === 'hood' && matchStatus !== 'captured' && (
+          <div className={`${styles.guideHood} ${matchStatus === 'matched' ? styles.matched : styles.detecting}`}>
+            <div className={styles.hoodBorder} />
+            <div className={`${styles.hoodCorner} ${styles.tl}`} />
+            <div className={`${styles.hoodCorner} ${styles.tr}`} />
+            <div className={`${styles.hoodCorner} ${styles.bl}`} />
+            <div className={`${styles.hoodCorner} ${styles.br}`} />
+            <span className={styles.hoodHint}>{currentZone.label}</span>
+          </div>
+        )}
+
         {currentZone.type === 'wheel' && matchStatus !== 'captured' && (
-          <>
-            {currentZone.wheelSide === 'left' && (
-              <div className={`${styles.guideWheel} ${styles.left} ${styles[matchStatus] || styles.detecting}`}>
-                <div className={styles.wheelCircle}><div className={styles.wheelHub} /></div>
-                <div className={styles.wheelProgress} ref={wheelLRef}>
-                  <svg viewBox="0 0 96 96"><circle cx="48" cy="48" r="44" /></svg>
-                </div>
-              </div>
-            )}
-            {currentZone.wheelSide === 'right' && (
-              <div className={`${styles.guideWheel} ${styles.right} ${styles[matchStatus] || styles.detecting}`}>
-                <div className={styles.wheelCircle}><div className={styles.wheelHub} /></div>
-                <div className={styles.wheelProgress} ref={wheelRRef}>
-                  <svg viewBox="0 0 96 96"><circle cx="48" cy="48" r="44" /></svg>
-                </div>
-              </div>
-            )}
-          </>
+          <div className={`${styles.guideWheel} ${getWheelPositionClass()} ${styles[matchStatus] || styles.detecting}`}>
+            <div className={styles.wheelCircle}>
+              <div className={styles.wheelSpokes} />
+              <div className={styles.wheelHub} />
+            </div>
+            <div
+              className={styles.wheelProgress}
+              ref={currentZone.wheelSide === 'left' ? wheelLRef : wheelRRef}
+            >
+              <svg viewBox="0 0 96 96"><circle cx="48" cy="48" r="44" /></svg>
+            </div>
+          </div>
         )}
 
         <div className={styles.stepbar}>
@@ -413,7 +578,10 @@ export default function ScanPage() {
           </button>
         ) : (
           <button className={styles.btnNext} onClick={handleNext}>
-            {zoneIndex < ZONES.length - 1 ? '다음 구역 →' : '스캔 완료 →'}
+            {autoNextCountdown > 0
+              ? `${autoNextCountdown}초 후 자동 이동...`
+              : (zoneIndex < ZONES.length - 1 ? '다음 구역 →' : '스캔 완료 →')
+            }
           </button>
         )}
       </div>

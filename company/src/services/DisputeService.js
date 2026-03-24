@@ -49,6 +49,26 @@ class DisputeService {
   }
 
   /**
+   * 분쟁 AI 분석 조회
+   */
+  async getAiAnalysis(disputeId) {
+    try {
+      const response = await api.get(`/api/disputes/${disputeId}/ai-analysis`)
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      console.error('분쟁 AI 분석 조회 실패:', error)
+      return {
+        success: false,
+        message: error?.response?.data?.message || 'AI 분석 정보를 불러오지 못했습니다.'
+      }
+    }
+  }
+
+  /**
    * 분쟁 생성 (업체가 분쟁 제기)
    */
   async createDispute(reservationId, data) {

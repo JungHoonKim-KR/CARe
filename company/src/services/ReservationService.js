@@ -2,15 +2,15 @@ import api from './api'
 
 class ReservationService {
   /**
-   * 예약 목록 조회 (업체별)
+   * 예약 목록 조회 (현재 로그인한 업체)
    */
-  async getReservations(companyId, params = {}) {
+  async getReservations(params = {}) {
     try {
-      const { status, page = 0, size = 20 } = params
-      
-      let url = `/api/companies/${companyId}/reservations?page=${page}&size=${size}`
+      const { status } = params
+
+      let url = '/api/companies/me/reservations'
       if (status) {
-        url += `&status=${status}`
+        url += `?status=${status}`
       }
 
       const response = await api.get(url)
@@ -155,6 +155,27 @@ class ReservationService {
       return {
         success: false,
         message: error?.response?.data?.message || '스크래치 비교 결과를 불러오지 못했습니다.'
+      }
+    }
+  }
+
+  /**
+   * 차량 반납 리포트 조회
+   */
+  async getReturnReport(carId, reservationId) {
+    try {
+      const query = reservationId ? `?reservationId=${reservationId}` : ''
+      const response = await api.get(`/api/cars/${carId}/return-report${query}`)
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      console.error('반납 리포트 조회 실패:', error)
+      return {
+        success: false,
+        message: error?.response?.data?.message || '반납 리포트를 불러오지 못했습니다.'
       }
     }
   }

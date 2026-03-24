@@ -10,9 +10,11 @@ import com.care.domain.reservation.service.ReservationService;
 import com.care.domain.renter.controller.dto.request.DocumentVerifyRequest;
 import com.care.domain.renter.controller.dto.request.TokenChargeRequest;
 import com.care.domain.renter.controller.dto.response.DocumentVerifyResponse;
+import com.care.domain.renter.controller.dto.response.RenterNotificationResponse;
 import com.care.domain.renter.controller.dto.response.RenterProfileResponse;
 import com.care.domain.renter.controller.dto.response.TokenChargeResponse;
 import com.care.domain.renter.service.DocumentService;
+import com.care.domain.renter.service.RenterNotificationService;
 import com.care.domain.renter.service.RenterService;
 import com.care.domain.renter.service.RenterTokenService;
 import jakarta.validation.Valid;
@@ -32,6 +34,7 @@ public class RenterController {
     private final DocumentService documentService;
     private final RenterService renterService;
     private final RenterTokenService renterTokenService;
+    private final RenterNotificationService renterNotificationService;
     private final CarService carService;
     private final ReservationService reservationService;
 
@@ -100,5 +103,26 @@ public class RenterController {
             @AuthenticationPrincipal String userId) {
         String balance = renterTokenService.getBalance(userId);
         return ResponseEntity.ok(Map.of("balance", balance));
+    }
+
+    /**
+     * GET /renters/me/notifications
+     * 렌터 알림 목록 조회
+     */
+    @GetMapping("/notifications")
+    public ResponseEntity<List<RenterNotificationResponse>> getNotifications(
+            @AuthenticationPrincipal String userId) {
+        return ResponseEntity.ok(renterNotificationService.getMyNotifications(userId));
+    }
+
+    /**
+     * PATCH /renters/me/notifications/{notificationId}/read
+     * 렌터 알림 읽음 처리
+     */
+    @PatchMapping("/notifications/{notificationId}/read")
+    public ResponseEntity<RenterNotificationResponse> markNotificationAsRead(
+            @AuthenticationPrincipal String userId,
+            @PathVariable String notificationId) {
+        return ResponseEntity.ok(renterNotificationService.markAsRead(userId, notificationId));
     }
 }

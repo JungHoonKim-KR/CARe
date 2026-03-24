@@ -10,6 +10,7 @@ import com.care.domain.reservation.controller.dto.response.DisputeDetailResponse
 import com.care.domain.reservation.controller.dto.response.DisputeAiAnalysisResponse;
 import com.care.domain.reservation.controller.dto.response.DisputePreviousScratchResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeSettleResponse;
+import com.care.domain.reservation.controller.dto.response.DisputeSummaryResponse;
 import com.care.domain.reservation.entity.Dispute;
 import com.care.domain.reservation.entity.DisputeStatus;
 import com.care.domain.reservation.entity.Reservation;
@@ -17,12 +18,14 @@ import com.care.domain.reservation.entity.SettlementStatus;
 import com.care.domain.reservation.entity.Scratch;
 import com.care.domain.reservation.repository.DisputeRepository;
 import com.care.domain.reservation.repository.ReservationRepository;
+import com.care.domain.renter.service.RenterNotificationService;
 import com.care.domain.scan.repository.ScratchRepository;
 import com.care.global.blockchain.CareTokenService;
 import com.care.global.blockchain.DisputeSettlementService;
 import com.care.global.ai.AiScratchSimilarityClient;
 import com.care.global.ai.AiScratchSimilarityResult;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +44,10 @@ public class DisputeService {
 	private final DisputeSettlementService disputeSettlementService;
 	private final CareTokenService careTokenService;
 	private final AiScratchSimilarityClient aiScratchSimilarityClient;
+	private final RenterNotificationService renterNotificationService;
+
+	@Value("${ai.scratch.similarity-threshold:60.0}")
+	private double similarityThreshold;
 
 	@Transactional
 	public DisputeCreateResponse createDispute(String requesterId,
@@ -70,9 +77,108 @@ public class DisputeService {
 				request.getClaimAmount()
 		);
 
+		captureReturnReportSnapshot(dispute, reservationId, targetScratch);
+
 		targetScratch.markDisputed();
 		Dispute saved = disputeRepository.save(dispute);
+		renterNotificationService.createDisputeCreatedNotification(reservation.getRenter(), saved);
 		return DisputeCreateResponse.from(saved);
+	}
+
+	private void captureReturnReportSnapshot(Dispute dispute, String reservationId, Scratch targetScratch) {
+		List<Scratch> beforeScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "BEFORE")
+				.stream()
+				.filter(scratch -> !scratch.isManual())
+				.filter(scratch -> scratch.getCropS3Url() != null && !scratch.getCropS3Url().isBlank())
+				.toList();
+
+		List<Scratch> candidates = beforeScratches.stream()
+				.filter(before -> before.getCarPart().equalsIgnoreCase(targetScratch.getCarPart()))
+				.toList();
+
+		if (candidates.isEmpty()) {
+			candidates = beforeScratches;
+		}
+
+		if (candidates.isEmpty()) {
+			dispute.captureReturnReportSnapshot(
+					null,
+					null,
+					targetScratch.getCropS3Url(),
+					0.0,
+					100.0,
+					similarityThreshold,
+					true
+			);
+			return;
+		}
+
+		Scratch bestBefore = null;
+		double bestSimilarity = -1.0;
+		double bestDiffScore = 100.0;
+
+		for (Scratch before : candidates) {
+			try {
+				AiScratchSimilarityResult result = aiScratchSimilarityClient
+						.compareByUrls(before.getCropS3Url(), targetScratch.getCropS3Url());
+				double similarityPercent = normalizeToPercent(result.similarity());
+				if (similarityPercent > bestSimilarity) {
+					bestSimilarity = similarityPercent;
+					bestDiffScore = result.diffScore();
+					bestBefore = before;
+				}
+			} catch (Exception ignored) {
+				// 개별 비교 실패는 skip하고 나머지 후보로 계속 진행
+			}
+		}
+
+		if (bestBefore == null) {
+			dispute.captureReturnReportSnapshot(
+					null,
+					null,
+					targetScratch.getCropS3Url(),
+					0.0,
+					100.0,
+					similarityThreshold,
+					true
+			);
+			return;
+		}
+
+		boolean warning = bestSimilarity < similarityThreshold;
+		dispute.captureReturnReportSnapshot(
+				bestBefore.getLogId(),
+				bestBefore.getCropS3Url(),
+				targetScratch.getCropS3Url(),
+				bestSimilarity,
+				bestDiffScore,
+				similarityThreshold,
+				warning
+		);
+	}
+
+	private double normalizeToPercent(double similarity) {
+		if (similarity <= 1.0) {
+			return similarity * 100.0;
+		}
+		return similarity;
+	}
+
+	@Transactional(readOnly = true)
+	public List<DisputeSummaryResponse> getCompanyDisputes(String companyId) {
+		return disputeRepository.findByReservation_OwnedCar_Company_CompanyIdOrderByCreatedAtDesc(companyId)
+				.stream()
+				.map(DisputeSummaryResponse::from)
+				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public DisputeDetailResponse getDisputeDetail(String requesterId, String disputeId) {
+		Dispute dispute = disputeRepository.findByDisputeId(disputeId)
+				.orElseThrow(() -> new IllegalArgumentException("분쟁을 찾을 수 없습니다: " + disputeId));
+
+		validateParticipantAccess(requesterId, dispute.getReservation());
+		return DisputeDetailResponse.from(dispute);
 	}
 
 	@Transactional(readOnly = true)

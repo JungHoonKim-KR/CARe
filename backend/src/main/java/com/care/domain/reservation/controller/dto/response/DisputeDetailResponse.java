@@ -12,6 +12,14 @@ public record DisputeDetailResponse(
 		String status,
 		String reason,
 		int claimAmount,
+		String snapshotBeforeLogId,
+		String snapshotBeforeCropS3Url,
+		String snapshotAfterCropS3Url,
+		Double snapshotSimilarity,
+		Double snapshotDiffScore,
+		Double snapshotThreshold,
+		boolean snapshotWarning,
+		LocalDateTime snapshotCapturedAt,
 		LocalDateTime createdAt,
 		LocalDateTime updatedAt
 ) {
@@ -24,6 +32,14 @@ public record DisputeDetailResponse(
 				dispute.getStatus(),
 				dispute.getReason(),
 				dispute.getClaimAmount(),
+				dispute.getSnapshotBeforeLogId(),
+				dispute.getSnapshotBeforeCropS3Url(),
+				dispute.getSnapshotAfterCropS3Url(),
+				dispute.getSnapshotSimilarity(),
+				dispute.getSnapshotDiffScore(),
+				dispute.getSnapshotThreshold(),
+				dispute.isSnapshotWarning(),
+				dispute.getSnapshotCapturedAt(),
 				dispute.getCreatedAt(),
 				dispute.getUpdatedAt()
 		);

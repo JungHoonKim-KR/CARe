@@ -1,6 +1,7 @@
 package com.care.domain.reservation.controller;
 
 import com.care.domain.reservation.controller.dto.response.DisputeAiAnalysisResponse;
+import com.care.domain.reservation.controller.dto.response.DisputeDetailResponse;
 import com.care.domain.reservation.service.DisputeService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -31,6 +33,38 @@ class DisputeSettlementControllerTest {
 
     @MockitoBean
     private JpaMetamodelMappingContext jpaMetamodelMappingContext;
+
+    @Test
+    void 분쟁_상세_단건조회_API_성공() throws Exception {
+        DisputeDetailResponse response = new DisputeDetailResponse(
+                "dispute-1",
+                "reservation-1",
+                "after-log-1",
+                null,
+                "OPEN",
+                "문콕 흔적 확인",
+                120000,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                null,
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+
+        given(disputeService.getDisputeDetail(nullable(String.class), anyString()))
+                .willReturn(response);
+
+        mockMvc.perform(get("/disputes/{disputeId}", "dispute-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.disputeId").value("dispute-1"))
+                .andExpect(jsonPath("$.reservationId").value("reservation-1"))
+                .andExpect(jsonPath("$.status").value("OPEN"));
+    }
 
     @Test
     void 분쟁_AI_분석_API_성공() throws Exception {

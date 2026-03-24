@@ -4,13 +4,13 @@ class DisputeService {
   /**
    * 분쟁 목록 조회
    */
-  async getDisputes(companyId, params = {}) {
+  async getDisputes(params = {}) {
     try {
-      const { status, page = 0, size = 20 } = params
-      
-      let url = `/api/companies/${companyId}/disputes?page=${page}&size=${size}`
+      const { status } = params
+
+      let url = '/api/companies/me/disputes'
       if (status) {
-        url += `&status=${status}`
+        url += `?status=${status}`
       }
 
       const response = await api.get(url)
@@ -49,15 +49,34 @@ class DisputeService {
   }
 
   /**
+   * 분쟁 AI 분석 조회
+   */
+  async getAiAnalysis(disputeId) {
+    try {
+      const response = await api.get(`/api/disputes/${disputeId}/ai-analysis`)
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      console.error('분쟁 AI 분석 조회 실패:', error)
+      return {
+        success: false,
+        message: error?.response?.data?.message || 'AI 분석 정보를 불러오지 못했습니다.'
+      }
+    }
+  }
+
+  /**
    * 분쟁 생성 (업체가 분쟁 제기)
    */
   async createDispute(reservationId, data) {
     try {
       const response = await api.post(`/api/reservations/${reservationId}/disputes`, {
+        targetLogId: data.targetLogId,
         reason: data.reason,
-        description: data.description,
-        claimAmount: data.claimAmount,
-        evidenceImages: data.evidenceImages || []
+        claimAmount: data.claimAmount
       })
 
       return {
@@ -138,6 +157,26 @@ class DisputeService {
       return {
         success: false,
         message: error?.response?.data?.message || '방어 자료 제출에 실패했습니다.'
+      }
+    }
+  }
+
+  /**
+   * 스크래치 로그 조회 (예약별 분쟁 스크래치 로그)
+   */
+  async getScratchLogs(reservationId) {
+    try {
+      const response = await api.get(`/api/reservations/${reservationId}/disputes/scratch-logs`)
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      console.error('스크래치 로그 조회 실패:', error)
+      return {
+        success: false,
+        message: error?.response?.data?.message || '스크래치 로그를 불러오지 못했습니다.'
       }
     }
   }

@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 })
 
 api.interceptors.request.use(
@@ -40,7 +40,7 @@ api.interceptors.response.use(
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('companyId')
-      window.location.href = '/login'
+      window.location.href = '/company/login'
     }
 
     return Promise.reject(error)

@@ -101,7 +101,7 @@ export default function PaymentPage() {
           </div>
           <div className="pay-row">
             <span className="pay-row-lbl">결제 금액</span>
-            <span className="pay-row-val">{(rentalPrice + insurance.price).toLocaleString()} USDC</span>
+            <span className="pay-row-val">{(rentalPrice + insurance.price).toLocaleString()} CARE</span>
           </div>
         </div>
 
@@ -129,20 +129,20 @@ export default function PaymentPage() {
           <p className="pay-card-title">결제 상세</p>
           <div className="pay-row">
             <span className="pay-row-lbl">차량 대여료</span>
-            <span className="pay-row-val">{rentalPrice.toLocaleString()} USDC</span>
+            <span className="pay-row-val">{rentalPrice.toLocaleString()} CARE</span>
           </div>
           <div className="pay-row">
             <span className="pay-row-lbl">{insurance.label} 보험료</span>
-            <span className="pay-row-val">{insurance.price.toLocaleString()} USDC</span>
+            <span className="pay-row-val">{insurance.price.toLocaleString()} CARE</span>
           </div>
           <div className="pay-row">
             <span className="pay-row-lbl">예치 보증금</span>
-            <span className="pay-row-val">{deposit.toLocaleString()} USDC</span>
+            <span className="pay-row-val">{deposit.toLocaleString()} CARE</span>
           </div>
           <div className="pay-total-line" />
           <div className="pay-row pay-row-last pay-row-total">
             <span className="pay-total-lbl">총 결제</span>
-            <span className="pay-total-val">{total.toLocaleString()} USDC</span>
+            <span className="pay-total-val">{total.toLocaleString()} CARE</span>
           </div>
         </div>
 
@@ -152,7 +152,7 @@ export default function PaymentPage() {
       <div className="pay-btn-area">
         {error && <p className="pay-error" style={{ margin: '0 0 10px', textAlign: 'center' }}>{error}</p>}
         <button className="pay-btn" onClick={handlePay} disabled={loading}>
-          {loading ? '처리 중...' : `${total.toLocaleString()} USDC 결제하기`}
+          {loading ? '처리 중...' : `${total.toLocaleString()} CARE 결제하기`}
         </button>
       </div>
 

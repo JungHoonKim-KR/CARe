@@ -23,8 +23,8 @@ export default function ChargePage() {
     setLoading(true)
     try {
       const data = await chargeToken(parsed)
-      addTokenHistory({ type: 'charge', amount: parsed, desc: 'CARE 토큰 충전', txHash: data.txHash })
-      setResult(data)
+      addTokenHistory({ type: 'charge', amount: parsed, desc: 'CARE 토큰 충전' })
+      setResult({ ...data, chargedAmount: parsed })
     } catch (e) {
       console.error('[Charge] 충전 실패:', e)
       setError(e.response?.data?.message || '충전에 실패했습니다.')
@@ -48,17 +48,15 @@ export default function ChargePage() {
         <div className="charge-success-card">
           <div className="charge-success-icon">✓</div>
           <p className="charge-success-label">충전 완료</p>
-          <p className="charge-success-amount">{result.amount} <span>CARE</span></p>
+          <p className="charge-success-amount">{result.chargedAmount} <span>CARE</span></p>
           <div className="charge-success-divider" />
+          <div className="charge-success-row">
+            <span>충전 금액</span>
+            <strong>+{result.chargedAmount} CARE</strong>
+          </div>
           <div className="charge-success-row">
             <span>현재 잔액</span>
             <strong>{result.balance} CARE</strong>
-          </div>
-          <div className="charge-success-row">
-            <span>TX Hash</span>
-            <span className="charge-tx-hash">
-              {result.txHash ? `${result.txHash.slice(0, 10)}...${result.txHash.slice(-6)}` : '-'}
-            </span>
           </div>
         </div>
 

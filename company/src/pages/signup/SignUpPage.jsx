@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import AuthService from '../../services/AuthService'
 import './SignUpPage.css'
 
@@ -233,7 +233,7 @@ export default function SignUpPage() {
           </form>
 
           <p className="login-link">
-            이미 계정이 있으신가요? <a href="/company/login">로그인</a>
+            이미 계정이 있으신가요? <Link to="/login">로그인</Link>
           </p>
 
           <p className="copyright">

@@ -15,7 +15,8 @@ export default function CarListPage() {
   const { state }  = useLocation()
   const searchInfo = state?.searchInfo || state || {}
 
-  const [fi, setFi]     = useState(0)
+  const carTypeMap = { '소형': 1, '중형': 2, '대형': 3, 'SUV': 4, '밴': 5, '럭셔리': 6 }
+  const [fi, setFi]     = useState(carTypeMap[searchInfo.carType] || 0)
   const [si, setSi]     = useState(0)
   const [page, setPage] = useState(1)
   const [favs, setFavs] = useState(new Set())
@@ -141,7 +142,7 @@ export default function CarListPage() {
                 <span className="cl-company">{car.companyName}</span>
                 {car.dailyPrice && (
                   <span className="cl-price-pill">
-                    {Number(car.dailyPrice).toLocaleString()} USDC
+                    {Number(car.dailyPrice).toLocaleString()} CARE
                   </span>
                 )}
               </div>

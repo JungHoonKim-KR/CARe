@@ -100,6 +100,33 @@
   background: var(--border);
 }
 
+.loading-container,
+.error-container {
+  padding: 60px 20px;
+  text-align: center;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-top: 24px;
+}
+
+.loading-container p {
+  font-size: 15px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.error-container {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.error-container p {
+  font-size: 15px;
+  color: #dc2626;
+  margin: 0;
+}
+
 @media (max-width: 1024px) {
   .car-management-page {
     padding: 24px 20px;

@@ -346,6 +346,30 @@ class DisputeServiceTest {
     }
 
     @Test
+    void 분쟁_정산_레거시_요청스키마_호환_성공() throws Exception {
+        // given
+        Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
+        DisputeSettleRequest request = new DisputeSettleRequest();
+        setField(request, "companyRefundAmount", 70000L);
+        setField(request, "resolution", "COMPANY_WIN");
+
+        given(disputeRepository.findByDisputeId("dispute-legacy")).willReturn(Optional.of(dispute));
+        given(disputeSettlementService.recordSettlement(any(), anyLong())).willReturn("0xrecord-legacy");
+        given(careTokenService.transfer("0xrenter", "0xcompany", 70000d)).willReturn("0xusdc-legacy");
+
+        // when
+        DisputeSettleResponse first = disputeService.settleDispute("company-1", "dispute-legacy", request);
+        DisputeSettleResponse second = disputeService.settleDispute("renter-1", "dispute-legacy", request);
+
+        // then
+        assertThat(first.status()).isEqualTo("PENDING");
+        assertThat(second.status()).isEqualTo("COMPLETED");
+        assertThat(second.finalAmount()).isEqualTo(70000L);
+        assertThat(second.txHash()).isEqualTo("0xusdc-legacy");
+        verify(careTokenService).transfer("0xrenter", "0xcompany", 70000d);
+    }
+
+    @Test
     void 분쟁_정산_실패_최대부담금_초과() {
         // given
         Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);

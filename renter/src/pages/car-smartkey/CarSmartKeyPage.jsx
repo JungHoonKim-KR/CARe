@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { issueSmartKey, unlockSmartKey } from '../../api/reservation'
+import { issueSmartKey, unlockSmartKey, lockSmartKey } from '../../api/reservation'
 import './CarSmartKeyPage.css'
 
 export default function CarSmartKeyPage() {
@@ -18,9 +18,10 @@ export default function CarSmartKeyPage() {
     if (!pickupReady) return
     try {
       if (locked) {
+        await issueSmartKey(rid)
         await unlockSmartKey(rid)
       } else {
-        await issueSmartKey(rid)
+        await lockSmartKey(rid)
       }
       setLocked((v) => !v)
     } catch (e) {

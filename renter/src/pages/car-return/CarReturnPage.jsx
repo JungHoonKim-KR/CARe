@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import carIconCute from '../../assets/car_icon_cute.png'
 import carIconFront from '../../assets/car_icon_front.png'
-import { scanAfter, completeReservation } from '../../api/reservation'
+import { scanAfter, completeReservation, lockSmartKey } from '../../api/reservation'
 import './CarReturnPage.css'
 
 const PANELS = [
@@ -24,9 +24,11 @@ export default function CarReturnPage() {
   const navigate = useNavigate()
   const { state } = useLocation()
   const reservation = state?.reservation
+  const fromScan = state?.fromScan || false
 
   // intro → select → camera → submitting → done
-  const [step, setStep] = useState('intro')
+  // fromScan=true 일 때는 바로 confirm 단계로 진입
+  const [step, setStep] = useState(fromScan ? 'confirm' : 'intro')
   const [currentPanel, setCurrentPanel] = useState(null)
   const [photos, setPhotos] = useState({})
 
@@ -93,12 +95,38 @@ export default function CarReturnPage() {
     }
     setStep('done')
     if (rid) {
-      // 반납 완료 상태 변경 + 사진 업로드 백그라운드 처리
+      // 스마트키 반납 + 반납 완료 상태 변경 + 사진 업로드 백그라운드 처리
+      lockSmartKey(rid).catch(e => console.error('[Return] 스마트키 반납 실패:', e))
       completeReservation(rid).catch(e => console.error('[Return] 반납 완료 API 실패:', e))
-      Promise.all(PANELS.map(p => scanAfter(rid, p.id, photos[p.id])))
-        .catch(e => console.error('[Return] 스캔 업로드 실패:', e))
+      if (!fromScan) {
+        Promise.all(PANELS.map(p => scanAfter(rid, p.id, photos[p.id])))
+          .catch(e => console.error('[Return] 스캔 업로드 실패:', e))
+      }
     }
   }
+
+  // ─── 스캔 완료 후 반납 확인 (fromScan) ──────────────────────
+  if (step === 'confirm') return (
+    <div className="cr-page">
+      <div className="cr-intro-body">
+        <div className="cr-icon-ring">
+          <img src={carIconCute} alt="차량" className="cr-car-icon" />
+        </div>
+        <div className="cr-intro-text">
+          <h1 className="cr-intro-title">반납을 완료하시겠습니까?</h1>
+          <p className="cr-intro-desc">
+            확인 시 스마트키가 반납되고<br/>
+            차량 상태가 반납완료로 변경돼요
+          </p>
+        </div>
+      </div>
+      <div className="cr-footer">
+        <button className="cr-primary-btn" onClick={submitReturn}>
+          반납 완료하기
+        </button>
+      </div>
+    </div>
+  )
 
   // ─── 인트로 ───────────────────────────────────────────────────
   if (step === 'intro') return (

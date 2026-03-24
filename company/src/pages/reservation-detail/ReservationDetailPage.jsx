@@ -1,47 +1,107 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import ReservationService from '../../services/ReservationService'
 import './ReservationDetailPage.css'
 
 export default function ReservationDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams()
+  const [reservationData, setReservationData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  // Mock data - replace with API call
-  const reservationData = {
-    carName: '현대 쏘나타',
-    carType: 'SUV · 2024년식',
-    plateNumber: '12가 3456',
-    status: '분쟁중',
-    pickup: {
-      date: '2026.02.25 11:00',
-      location: '서울 강남구 테헤란로 123',
-      completed: true, // 픽업 완료 여부
-    },
-    dropoff: {
-      date: '2026.02.28 11:00',
-      location: '서울 강남구 테헤란로 123',
-      completed: true, // 반납 완료 여부
-    },
-    renter: {
-      name: '최지호',
-      country: '대한민국',
-      phone: '+82-10-1234-5678',
-    },
-    payment: {
-      rentalFee: 240000,
-      insurance: 30000,
-      deposit: 100000,
-      total: 370000,
-    },
-    defects: {
-      pickup: 2,
-      dropoff: 4,
-      newDefects: 2,
-    },
-    dispute: {
-      reason: '반납 시 새로운 스크래치 발견',
-      claimAmount: 150000,
-    },
+  useEffect(() => {
+    fetchReservationDetail()
+  }, [id])
+
+  const formatDateTime = (isoDate) => {
+    if (!isoDate) return '-'
+    return new Date(isoDate).toLocaleString('ko-KR')
+  }
+
+  const getStatusLabel = (status) => {
+    const statusMap = {
+      RESERVED: '예약완료',
+      IN_USE: '이용중',
+      AFTER_SCAN: '반납대기',
+      COMPLETED: '반납완료',
+      DISPUTE: '분쟁중'
+    }
+    return statusMap[status] || status || '-'
+  }
+
+  const fetchReservationDetail = async () => {
+    setLoading(true)
+    setError('')
+
+    const result = await ReservationService.getReservationDetail(id)
+    if (!result.success) {
+      setError(result.message)
+      setLoading(false)
+      return
+    }
+
+    const data = result.data
+    const statusLabel = getStatusLabel(data.status)
+
+    setReservationData({
+      carName: `${data.car?.brand || '-'} ${data.car?.modelName || ''}`.trim(),
+      carType: '-',
+      plateNumber: data.car?.plateNumber || '-',
+      status: statusLabel,
+      pickup: {
+        date: formatDateTime(data.pickupDate),
+        location: '-',
+        completed: ['IN_USE', 'AFTER_SCAN', 'COMPLETED', 'DISPUTE'].includes(data.status),
+      },
+      dropoff: {
+        date: formatDateTime(data.returnDate),
+        location: '-',
+        completed: ['COMPLETED', 'DISPUTE'].includes(data.status),
+      },
+      renter: {
+        name: data.renter?.name || '-',
+        country: '-',
+        email: data.renter?.email || '-',
+      },
+      payment: {
+        rentalFee: null,
+        insurance: data.insurance?.price ?? null,
+        deposit: null,
+        total: null,
+      },
+      defects: {
+        pickup: 0,
+        dropoff: 0,
+        newDefects: 0,
+      },
+      dispute: data.status === 'DISPUTE' ? {
+        reason: '-',
+        claimAmount: null,
+      } : null,
+      reservationId: data.reservationId,
+    })
+    setLoading(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="reservation-detail-page">
+        <div className="empty-container">
+          <p>예약 상세 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !reservationData) {
+    return (
+      <div className="reservation-detail-page">
+        <div className="empty-container">
+          <p>{error || '예약 상세 정보를 불러오지 못했습니다.'}</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -210,20 +270,28 @@ export default function ReservationDetailPage() {
             </h3>
             <div className="payment-row">
               <span className="payment-label">대여료</span>
-              <span className="payment-value">{reservationData.payment.rentalFee.toLocaleString()}원</span>
+              <span className="payment-value">
+                {reservationData.payment.rentalFee === null ? '-' : `${reservationData.payment.rentalFee.toLocaleString()}원`}
+              </span>
             </div>
             <div className="payment-row">
               <span className="payment-label">보험료</span>
-              <span className="payment-value">{reservationData.payment.insurance.toLocaleString()}원</span>
+              <span className="payment-value">
+                {reservationData.payment.insurance === null ? '-' : `${reservationData.payment.insurance.toLocaleString()}원`}
+              </span>
             </div>
             <div className="payment-row">
               <span className="payment-label">보증금</span>
-              <span className="payment-value">{reservationData.payment.deposit.toLocaleString()}원</span>
+              <span className="payment-value">
+                {reservationData.payment.deposit === null ? '-' : `${reservationData.payment.deposit.toLocaleString()}원`}
+              </span>
             </div>
             <div className="payment-divider"></div>
             <div className="payment-row total-row">
               <span className="payment-label">총 결제 금액</span>
-              <span className="payment-total">{reservationData.payment.total.toLocaleString()}원</span>
+              <span className="payment-total">
+                {reservationData.payment.total === null ? '-' : `${reservationData.payment.total.toLocaleString()}원`}
+              </span>
             </div>
           </div>
 

@@ -22,7 +22,7 @@ export async function callFaucet(privateKey, toAddress) {
   const provider = new JsonRpcProvider(RPC_URL)
   const signer = new Wallet(privateKey, provider)
   const contract = new Contract(CARE_TOKEN_ADDRESS, ABI, signer)
-  const tx = await contract.faucet(toAddress, BigInt(FAUCET_AMOUNT) * 1_000_000n)
+  const tx = await contract.faucet(toAddress, BigInt(FAUCET_AMOUNT))
   await tx.wait()
   return tx
 }

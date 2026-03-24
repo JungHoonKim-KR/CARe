@@ -16,6 +16,7 @@ export async function getCareBalance(address) {
   const contract = new Contract(CARE_TOKEN_ADDRESS, ABI, provider)
   const raw = await contract.balanceOf(address)
   return Number(raw).toLocaleString()
+
 }
 
 export async function callFaucet(privateKey, toAddress) {

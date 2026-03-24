@@ -39,8 +39,9 @@ export default function ScanPage() {
   const [showGuideOverlay,  setShowGuideOverlay]  = useState(false)
   const [overlayHidden,     setOverlayHidden]     = useState(false)
   const [showScanStartToast, setShowScanStartToast] = useState(false)
-  const [autoNextCountdown,  setAutoNextCountdown]  = useState(0)   // 남은 초 표시용
+  const [autoNextCountdown,  setAutoNextCountdown]  = useState(0)
   const autoNextTimerRef = useRef(null)
+  const [modalImg, setModalImg] = useState(null)  // 확대 모달용
 
   const currentZone = ZONES[zoneIndex]
   const history     = allScratches.filter(s => s.carPart === currentZone?.id)
@@ -362,6 +363,17 @@ export default function ScanPage() {
   // ── 완료 화면
   if (isDone) return (
     <div className={styles.page} style={{ overflowY: 'auto' }}>
+
+      {/* 이미지 확대 모달 */}
+      {modalImg && (
+        <div className={styles.imgModal} onClick={() => setModalImg(null)}>
+          <div className={styles.imgModalBox} onClick={e => e.stopPropagation()}>
+            <button className={styles.imgModalClose} onClick={() => setModalImg(null)}>✕</button>
+            <img src={modalImg} alt="원본" className={styles.imgModalImg} />
+          </div>
+        </div>
+      )}
+
       <div className={styles.summary}>
         <div className={styles.summaryHero}>
           <div className={styles.summaryCheck}>✓</div>
@@ -393,10 +405,17 @@ export default function ScanPage() {
               </div>
               <div className={styles.summaryZoneScroll}>
                 {boxes.map((box, i) => {
-                  const src = box.cropS3Url || cap?.dataUrl || null
+                  const src     = box.cropS3Url || cap?.dataUrl || null
+                  const fullSrc = box.originalS3Url || cap?.dataUrl || src
                   return src
-                    ? <img key={i} src={src} alt={`흠집 ${i + 1}`} className={styles.summaryCropImg} />
-                    : <div key={i} className={styles.summaryCropImgEmpty}><span style={{fontSize:11,color:'#bbb'}}>이미지 없음</span></div>
+                    ? <img
+                        key={i} src={src} alt={`흠집 ${i + 1}`}
+                        className={styles.summaryCropImg}
+                        onClick={() => setModalImg(fullSrc)}
+                      />
+                    : <div key={i} className={styles.summaryCropImgEmpty}>
+                        <span style={{fontSize:11,color:'#bbb'}}>이미지 없음</span>
+                      </div>
                 })}
               </div>
             </div>

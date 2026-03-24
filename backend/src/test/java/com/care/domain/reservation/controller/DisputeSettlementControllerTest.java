@@ -44,6 +44,14 @@ class DisputeSettlementControllerTest {
                 "OPEN",
                 "문콕 흔적 확인",
                 120000,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                null,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );

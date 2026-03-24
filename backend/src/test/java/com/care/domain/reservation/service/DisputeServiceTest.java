@@ -30,6 +30,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -77,6 +78,7 @@ class DisputeServiceTest {
         reservation = mockReservation("reservation-1", "company-1", "renter-1");
         targetScratch = mockScratch("after-log-1", "AFTER", reservation, false);
         defenseScratch = mockScratch("before-log-1", "BEFORE", reservation, false);
+        ReflectionTestUtils.setField(disputeService, "similarityThreshold", 60.0);
     }
 
     @Test
@@ -127,6 +129,10 @@ class DisputeServiceTest {
                 .willReturn(Optional.of(reservation));
         given(scratchRepository.findById("after-log-1"))
                 .willReturn(Optional.of(targetScratch));
+        given(scratchRepository.findByReservation_ReservationIdAndLogType("reservation-1", "BEFORE"))
+            .willReturn(List.of(defenseScratch));
+        given(aiScratchSimilarityClient.compareByUrls(any(), any()))
+            .willReturn(new AiScratchSimilarityResult(0.55, 0.12));
         given(disputeRepository.existsByTargetScratch_LogIdAndStatusNot("after-log-1", "RESOLVED"))
                 .willReturn(false);
         given(disputeRepository.save(any(Dispute.class)))
@@ -146,6 +152,9 @@ class DisputeServiceTest {
         ArgumentCaptor<Dispute> captor = ArgumentCaptor.forClass(Dispute.class);
         verify(disputeRepository).save(captor.capture());
         assertThat(captor.getValue().getStatus()).isEqualTo("OPEN");
+        assertThat(captor.getValue().getSnapshotBeforeLogId()).isEqualTo("before-log-1");
+        assertThat(captor.getValue().getSnapshotAfterCropS3Url()).isEqualTo("https://example.com/after-log-1.jpg");
+        assertThat(captor.getValue().isSnapshotWarning()).isTrue();
     }
 
     @Test
@@ -393,6 +402,7 @@ class DisputeServiceTest {
         Scratch scratchMock = org.mockito.Mockito.mock(Scratch.class);
         lenient().when(scratchMock.getLogId()).thenReturn(logId);
         lenient().when(scratchMock.getLogType()).thenReturn(logType);
+        lenient().when(scratchMock.getCarPart()).thenReturn("FRONT");
         lenient().when(scratchMock.getReservation()).thenReturn(reservation);
         lenient().when(scratchMock.getCropS3Url()).thenReturn("https://example.com/" + logId + ".jpg");
         lenient().when(scratchMock.isManual()).thenReturn(false);

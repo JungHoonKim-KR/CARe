@@ -15,10 +15,12 @@ export default function ReservationDetailPage() {
     pickup: {
       date: '2026.02.25 11:00',
       location: '서울 강남구 테헤란로 123',
+      completed: true, // 픽업 완료 여부
     },
     dropoff: {
       date: '2026.02.28 11:00',
       location: '서울 강남구 테헤란로 123',
+      completed: true, // 반납 완료 여부
     },
     renter: {
       name: '최지호',
@@ -102,48 +104,85 @@ export default function ReservationDetailPage() {
 
           {/* 이용 상태 */}
           <div className="info-card">
-            <h3 className="card-title">이용 상태</h3>
-            <div className="usage-status">
-              <div className="status-item">
+            <h3 className="card-title">
+              <span className="title-icon">📋</span> 이용 상태
+            </h3>
+
+            {/* 픽업/반납 상태 박스 */}
+            <div className="usage-status-grid">
+              {/* 픽업 정보 */}
+              <div className={`status-box pickup ${reservationData.pickup.completed ? 'completed' : ''}`}>
                 <div className="status-header">
-                  <span className="status-check">✓ 픽업</span>
-                  <button className="view-photos-btn">사진 보기</button>
+                  <span className="status-check">
+                    {reservationData.pickup.completed && <span className="check-icon">✓</span>} 픽업
+                  </span>
+                  {reservationData.pickup.completed && (
+                    <button className="view-photos-btn">
+                      <span className="camera-icon">📷</span> 사진 보기
+                    </button>
+                  )}
                 </div>
-                <div className="status-detail">기존 결함: {reservationData.defects.pickup}건 (AI 탐지)</div>
+                {reservationData.pickup.completed && (
+                  <>
+                    <div className="status-datetime">{reservationData.pickup.date}</div>
+                    <div className="status-detail">
+                      기존 결함: {reservationData.defects.pickup}건 (AI 탐지)
+                    </div>
+                  </>
+                )}
               </div>
-              <div className="status-item">
+
+              {/* 반납 정보 */}
+              <div className={`status-box return ${reservationData.dropoff.completed ? 'completed' : ''}`}>
                 <div className="status-header">
-                  <span className="status-check">✓ 반납</span>
-                  <button className="view-photos-btn">사진 보기</button>
+                  <span className="status-check">
+                    {reservationData.dropoff.completed && <span className="check-icon">✓</span>} 반납
+                  </span>
+                  {reservationData.dropoff.completed && (
+                    <button className="view-photos-btn">
+                      <span className="camera-icon">📷</span> 사진 보기
+                    </button>
+                  )}
                 </div>
-                <div className="status-detail">결함: {reservationData.defects.dropoff}건 (AI 탐지)</div>
+                {reservationData.dropoff.completed && (
+                  <>
+                    <div className="status-datetime">{reservationData.dropoff.date}</div>
+                    <div className="status-detail">
+                      결함: {reservationData.defects.dropoff}건 (AI 탐지)
+                    </div>
+                  </>
+                )}
               </div>
             </div>
+
+            {/* 새로운 결함 강조 표시 */}
             {reservationData.defects.newDefects > 0 && (
-              <div className="defect-alert">
+              <div className="defect-alert-banner">
                 ⚠️ 새로운 결함 {reservationData.defects.newDefects}건 발견
               </div>
             )}
-          </div>
 
-          {/* 분쟁 정보 */}
-          {reservationData.dispute && (
-            <div className="info-card dispute-card">
-              <h3 className="card-title dispute-title">
-                <span className="icon">⚠️</span> 분쟁 정보
-              </h3>
-              <div className="dispute-content">
-                <div className="dispute-row">
-                  <span className="dispute-label">분쟁 사유</span>
-                  <span className="dispute-reason">{reservationData.dispute.reason}</span>
-                </div>
-                <div className="dispute-row">
-                  <span className="dispute-label">청구 금액</span>
-                  <span className="dispute-amount">{reservationData.dispute.claimAmount.toLocaleString()}원</span>
-                </div>
-              </div>
+            {/* 액션 버튼 그룹 */}
+            <div className="action-buttons-group">
+              {/* 분쟁 정보 버튼 */}
+              {reservationData.dispute && (
+                <button
+                  className="dispute-button"
+                  onClick={() => navigate(`/disputes/${id}`)}
+                >
+                  분쟁 정보 확인하기
+                </button>
+              )}
+
+              {/* AI 리포트 버튼 */}
+              <button
+                className="ai-report-button"
+                onClick={() => navigate(`/ai-report/${id}`)}
+              >
+                AI 리포트 확인하기
+              </button>
             </div>
-          )}
+          </div>
         </div>
 
         <div className="right-column">
@@ -160,8 +199,8 @@ export default function ReservationDetailPage() {
               <span className="info-value">{reservationData.renter.country}</span>
             </div>
             <div className="info-row">
-              <span className="info-label">연락처</span>
-              <span className="info-value">{reservationData.renter.phone}</span>
+              <span className="info-label">이메일</span>
+              <span className="info-value">{reservationData.renter.email}</span>
             </div>
           </div>
 

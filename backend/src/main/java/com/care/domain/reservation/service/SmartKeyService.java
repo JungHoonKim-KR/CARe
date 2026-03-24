@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -38,20 +39,25 @@ public class SmartKeyService {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예약입니다."));
 
-        // 이미 발급된 스마트키가 있으면 반환
-        return smartKeyRepository.findByReservation_ReservationId(reservationId)
-                .map(SmartKeyResponse::new)
-                .orElseGet(() -> {
-                    String token = UUID.randomUUID().toString().replace("-", "");
-                    LocalDateTime expiresAt = reservation.getReturnDate();
-                    SmartKey key = SmartKey.issue(
-                            UUID.randomUUID().toString(),
-                            reservation,
-                            token,
-                            expiresAt
-                    );
-                    return new SmartKeyResponse(smartKeyRepository.save(key));
-                });
+        // 기존 키가 있으면 반환, 단 회수/만료된 경우 새로 발급
+        Optional<SmartKey> existing = smartKeyRepository.findByReservation_ReservationId(reservationId);
+        if (existing.isPresent()) {
+            SmartKey existingKey = existing.get();
+            if (existingKey.isActive() && !existingKey.isExpired()) {
+                return new SmartKeyResponse(existingKey); // 유효한 키 그대로 반환
+            }
+            smartKeyRepository.delete(existingKey);
+            smartKeyRepository.flush(); // DB에 즉시 반영 후 재발급
+        }
+        String token = UUID.randomUUID().toString().replace("-", "");
+        LocalDateTime expiresAt = reservation.getReturnDate();
+        SmartKey key = SmartKey.issue(
+                UUID.randomUUID().toString(),
+                reservation,
+                token,
+                expiresAt
+        );
+        return new SmartKeyResponse(smartKeyRepository.save(key));
     }
 
     /**

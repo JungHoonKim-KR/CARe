@@ -14,35 +14,46 @@ export default function ReservationList({ reservations }) {
     return statusMap[status] || 'badge-gray'
   }
 
-  const handleItemClick = (reservationId) => {
+  const handleRowClick = (reservationId) => {
     navigate(`/reservations/${reservationId}`)
   }
 
   return (
-    <div className="reservation-list">
-      {reservations.map((reservation) => (
-        <div
-          key={reservation.id}
-          className="reservation-item"
-          onClick={() => handleItemClick(reservation.id)}
-        >
-          <div className="reservation-left">
-            <div className="car-info">
-              <div className="car-name">{reservation.carName}</div>
-              <div className="customer-date">
-                {reservation.customerName} · {reservation.date}
-              </div>
-            </div>
-          </div>
-
-          <div className="reservation-right">
-            <div className="reservation-amount">{reservation.amount}</div>
-            <span className={`badge ${getStatusBadge(reservation.status)}`}>
-              {reservation.status}
-            </span>
-          </div>
-        </div>
-      ))}
+    <div className="reservation-table-container">
+      <table className="reservation-table">
+        <thead>
+          <tr>
+            <th>차량</th>
+            <th>대여자</th>
+            <th>예약일</th>
+            <th>금액</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          {reservations.map((reservation) => (
+            <tr key={reservation.id} onClick={() => handleRowClick(reservation.id)}>
+              <td>
+                <div className="cell-primary">{reservation.carName}</div>
+              </td>
+              <td>
+                <div className="cell-text">{reservation.customerName}</div>
+              </td>
+              <td>
+                <div className="cell-text">{reservation.date}</div>
+              </td>
+              <td>
+                <div className="cell-amount">{reservation.amount}</div>
+              </td>
+              <td>
+                <span className={`badge ${getStatusBadge(reservation.status)}`}>
+                  {reservation.status}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }

@@ -141,6 +141,26 @@ class DisputeService {
       }
     }
   }
+
+  /**
+   * 스크래치 로그 조회 (예약별 분쟁 스크래치 로그)
+   */
+  async getScratchLogs(reservationId) {
+    try {
+      const response = await api.get(`/api/reservations/${reservationId}/disputes/scratch-logs`)
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      console.error('스크래치 로그 조회 실패:', error)
+      return {
+        success: false,
+        message: error?.response?.data?.message || '스크래치 로그를 불러오지 못했습니다.'
+      }
+    }
+  }
 }
 
 export default new DisputeService()

@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import ConfirmModal from '../../components/ConfirmModal'
+import DisputeService from '../../services/DisputeService'
 import './DisputePage.css'
 
 export default function DisputePage() {
@@ -8,6 +9,27 @@ export default function DisputePage() {
   const navigate = useNavigate()
   const [isResolveModalOpen, setIsResolveModalOpen] = useState(false)
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
+  const [scratchLogs, setScratchLogs] = useState([])
+  const [loadingScratchLogs, setLoadingScratchLogs] = useState(false)
+
+  useEffect(() => {
+    // 스크래치 로그 조회
+    const fetchScratchLogs = async () => {
+      if (!dispute.reservationId) return
+
+      setLoadingScratchLogs(true)
+      const result = await DisputeService.getScratchLogs(dispute.reservationId)
+
+      if (result.success) {
+        setScratchLogs(result.data)
+      } else {
+        console.error('스크래치 로그 조회 실패:', result.message)
+      }
+      setLoadingScratchLogs(false)
+    }
+
+    fetchScratchLogs()
+  }, [id])
 
   // 임시 분쟁 상세 데이터 (실제로는 API에서 id로 조회)
   const dispute = {
@@ -144,6 +166,60 @@ export default function DisputePage() {
               >
                 AI 스캔 리포트 보기
               </button>
+            </div>
+
+            {/* Scratch Logs */}
+            <div className="card">
+              <h2 className="section-title">스크래치 로그 ({scratchLogs.length}건)</h2>
+              {loadingScratchLogs ? (
+                <p className="loading-text">스크래치 로그를 불러오는 중...</p>
+              ) : scratchLogs.length === 0 ? (
+                <p className="no-data-text">스크래치 로그가 없습니다.</p>
+              ) : (
+                <div className="scratch-logs-list">
+                  {scratchLogs.map((log) => (
+                    <div key={log.logId} className="scratch-log-item">
+                      <div className="log-header">
+                        <div className="log-info">
+                          <span className="log-type">{log.logType}</span>
+                          <span className="log-part">{log.carPart}</span>
+                          {log.isDisputed && <span className="log-badge disputed">분쟁</span>}
+                          {log.isManual && <span className="log-badge manual">수동</span>}
+                        </div>
+                        <span className="log-date">
+                          {new Date(log.createdAt).toLocaleString('ko-KR')}
+                        </span>
+                      </div>
+                      <div className="log-images">
+                        {log.originalS3Url && (
+                          <div className="log-image-wrapper">
+                            <img src={log.originalS3Url} alt="원본 이미지" />
+                            <span className="image-label">원본</span>
+                          </div>
+                        )}
+                        {log.cropS3Url && (
+                          <div className="log-image-wrapper">
+                            <img src={log.cropS3Url} alt="크롭 이미지" />
+                            <span className="image-label">크롭</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="log-details">
+                        <div className="log-detail-item">
+                          <span className="detail-label">좌표:</span>
+                          <span className="detail-value">X: {log.coordX}, Y: {log.coordY}</span>
+                        </div>
+                        {log.proofIpfsCid && (
+                          <div className="log-detail-item">
+                            <span className="detail-label">IPFS CID:</span>
+                            <span className="detail-value ipfs-cid">{log.proofIpfsCid}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

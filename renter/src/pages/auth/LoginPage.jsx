@@ -42,6 +42,7 @@ export default function LoginPage() {
       localStorage.removeItem('did_docId')
       localStorage.removeItem('did_expiry')
 
+      localStorage.setItem('userEmail', form.email)
       login(accessToken, refreshToken, userInfo)
 
       // 백엔드에서 언어 설정 + 서류 인증 상태 로드

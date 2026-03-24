@@ -144,8 +144,35 @@ export default function HomePage() {
   }
 
   const selectDate = (dateStr) => {
-    if (dateModal === 'pickup') setForm((p) => ({ ...p, pickupDate: dateStr }))
-    else setForm((p) => ({ ...p, returnDate: dateStr }))
+    if (dateModal === 'pickup') {
+      setForm((p) => {
+        const updates = { ...p, pickupDate: dateStr }
+        // 반납 날짜가 대여 날짜 이전이면 초기화
+        if (p.returnDate && p.returnDate < dateStr) updates.returnDate = ''
+        // 오늘 날짜 선택 시, 지난 시간이면 다음 정시로 보정
+        const today = new Date()
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+        if (dateStr === todayStr) {
+          const nextHour = today.getHours() + 1
+          if (parseInt(p.pickupTime) < nextHour) {
+            updates.pickupTime = `${String(Math.min(nextHour, 23)).padStart(2, '0')}:00`
+          }
+        }
+        return updates
+      })
+    } else {
+      setForm((p) => {
+        // 반납 날짜가 대여 날짜 이전이면 선택 불가
+        if (p.pickupDate && dateStr < p.pickupDate) return p
+        const updates = { ...p, returnDate: dateStr }
+        // 반납일 = 대여일이면 반납 시간이 대여 시간 이후여야 함
+        if (dateStr === p.pickupDate && p.returnTime <= p.pickupTime) {
+          const nextHour = parseInt(p.pickupTime) + 1
+          updates.returnTime = `${String(Math.min(nextHour, 23)).padStart(2, '0')}:00`
+        }
+        return updates
+      })
+    }
     setDateModal(null)
   }
 
@@ -315,7 +342,11 @@ export default function HomePage() {
           <span>{t('home.showAll')}</span>
         </label>
 
-        <button className="btn btn-primary search-btn" onClick={handleSearch}>
+        <button
+          className="btn btn-primary search-btn"
+          onClick={handleSearch}
+          disabled={!form.country || !form.location || !form.pickupDate || !form.returnDate}
+        >
           {t('home.search')}
         </button>
       </div>

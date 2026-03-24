@@ -48,7 +48,7 @@ export default function BookingCompletePage() {
             </svg>
           </div>
           <p className="bc-msg">예약을 완료했어요</p>
-          <p className="bc-amount">{total.toLocaleString()} USDC</p>
+          <p className="bc-amount">{total.toLocaleString()} CARE</p>
         </div>
 
         {/* 차량 이미지 */}
@@ -82,12 +82,6 @@ export default function BookingCompletePage() {
             <span className="bc-row-val">{returnLabel}</span>
           </div>
         </div>
-
-        {/* 안내 문구 */}
-        <p className="bc-notice">
-          반환된 금액은<br />
-          언제든지 거래소로 보내거나 현금화 할 수 있어요
-        </p>
 
         <div style={{ height: 120 }} />
       </div>

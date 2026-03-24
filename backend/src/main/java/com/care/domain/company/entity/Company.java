@@ -47,6 +47,9 @@ public class Company extends BaseEntity {
     @Column(name = "language_code", length = 10)
     private String languageCode;
 
+    @Column(name = "did_verified", nullable = false)
+    private boolean didVerified = false;
+
     // 정적 팩토리 메서드 -> new 대신 of()로 Company 객체를 생성 및 반환
     // 나중에 추가되는 정보들은 null로 처리 (
     public static Company of(String companyId, String name, String email, String passwordHash, String airportCode, String languageCode, String walletAddress) {
@@ -56,6 +59,7 @@ public class Company extends BaseEntity {
         company.email = email;
         company.passwordHash = passwordHash;
         company.airportCode = airportCode;
+        company.languageCode = languageCode;
         company.walletAddress = walletAddress;
         return company;
     }

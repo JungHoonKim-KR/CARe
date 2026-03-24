@@ -266,3 +266,54 @@
 }
 .btnDone:hover { opacity: 0.9; }
 .btnDone:active { transform: scale(0.97); }
+
+/* ── 완료 화면 구역별 카드 */
+.summaryZoneCard {
+  width: 100%;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.summaryZoneHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.summaryZoneName { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+.summaryZoneCount { font-size: 11px; color: #F7A633; font-weight: 600; }
+.summaryZoneScroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px 14px;
+  scrollbar-width: none;
+}
+.summaryZoneScroll::-webkit-scrollbar { display: none; }
+.summaryCropImg {
+  flex-shrink: 0;
+  width: 100px;
+  height: 75px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.07);
+}
+.summaryCropImgEmpty {
+  flex-shrink: 0;
+  width: 100px;
+  height: 75px;
+  border-radius: 8px;
+  background: #eee;
+}
+.summaryAllClear {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px;
+  font-size: 13px;
+  color: #aaa;
+  font-weight: 300;
+}

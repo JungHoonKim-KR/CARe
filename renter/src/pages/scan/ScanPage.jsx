@@ -8,15 +8,14 @@ import { Scanner }                      from './scanner.js'
 import { ZONES }                        from './zones.js'
 import styles                           from './ScanPage.module.css'
 import { getScanResult }                from '../../api/scan'
-import { completeReservation, lockSmartKey } from '../../api/reservation'
 import careLogo                         from '../../assets/care_logo.png'
-import { drawBoxes, clearOverlay, updateARBoxes, startARLoop, stopARLoop, showHistoryOverlay } from './overlay.js'
+import { clearOverlay, updateARBoxes, startARLoop, stopARLoop, showHistoryOverlay } from './overlay.js'
+
 export default function ScanPage() {
   const { reservationId } = useParams()
   const location          = useLocation()
   const navigate          = useNavigate()
   const logType           = location.state?.logType || 'BEFORE'
-  const reservation       = location.state?.reservation
 
   const videoRef    = useRef(null)
   const canvasRef   = useRef(null)
@@ -29,7 +28,6 @@ export default function ScanPage() {
   const [zoneIndex,    setZoneIndex]    = useState(0)
   const [captures,     setCaptures]     = useState({})
   const [isDone,       setIsDone]       = useState(false)
-  const [isSaved,      setIsSaved]      = useState(false)
   const [matchStatus,  setMatchStatus]  = useState('detecting')
   const [matchValue,   setMatchValue]   = useState(0)
   const [showToast,    setShowToast]    = useState(false)
@@ -37,10 +35,13 @@ export default function ScanPage() {
   const [isCapturing,  setIsCapturing]  = useState(false)
   const [allScratches, setAllScratches] = useState([])
   const [activeCard,   setActiveCard]   = useState(null)
+  const [debugLog,     setDebugLog]     = useState('')  // ✅ 모바일 디버그용
 
   const currentZone = ZONES[zoneIndex]
   const history     = allScratches.filter(s => s.carPart === currentZone?.id)
 
+  const isWaitingRef   = useRef(false)
+  const timeoutRef     = useRef(null)
   const matchStatusRef = useRef(matchStatus)
   useEffect(() => { matchStatusRef.current = matchStatus }, [matchStatus])
   useEffect(() => { setActiveCard(null) }, [zoneIndex])
@@ -63,27 +64,65 @@ export default function ScanPage() {
 
   // WebSocket + rAF
   useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const protocol  = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const AI_WS_URL = import.meta.env.VITE_AI_WS_URL || `${protocol}//${window.location.hostname}:8000`
-    const wsUrl = `${AI_WS_URL}/api/v1/scratches/ws/detect`
-    wsRef.current = new WebSocket(wsUrl)
-    wsRef.current.onopen = () => console.log('🟢 [WS] 연결 성공!')
+    const wsUrl     = `${AI_WS_URL}/api/v1/scratches/ws/detect`
+    wsRef.current   = new WebSocket(wsUrl)
+    wsRef.current.onopen = () => {
+      console.log('🟢 [WS] 연결 성공!')
+      setDebugLog(prev => prev + ' | WS연결OK')
+    }
+
     wsRef.current.onmessage = (event) => {
+      isWaitingRef.current = false
+      clearTimeout(timeoutRef.current)
       if (matchStatusRef.current === 'captured') return
       const data = JSON.parse(event.data)
-      if (data.boxes) updateARBoxes(data.boxes)
+
+      if (data.boxes) {
+        const video = videoRef.current
+        const vw = video?.videoWidth  || 640
+        const vh = video?.videoHeight || 360
+        const scale = 640 / Math.max(vw, vh)
+        const capW  = Math.round(vw * scale)
+        const capH  = Math.round(vh * scale)
+
+        // ✅ 실제 캡처 해상도 기준으로 스케일 변환
+        updateARBoxes(data.boxes, capW, capH)
+      }
     }
+
     const interval = setInterval(() => {
       if (matchStatusRef.current === 'captured') return
+      if (isWaitingRef.current) return
+
       const video = videoRef.current, ws = wsRef.current
       if (!video || !ws || ws.readyState !== WebSocket.OPEN) return
+
+      // ✅ 비디오 실제 비율 유지
+      const vw = video.videoWidth  || 640
+      const vh = video.videoHeight || 360
+
+      // 긴 쪽을 640 기준으로 스케일
+      const scale  = 640 / Math.max(vw, vh)
+      const capW   = Math.round(vw * scale)
+      const capH   = Math.round(vh * scale)
+
       const c = document.createElement('canvas')
-      c.width = 640; c.height = 360
-      c.getContext('2d').drawImage(video, 0, 0, 640, 360)
+      c.width  = capW
+      c.height = capH
+      c.getContext('2d').drawImage(video, 0, 0, capW, capH)
+
       c.toBlob(blob => {
-        if (blob && ws.readyState === WebSocket.OPEN) ws.send(blob)
-      }, 'image/jpeg', 0.3)
-    }, 400)
+        if (blob && ws.readyState === WebSocket.OPEN) {
+          isWaitingRef.current = true
+          ws.send(blob)
+          timeoutRef.current = setTimeout(() => {
+            isWaitingRef.current = false
+          }, 2000)
+        }
+      }, 'image/jpeg', 0.6)
+    }, 200)
     return () => { clearInterval(interval); stopARLoop(); if (wsRef.current) wsRef.current.close() }
   }, [])
 
@@ -91,7 +130,7 @@ export default function ScanPage() {
   useEffect(() => {
     let stream = null, cancelled = false
     navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: 1280, height: 720 },
+      video: { facingMode: { ideal: 'environment' } },
       audio: false,
     })
       .then(s => {
@@ -100,14 +139,27 @@ export default function ScanPage() {
         const video = videoRef.current
         if (!video) return
         video.srcObject = s
+
+        // ✅ onloadedmetadata: play만 (모바일은 이 시점에 videoWidth=0일 수 있음)
         video.onloadedmetadata = () => {
-          if (!cancelled) {
-            video.play().catch(() => {})
-            startARLoop(arCanvasRef.current, video)
-          }
+          const msg = `meta:${video.videoWidth}x${video.videoHeight} ready:${video.readyState}`
+          console.log('📱', msg)
+          setDebugLog(prev => prev + ' | ' + msg)
+          if (!cancelled) video.play().catch(() => {})
+        }
+
+        // ✅ onloadeddata: 실제 프레임 나온 후 AR 시작 — 모바일 핵심 수정
+        video.onloadeddata = () => {
+          const msg = `data:${video.videoWidth}x${video.videoHeight}`
+          console.log('📱', msg)
+          setDebugLog(prev => prev + ' | ' + msg)
+          if (!cancelled) startARLoop(arCanvasRef.current, video)
         }
       })
-      .catch(err => { if (!cancelled) console.error('[ScanPage] 카메라 실패', err) })
+      .catch(err => {
+        console.error('[ScanPage] 카메라 실패', err)
+        setDebugLog(prev => prev + ' | 카메라실패:' + err.message)
+      })
     return () => { cancelled = true; stream?.getTracks().forEach(t => t.stop()) }
   }, [])
 
@@ -133,10 +185,13 @@ export default function ScanPage() {
     scanner.onCapture = (zoneId, dataUrl, boxes) => {
       setCaptures(prev => ({ ...prev, [zoneId]: { dataUrl, boxes } }))
       setMatchStatus('captured'); setCanCapture(false); setIsCapturing(false)
+      // scanner.onCapture 안에 추가
+      if (boxes.length > 0 && navigator.vibrate) {
+        navigator.vibrate(200)  // ✅ 흠집 발견 시 진동
+      }
       stopARLoop()
       clearOverlay(arCanvasRef.current)
       if (canvasRef.current && videoRef.current)
-        drawBoxes(canvasRef.current, videoRef.current, boxes)
       if (boxes.length > 0) { setShowToast(true); setTimeout(() => setShowToast(false), 2000) }
     }
     scanner.setZone(currentZone)
@@ -165,18 +220,15 @@ export default function ScanPage() {
     setCaptures(prev => ({ ...prev, [currentZone.id]: { dataUrl: null, boxes: [] } }))
     handleNext()
   }
+  function handleCardClick(i) {
+    const newActive = activeCard === i ? null : i
+    setActiveCard(newActive)
+    if (newActive !== null)
+      showHistoryOverlay(history[newActive], videoRef.current, arCanvasRef.current)
+    else
+      showHistoryOverlay(null, videoRef.current, arCanvasRef.current)
+  }
 
-    function handleCardClick(i) {
-      const newActive = activeCard === i ? null : i
-      setActiveCard(newActive)
-
-      // AR 오버레이 표시/해제
-      if (newActive !== null) {
-        showHistoryOverlay(history[newActive], videoRef.current)
-      } else {
-        showHistoryOverlay(null, videoRef.current)
-      }
-    }
   const totalDefects = Object.values(captures).reduce((a, c) => a + (c.boxes?.length || 0), 0)
 
   function getInstructionHtml() {
@@ -188,40 +240,20 @@ export default function ScanPage() {
         : `<strong style="color:#10b981">이상 없음</strong> — 깨끗한 상태입니다.`
     }
     if (matchStatus === 'matched')
-      return `<strong style="color:#b8962e">촬영 버튼</strong>을 눌러 흠집을 저장하세요.`
+      return `<strong style="color:#F7A633">촬영 버튼</strong>을 눌러 흠집을 저장하세요.`
     return currentZone.instruction
   }
 
-  // 저장 완료 화면 (반납 후)
-  if (isSaved) return (
-    <div className={styles.page} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 28, padding: '40px 32px', textAlign: 'center', minHeight: '100vh', background: 'white' }}>
-      <div style={{ width: 96, height: 96, borderRadius: '50%', background: '#F7A633', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 40px rgba(247,166,51,0.38)', animation: 'scanPopIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards' }}>
-        <svg width="52" height="52" viewBox="0 0 24 24" fill="none">
-          <path d="M20 6L9 17L4 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 900, color: '#111', margin: 0, letterSpacing: '-0.5px' }}>사진이 안전하게 저장되었습니다</h1>
-        <p style={{ fontSize: 15, color: '#888', lineHeight: 1.75, margin: 0 }}>스캔 결과가 블록체인에 기록됐어요.<br/>이용해 주셔서 감사해요 😊</p>
-      </div>
-      <button
-        onClick={() => navigate('/home')}
-        style={{ width: '100%', maxWidth: 400, background: '#F7A633', color: 'white', border: 'none', borderRadius: 16, padding: 18, fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 16px rgba(247,166,51,0.35)', marginTop: 8 }}
-      >
-        홈으로 돌아가기
-      </button>
-    </div>
-  )
-
-  // 완료 화면
+  // ── 완료 화면
   if (isDone) return (
-    <div className={styles.page}>
+    <div className={styles.page} style={{ overflowY: 'auto' }}>
       <div className={styles.summary}>
         <div className={styles.summaryHero}>
           <div className={styles.summaryCheck}>✓</div>
           <div className={styles.summaryHeroTitle}>스캔 완료</div>
           <div className={styles.summaryHeroSub}>모든 구역이 안전하게 기록되었습니다</div>
         </div>
+
         <div className={styles.summaryStats}>
           <div className={styles.statCard}>
             <div className={styles.statLabel}>감지된 흠집</div>
@@ -232,57 +264,74 @@ export default function ScanPage() {
             <div className={`${styles.statValue} ${styles.statValueSafe}`}>{ZONES.length}</div>
           </div>
         </div>
-        <div className={styles.summaryGrid}>
-          {ZONES.map(z => {
-            const cap = captures[z.id]
-            const hasDefect = (cap?.boxes?.length || 0) > 0
-            return (
-              <div key={z.id} className={`${styles.summaryCard} ${hasDefect ? styles.summaryCardHasDefect : ''}`}>
-                <div className={styles.summaryCardImg} />
-                <div className={styles.summaryCardInfo}>
-                  <span className={styles.summaryCardZone}>{z.label}</span>
-                  <span className={`${styles.summaryCardStatus} ${hasDefect ? styles.summaryCardDefect : styles.summaryCardClean}`}>
-                    {hasDefect ? `흠집 ${cap.boxes.length}개` : '이상 없음'}
-                  </span>
-                </div>
+
+        {ZONES.map(z => {
+          const cap       = captures[z.id]
+          const boxes     = cap?.boxes || []
+          const hasDefect = boxes.length > 0
+          if (!hasDefect) return null
+          return (
+            <div key={z.id} className={styles.summaryZoneCard}>
+              <div className={styles.summaryZoneHeader}>
+                <span className={styles.summaryZoneName}>{z.label}</span>
+                <span className={styles.summaryZoneCount}>흠집 {boxes.length}개</span>
               </div>
-            )
-          })}
-        </div>
-        <button className={styles.btnDone} onClick={() => {
-          if (logType === 'AFTER') {
-            navigate('/car-return', { state: { reservation, fromScan: true } })
-          } else {
-            navigate('/car-smartkey', { state: { reservation } })
-          }
-        }}>완료</button>
+              <div className={styles.summaryZoneScroll}>
+                {boxes.map((box, i) => (
+                  box.cropS3Url
+                    ? <img key={i} src={box.cropS3Url} alt={`흠집 ${i + 1}`} className={styles.summaryCropImg} />
+                    : <div key={i} className={styles.summaryCropImgEmpty} />
+                ))}
+              </div>
+            </div>
+          )
+        })}
+
+        {totalDefects === 0 && (
+          <div className={styles.summaryAllClear}>
+            <span style={{ fontSize: 32 }}>🎉</span>
+            <p>모든 구역에서 흠집이 발견되지 않았어요!</p>
+          </div>
+        )}
+
+        <button className={styles.btnDone} onClick={() => navigate('/my-car')}>
+          완료
+        </button>
       </div>
     </div>
   )
 
-  // 스캔 화면
+  // ── 스캔 화면
   return (
     <div className={styles.page}>
 
-      {/* 카메라 + 오버레이 */}
+      {/* ✅ 모바일 디버그 오버레이 — 확인 후 제거 */}
+      {debugLog ? (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.75)', color: '#00ff88',
+          fontSize: 10, padding: '6px 8px', wordBreak: 'break-all',
+          maxWidth: '100vw', pointerEvents: 'none',
+        }}>
+          {debugLog}
+        </div>
+      ) : null}
+
       <div className={styles.cameraWrap}>
         <video ref={videoRef} className={styles.video} playsInline muted />
         <canvas ref={arCanvasRef} className={styles.overlay} style={{ zIndex: 1 }} />
         <canvas ref={canvasRef}   className={styles.overlay} style={{ zIndex: 2 }} />
         <div className={styles.scanLine} />
 
-        {/* 헤더 — 로고 + 구역 진행 */}
         <div className={styles.header}>
           <img src={careLogo} alt="CAre" className={styles.headerLogo} />
           <span className={styles.headerStep}>{zoneIndex + 1} / {ZONES.length}</span>
         </div>
 
-        {/* 저장됨 토스트 */}
         <div className={`${styles.saveToast} ${showToast ? styles.visible : ''}`}>
           ✓ 흠집이 저장되었습니다
         </div>
 
-        {/* 번호판 가이드 */}
         {currentZone.type === 'plate' && matchStatus !== 'captured' && (
           <div className={`${styles.guidePlate} ${styles[matchStatus] || styles.detecting}`}>
             <div className={styles.guidePlateInner}>
@@ -295,7 +344,6 @@ export default function ScanPage() {
           </div>
         )}
 
-        {/* 바퀴 가이드 */}
         {currentZone.type === 'wheel' && matchStatus !== 'captured' && (
           <>
             {currentZone.wheelSide === 'left' && (
@@ -317,7 +365,6 @@ export default function ScanPage() {
           </>
         )}
 
-        {/* 스텝바 */}
         <div className={styles.stepbar}>
           {ZONES.map((z, i) => {
             const cap = captures[z.id]
@@ -331,23 +378,21 @@ export default function ScanPage() {
             )
           })}
         </div>
+
         <div className={styles.zoneNameBar}>
           <span className={styles.zoneName}>{currentZone.name}</span>
         </div>
       </div>
 
-      {/* 매칭 진행바 */}
       <div className={styles.matchProgress}>
         <div className={styles.matchFill} style={{ width: `${matchValue}%` }} />
       </div>
 
-      {/* 안내 텍스트 */}
       <div className={styles.instruction}>
         <div className={styles.instructionIcon}>{currentZone.icon}</div>
         <div className={styles.instructionText} dangerouslySetInnerHTML={{ __html: getInstructionHtml() }} />
       </div>
 
-      {/* 버튼 */}
       <div className={styles.actions}>
         <button className={styles.btnSkip} onClick={handleSkip}>건너뛰기</button>
         {matchStatus !== 'captured' ? (
@@ -361,7 +406,6 @@ export default function ScanPage() {
         )}
       </div>
 
-      {/* 흠집 기록 — flex-grow로 남은 공간 채움 */}
       <div className={styles.historySection}>
         <div className={styles.historyHeader}>
           <span className={styles.historyTitle}>이 구역의 흠집 기록</span>

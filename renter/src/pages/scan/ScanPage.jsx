@@ -294,8 +294,20 @@ export default function ScanPage() {
           </div>
         )}
 
-        <button className={styles.btnDone} onClick={() => navigate('/my-car')}>
-          완료
+        <button className={styles.btnDone} onClick={() => {
+          const cracks = ZONES
+            .filter(z => captures[z.id]?.boxes?.length > 0)
+            .map(z => ({
+              side: z.id,
+              label: z.label,
+              count: captures[z.id].boxes.length,
+              crops: captures[z.id].boxes.map(b => b.cropS3Url).filter(Boolean),
+            }))
+          navigate('/car-crack', {
+            state: { reservation: location.state?.reservation, scanResult: { cracks, totalDefects } }
+          })
+        }}>
+          리포트 확인
         </button>
       </div>
     </div>

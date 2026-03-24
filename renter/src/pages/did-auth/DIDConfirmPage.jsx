@@ -63,6 +63,24 @@ export default function DIDConfirmPage() {
 
   const handleSubmit = async () => {
     setError('')
+
+    // 빈 칸 검증
+    if (!form.name.trim() || !form.birthDate.trim() || !form.issueDate.trim()) {
+      setError('모든 항목을 입력해 주세요.')
+      return
+    }
+    if (isPassport) {
+      if (!form.passportNo.trim() || !form.expiryDate.trim()) {
+        setError('모든 항목을 입력해 주세요.')
+        return
+      }
+    } else {
+      if (!form.licenZero.trim() || !form.licenFirst.trim() || !form.licenSecond.trim() || !form.licenThird.trim()) {
+        setError('면허증 번호를 모두 입력해 주세요.')
+        return
+      }
+    }
+
     setLoading(true)
     try {
       const payload = isPassport

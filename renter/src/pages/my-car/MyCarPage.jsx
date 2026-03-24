@@ -75,6 +75,7 @@ export default function MyCarPage() {
   const [reservation, setReservation] = useState(state?.reservation || null)
   const [loading, setLoading] = useState(!state?.reservation)
   const [showDisputeModal, setShowDisputeModal] = useState(false)
+  const [hasMultiple, setHasMultiple] = useState(false)
 
   useEffect(() => {
     if (state?.reservation) return
@@ -85,8 +86,9 @@ export default function MyCarPage() {
         const sorted = [...list].sort((a, b) =>
           new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
         )
-        const active = sorted.find((r) => r.status === 'IN_USE')
-          || sorted.find((r) => r.status === 'RESERVED')
+        const activeList = sorted.filter((r) => r.status === 'IN_USE' || r.status === 'RESERVED')
+        const active = activeList[0]
+        if (activeList.length > 1) setHasMultiple(true)
         if (active) {
           setReservation(active)
           const pending = localStorage.getItem(`disputePending_${active.reservationId}`) === 'true'
@@ -259,6 +261,13 @@ export default function MyCarPage() {
             <span>{reservation.insuranceName} | {reservation.plateNumber}</span>
           </div>
         </div>
+
+        {/* 다중 예약 안내 */}
+        {hasMultiple && (
+          <div style={{ margin: '0 16px 12px', padding: '12px 16px', background: '#FFF8EC', borderRadius: 12, fontSize: 13, color: '#B8860B', textAlign: 'center' }}>
+            다른 예약은 내 예약 목록에서 확인할 수 있습니다.
+          </div>
+        )}
 
         {/* 차량 외관 촬영 카드 */}
         <div className="mc-action-card">

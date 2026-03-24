@@ -4,7 +4,9 @@ import com.care.domain.company.controller.dto.request.BizVerifyRequest;
 import com.care.domain.company.controller.dto.response.BizVerifyResponse;
 import com.care.domain.company.controller.dto.response.CompanyProfileResponse;
 import com.care.domain.company.service.CompanyService;
+import com.care.domain.reservation.controller.dto.response.DisputeSummaryResponse;
 import com.care.domain.reservation.controller.dto.response.ReservationSummaryResponse;
+import com.care.domain.reservation.service.DisputeService;
 import com.care.domain.reservation.service.ReservationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ public class CompanyController {
 
     private final CompanyService companyService;
     private final ReservationService reservationService;
+    private final DisputeService disputeService;
 
     // 프로필 조회 api
     @GetMapping
@@ -43,5 +46,14 @@ public class CompanyController {
     @GetMapping("/reservations")
     public ResponseEntity<List<ReservationSummaryResponse>> getReservations(@AuthenticationPrincipal String companyId) {
         return ResponseEntity.ok(reservationService.getCompanyReservations(companyId));
+    }
+
+    /**
+     * GET /companies/me/disputes
+     * 회사 분쟁 목록 조회
+     */
+    @GetMapping("/disputes")
+    public ResponseEntity<List<DisputeSummaryResponse>> getDisputes(@AuthenticationPrincipal String companyId) {
+        return ResponseEntity.ok(disputeService.getCompanyDisputes(companyId));
     }
 }

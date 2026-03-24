@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
 import AuthService from '../../services/AuthService'
 import './LoginPage.css'
 
@@ -102,7 +102,7 @@ export default function LoginPage() {
           </form>
 
           <p className="register-link">
-            회원이 아니신가요? <a href="/register">회원가입</a>
+            회원이 아니신가요? <Link to="/register">회원가입</Link>
           </p>
 
           <p className="copyright">

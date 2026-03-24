@@ -8,7 +8,7 @@ import { Scanner }                      from './scanner.js'
 import { ZONES }                        from './zones.js'
 import styles                           from './ScanPage.module.css'
 import { getScanResult }                from '../../api/scan'
-import { completeReservation }         from '../../api/reservation'
+import { completeReservation, lockSmartKey } from '../../api/reservation'
 import careLogo                         from '../../assets/care_logo.png'
 import { drawBoxes, clearOverlay, updateARBoxes, startARLoop, stopARLoop, showHistoryOverlay } from './overlay.js'
 export default function ScanPage() {
@@ -251,8 +251,7 @@ export default function ScanPage() {
         </div>
         <button className={styles.btnDone} onClick={() => {
           if (logType === 'AFTER') {
-            completeReservation(reservationId).catch(e => console.error('[Scan] 반납완료 실패:', e))
-            setIsSaved(true)
+            navigate('/car-return', { state: { reservation, fromScan: true } })
           } else {
             navigate('/car-smartkey', { state: { reservation } })
           }

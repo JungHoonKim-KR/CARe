@@ -5,6 +5,7 @@ import com.care.domain.reservation.controller.dto.request.DisputeDefenseRequest;
 import com.care.domain.reservation.controller.dto.response.DisputeCreateResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDefenseResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDetailResponse;
+import com.care.domain.reservation.controller.dto.response.DisputePreviousScratchResponse;
 import com.care.domain.reservation.service.DisputeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -44,6 +46,14 @@ public class DisputeController {
 			@PathVariable String disputeId
 	) {
 		return ResponseEntity.ok(disputeService.getDisputeDetail(userId, reservationId, disputeId));
+	}
+
+	@GetMapping("/scratch-logs")
+	public ResponseEntity<List<DisputePreviousScratchResponse>> getReservationScratchLogs(
+			@AuthenticationPrincipal String userId,
+			@PathVariable String reservationId
+	) {
+		return ResponseEntity.ok(disputeService.getReservationScratchLogs(userId, reservationId));
 	}
 
 	@RequestMapping(value = "/{disputeId}/defense", method = {RequestMethod.PATCH, RequestMethod.POST})

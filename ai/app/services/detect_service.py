@@ -54,7 +54,7 @@ async def detect_and_upload(image_path: Path, zone: str, log_type: str) -> dict:
             "h": h_img * 0.1,
         }]
     else:
-        results = model(str(image_path), conf=0.3)[0]
+        results = model(str(image_path), conf=0.5, iou=0.4)[0]
         for box in results.boxes:
             x1, y1, x2, y2 = box.xyxy[0].tolist()
             raw_boxes.append({

@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getTokenBalance } from '../../api/auth'
+import { getTokenHistory } from '../../utils/careToken'
 import './TokenHistoryPage.css'
 
 export default function TokenHistoryPage() {
   const navigate = useNavigate()
   const [balance, setBalance] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [history, setHistory] = useState([])
 
   useEffect(() => {
     setLoading(true)
@@ -14,10 +16,18 @@ export default function TokenHistoryPage() {
       .then((data) => setBalance(data.balance))
       .catch(() => setBalance('오류'))
       .finally(() => setLoading(false))
+
+    setHistory(getTokenHistory())
   }, [])
 
-  // 사용 내역 API 생기면 여기서 fetch
-  const history = []
+  const formatDate = (iso) => {
+    const d = new Date(iso)
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    const hh = String(d.getHours()).padStart(2, '0')
+    const min = String(d.getMinutes()).padStart(2, '0')
+    return `${d.getFullYear()}.${mm}.${dd} ${hh}:${min}`
+  }
 
   return (
     <div className="token-history-page">
@@ -75,7 +85,7 @@ export default function TokenHistoryPage() {
                   </span>
                   <div>
                     <p className="token-history-item-desc">{item.desc}</p>
-                    <p className="token-history-item-date">{item.date}</p>
+                    <p className="token-history-item-date">{formatDate(item.date)}</p>
                   </div>
                 </div>
                 <p className={`token-history-item-amount ${item.type}`}>

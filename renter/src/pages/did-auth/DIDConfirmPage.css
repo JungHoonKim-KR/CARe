@@ -150,3 +150,13 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.did-ocr-notice {
+  margin: 0 20px 8px;
+  padding: 10px 14px;
+  background: #FFF8ED;
+  border-left: 3px solid #F7A633;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #7A5500;
+}

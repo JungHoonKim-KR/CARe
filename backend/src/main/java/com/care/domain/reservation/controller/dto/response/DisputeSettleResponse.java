@@ -1,7 +1,5 @@
 package com.care.domain.reservation.controller.dto.response;
 
-import com.care.domain.reservation.entity.Settlement;
-
 import java.time.LocalDateTime;
 
 public record DisputeSettleResponse(
@@ -12,14 +10,21 @@ public record DisputeSettleResponse(
     LocalDateTime settledAt,
     String txHash
 ) {
-    public static DisputeSettleResponse from(Settlement settlement) {
+    public static DisputeSettleResponse of(
+            String settlementId,
+            String reservationId,
+            long finalAmount,
+            String status,
+            LocalDateTime settledAt,
+            String txHash
+    ) {
         return new DisputeSettleResponse(
-                settlement.getSettlementId(),
-                settlement.getReservation().getReservationId(),
-                settlement.getFinalAmount(),
-                settlement.getStatus(),
-                settlement.getSettledAt(),
-                settlement.getTxHash()
+                settlementId,
+                reservationId,
+                finalAmount,
+                status,
+                settledAt,
+                txHash
         );
     }
 }

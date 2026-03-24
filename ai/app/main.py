@@ -4,8 +4,13 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes.face import router as face_router
 from app.api.routes.health import router as health_router
 from app.api.routes.scratches import router as scratches_router
+
+from app.api.routes.face import router as face_router
+from app.api.routes.document import router as document_router
+
 
 
 def create_app() -> FastAPI:
@@ -23,7 +28,10 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(health_router, prefix="/api/v1")
+    app.include_router(face_router, prefix="/api/v1")
+    app.include_router(document_router, prefix="/api/v1")
     app.include_router(scratches_router, prefix="/api/v1")
+
     return app
 
 

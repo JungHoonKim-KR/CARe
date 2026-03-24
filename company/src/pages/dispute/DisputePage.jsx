@@ -11,11 +11,72 @@ export default function DisputePage() {
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
   const [scratchLogs, setScratchLogs] = useState([])
   const [loadingScratchLogs, setLoadingScratchLogs] = useState(false)
+  const [dispute, setDispute] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    const fetchDisputeDetails = async () => {
+      setLoading(true)
+      setError('')
+
+      // Parse id parameter - expecting format like "rsv-001-dis-001"
+      // or we need reservationId separately
+      // For now, let's assume we need to extract both from URL or have them passed
+
+      // TODO: Update this based on actual route structure
+      // If route is /disputes/:reservationId/:disputeId
+      // then we need to update route params
+
+      // For now, using mock data structure but prepared for real API
+      const mockDispute = {
+        id: id,
+        disputeId: 'DIS-2024-001',
+        reservationId: 'RES-2024-001',
+        carName: '소나타 DN8',
+        carNumber: '12가 3456',
+        carModel: '2023년식',
+        renterName: '김철수',
+        renterEmail: 'kimcs@example.com',
+        issueType: '차량 파손',
+        status: 'pending',
+        createdDate: '2024-03-15 14:30',
+        description: '차량 앞 범퍼에 스크래치가 발견되었습니다. 렌터가 주차 중 발생했다고 주장하나, AI 스캔 결과 충돌 흔적이 확인되었습니다.',
+        amount: 500000,
+        images: [
+          'https://images.unsplash.com/photo-1621939514649-280e2ee25f60?w=400',
+          'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=400',
+        ],
+        aiReportUrl: '/ai-report/001',
+        timeline: [
+          { date: '2024-03-15 14:30', action: '분쟁 요청', user: '업체' },
+          { date: '2024-03-15 14:35', action: '렌터 확인', user: '김철수' },
+          { date: '2024-03-15 15:00', action: 'AI 스캔 완료', user: '시스템' },
+        ]
+      }
+
+      setDispute(mockDispute)
+      setLoading(false)
+
+      // Uncomment when API route is ready:
+      /*
+      const result = await DisputeService.getDisputeDetail(reservationId, disputeId)
+      if (result.success) {
+        setDispute(result.data)
+      } else {
+        setError(result.message)
+      }
+      setLoading(false)
+      */
+    }
+
+    fetchDisputeDetails()
+  }, [id])
 
   useEffect(() => {
     // 스크래치 로그 조회
     const fetchScratchLogs = async () => {
-      if (!dispute.reservationId) return
+      if (!dispute || !dispute.reservationId) return
 
       setLoadingScratchLogs(true)
       const result = await DisputeService.getScratchLogs(dispute.reservationId)
@@ -29,33 +90,31 @@ export default function DisputePage() {
     }
 
     fetchScratchLogs()
-  }, [id])
+  }, [dispute])
 
-  // 임시 분쟁 상세 데이터 (실제로는 API에서 id로 조회)
-  const dispute = {
-    id: id,
-    disputeId: 'DIS-2024-001',
-    reservationId: 'RES-2024-001',
-    carName: '소나타 DN8',
-    carNumber: '12가 3456',
-    carModel: '2023년식',
-    renterName: '김철수',
-    renterEmail: 'kimcs@example.com',
-    issueType: '차량 파손',
-    status: 'pending',
-    createdDate: '2024-03-15 14:30',
-    description: '차량 앞 범퍼에 스크래치가 발견되었습니다. 렌터가 주차 중 발생했다고 주장하나, AI 스캔 결과 충돌 흔적이 확인되었습니다.',
-    amount: 500000,
-    images: [
-      'https://images.unsplash.com/photo-1621939514649-280e2ee25f60?w=400',
-      'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=400',
-    ],
-    aiReportUrl: '/ai-report/001',
-    timeline: [
-      { date: '2024-03-15 14:30', action: '분쟁 요청', user: '업체' },
-      { date: '2024-03-15 14:35', action: '렌터 확인', user: '김철수' },
-      { date: '2024-03-15 15:00', action: 'AI 스캔 완료', user: '시스템' },
-    ]
+  const handleSubmitDefense = async () => {
+    if (!dispute || !dispute.reservationId) {
+      alert('분쟁 정보를 찾을 수 없습니다.')
+      return
+    }
+
+    const defenseLogId = window.prompt('방어 자료 로그 ID를 입력하세요:')
+    if (!defenseLogId) return
+
+    const result = await DisputeService.submitDefense(
+      dispute.reservationId,
+      dispute.disputeId,
+      defenseLogId,
+      'POST' // Use 'PATCH' to update existing defense
+    )
+
+    if (result.success) {
+      alert('방어 자료가 성공적으로 제출되었습니다.')
+      // Refresh dispute details
+      window.location.reload()
+    } else {
+      alert(result.message || '방어 자료 제출에 실패했습니다.')
+    }
   }
 
   const handleResolve = () => {
@@ -70,6 +129,31 @@ export default function DisputePage() {
     // TODO: API 호출
     alert('분쟁이 반려되었습니다.')
     navigate('/disputes')
+  }
+
+  if (loading) {
+    return (
+      <div className="dispute-page">
+        <div className="loading-container">
+          <p>분쟁 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="dispute-page">
+        <div className="error-container">
+          <p>{error}</p>
+          <button onClick={() => navigate(-1)}>돌아가기</button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!dispute) {
+    return null
   }
 
   return (
@@ -249,6 +333,12 @@ export default function DisputePage() {
               <div className="card actions-card">
                 <h2 className="section-title">처리 작업</h2>
                 <div className="actions-buttons">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={handleSubmitDefense}
+                  >
+                    방어 자료 제출
+                  </button>
                   <button
                     className="btn btn-danger"
                     onClick={() => setIsRejectModalOpen(true)}

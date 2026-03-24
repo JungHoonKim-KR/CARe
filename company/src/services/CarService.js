@@ -145,6 +145,26 @@ class CarService {
       }
     }
   }
+
+  /**
+   * 차량 반납 리포트 조회 (AI 스크래치 로그)
+   */
+  async getReturnReport(carId) {
+    try {
+      const response = await api.get(`/api/cars/${carId}/return-report`)
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      console.error('반납 리포트 조회 실패:', error)
+      return {
+        success: false,
+        message: error?.response?.data?.message || '반납 리포트를 불러오지 못했습니다.'
+      }
+    }
+  }
 }
 
 export default new CarService()

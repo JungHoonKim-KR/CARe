@@ -31,9 +31,9 @@ class DisputeService {
   /**
    * 분쟁 상세 조회
    */
-  async getDisputeDetail(disputeId) {
+  async getDisputeDetail(reservationId, disputeId) {
     try {
-      const response = await api.get(`/api/disputes/${disputeId}`)
+      const response = await api.get(`/api/reservations/${reservationId}/disputes/${disputeId}`)
 
       return {
         success: true,
@@ -54,10 +54,9 @@ class DisputeService {
   async createDispute(reservationId, data) {
     try {
       const response = await api.post(`/api/reservations/${reservationId}/disputes`, {
+        targetLogId: data.targetLogId,
         reason: data.reason,
-        description: data.description,
-        claimAmount: data.claimAmount,
-        evidenceImages: data.evidenceImages || []
+        claimAmount: data.claimAmount
       })
 
       return {
@@ -122,12 +121,14 @@ class DisputeService {
   /**
    * 분쟁 방어 자료 제출 (업체가 반박)
    */
-  async submitDefense(disputeId, data) {
+  async submitDefense(reservationId, disputeId, defenseLogId, method = 'POST') {
     try {
-      const response = await api.post(`/api/disputes/${disputeId}/defense`, {
-        defenseReason: data.defenseReason,
-        evidenceImages: data.evidenceImages || []
-      })
+      const endpoint = `/api/reservations/${reservationId}/disputes/${disputeId}/defense`
+      const payload = { defenseLogId }
+
+      const response = method === 'PATCH'
+        ? await api.patch(endpoint, payload)
+        : await api.post(endpoint, payload)
 
       return {
         success: true,

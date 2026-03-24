@@ -18,6 +18,7 @@ import com.care.domain.reservation.entity.SettlementStatus;
 import com.care.domain.reservation.entity.Scratch;
 import com.care.domain.reservation.repository.DisputeRepository;
 import com.care.domain.reservation.repository.ReservationRepository;
+import com.care.domain.renter.service.RenterNotificationService;
 import com.care.domain.scan.repository.ScratchRepository;
 import com.care.global.blockchain.CareTokenService;
 import com.care.global.blockchain.DisputeSettlementService;
@@ -43,6 +44,7 @@ public class DisputeService {
 	private final DisputeSettlementService disputeSettlementService;
 	private final CareTokenService careTokenService;
 	private final AiScratchSimilarityClient aiScratchSimilarityClient;
+	private final RenterNotificationService renterNotificationService;
 
 	@Value("${ai.scratch.similarity-threshold:60.0}")
 	private double similarityThreshold;
@@ -79,6 +81,7 @@ public class DisputeService {
 
 		targetScratch.markDisputed();
 		Dispute saved = disputeRepository.save(dispute);
+		renterNotificationService.createDisputeCreatedNotification(reservation.getRenter(), saved);
 		return DisputeCreateResponse.from(saved);
 	}
 

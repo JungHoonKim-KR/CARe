@@ -18,6 +18,7 @@ import com.care.domain.reservation.entity.Scratch;
 import com.care.domain.reservation.repository.DisputeRepository;
 import com.care.domain.reservation.repository.ReservationRepository;
 import com.care.domain.renter.entity.Renter;
+import com.care.domain.renter.service.RenterNotificationService;
 import com.care.domain.scan.repository.ScratchRepository;
 import com.care.global.ai.AiScratchSimilarityClient;
 import com.care.global.ai.AiScratchSimilarityResult;
@@ -65,6 +66,9 @@ class DisputeServiceTest {
 
     @Mock
     private AiScratchSimilarityClient aiScratchSimilarityClient;
+
+    @Mock
+    private RenterNotificationService renterNotificationService;
 
     @InjectMocks
     private DisputeService disputeService;
@@ -155,6 +159,7 @@ class DisputeServiceTest {
         assertThat(captor.getValue().getSnapshotBeforeLogId()).isEqualTo("before-log-1");
         assertThat(captor.getValue().getSnapshotAfterCropS3Url()).isEqualTo("https://example.com/after-log-1.jpg");
         assertThat(captor.getValue().isSnapshotWarning()).isTrue();
+        verify(renterNotificationService).createDisputeCreatedNotification(any(), any());
     }
 
     @Test

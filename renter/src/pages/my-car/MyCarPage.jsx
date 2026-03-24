@@ -24,6 +24,13 @@ const MOCK_RESERVATION = {
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
+const STATUS_LABEL = {
+  RESERVED: '예약 완료',
+  IN_USE: '이용 중',
+  COMPLETED: '반납 완료',
+  CANCELLED: '취소됨',
+}
+
 function parseDate(val) {
   if (!val) return null
   // 배열 형태 [2026, 3, 15] 처리
@@ -86,7 +93,7 @@ export default function MyCarPage() {
         const sorted = [...list].sort((a, b) =>
           new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
         )
-        const activeList = sorted.filter((r) => r.status === 'IN_USE' || r.status === 'RESERVED')
+        const activeList = sorted.filter((r) => r.status === 'IN_USE' || r.status === 'RESERVED' || r.status === 'COMPLETED')
         const active = activeList[0]
         if (activeList.length > 1) setHasMultiple(true)
         if (active) {
@@ -132,6 +139,8 @@ export default function MyCarPage() {
       </div>
     )
   }
+
+  const isCompleted = reservation.status === 'COMPLETED'
 
   const crackDone    = reservation
     ? localStorage.getItem(`crackDone_${reservation.reservationId}`) === 'true'
@@ -179,7 +188,9 @@ export default function MyCarPage() {
         <div className="mc-car-header">
           <div className="mc-plate-row">
             <span className="mc-plate">{reservation.plateNumber}</span>
-            <span className="mc-nft-badge">{reservation.status}</span>
+            <span className={`mc-nft-badge${reservation.status === 'COMPLETED' ? ' completed' : ''}`}>
+              {STATUS_LABEL[reservation.status] || reservation.status}
+            </span>
           </div>
           <h1 className="mc-car-name">{carName}</h1>
         </div>
@@ -270,45 +281,60 @@ export default function MyCarPage() {
         )}
 
         {/* 차량 외관 촬영 카드 */}
-        <div className="mc-action-card">
-          <p className="mc-action-card-title">차량 외관 촬영</p>
-          <div className="mc-action-row">
-            <button
-              className="mc-action-btn mc-shoot-btn"
-              onClick={() => navigate('/return-guide', { state: { reservation, logType: 'BEFORE' } })}
-            >
-              <div className="mc-action-btn-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"
-                    stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
-                  <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-              </div>
-              <span className="mc-action-btn-label">픽업 전 촬영</span>
-              <span className="mc-action-btn-sub">탑승 전 외관 기록</span>
-            </button>
-            <button
-              className="mc-action-btn mc-return-btn"
-              onClick={() => navigate('/return-guide', { state: { reservation } })}
-            >
-              <div className="mc-action-btn-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M9 14l-4-4 4-4" stroke="currentColor" strokeWidth="2"
-                    strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M5 10h11a4 4 0 010 8h-1" stroke="currentColor" strokeWidth="2"
-                    strokeLinecap="round"/>
-                </svg>
-              </div>
-              <span className="mc-action-btn-label">반납하기</span>
-              <span className="mc-action-btn-sub">반납 전 외관 촬영</span>
-            </button>
+        {isCompleted ? (
+          <div className="mc-action-card mc-completed-card">
+            <p className="mc-action-card-title">반납이 완료되었습니다</p>
           </div>
-        </div>
+        ) : (
+          <div className="mc-action-card">
+            <p className="mc-action-card-title">차량 외관 촬영</p>
+            <div className="mc-action-row">
+              <button
+                className={`mc-action-btn mc-shoot-btn${crackDone ? ' mc-shoot-btn--done' : ''}`}
+                disabled={crackDone}
+                onClick={() => !crackDone && navigate('/return-guide', { state: { reservation, logType: 'BEFORE' } })}
+              >
+                <div className="mc-action-btn-icon">
+                  {crackDone ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5"
+                        strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"
+                        stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+                      <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                  )}
+                </div>
+                <span className="mc-action-btn-label">{crackDone ? '완료됨.' : '픽업 전 촬영'}</span>
+                <span className="mc-action-btn-sub">{crackDone ? '외관 촬영이 완료되었습니다' : '탑승 전 외관 기록'}</span>
+              </button>
+              <button
+                className="mc-action-btn mc-return-btn"
+                onClick={() => navigate('/return-guide', { state: { reservation } })}
+              >
+                <div className="mc-action-btn-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 14l-4-4 4-4" stroke="currentColor" strokeWidth="2"
+                      strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M5 10h11a4 4 0 010 8h-1" stroke="currentColor" strokeWidth="2"
+                      strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <span className="mc-action-btn-label">반납하기</span>
+                <span className="mc-action-btn-sub">반납 전 외관 촬영</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         <div style={{ height: 130 }} />
       </div>
 
       {/* 하단 고정 - Smart Key + 반납 */}
+      {!isCompleted && (
       <div className="mc-action-bar">
 <button
           className={`mc-smartkey-inner${pickupReady ? '' : ' locked'}`}
@@ -336,6 +362,7 @@ export default function MyCarPage() {
           }
         </button>
       </div>
+      )}
 
       {/* 분쟁 알림 모달 */}
       {showDisputeModal && (

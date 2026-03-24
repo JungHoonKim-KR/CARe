@@ -1,5 +1,3 @@
-const AI_BASE_URL = import.meta.env.VITE_AI_BASE_URL ?? 'http://localhost:8000'
-
 /**
  * 여권 이미지와 셀피를 비교해 동일인 여부 확인
  * @param {string} passportDataUrl - base64 data URL
@@ -7,13 +5,11 @@ const AI_BASE_URL = import.meta.env.VITE_AI_BASE_URL ?? 'http://localhost:8000'
  * @returns {Promise<{verified: boolean, distance: number}>}
  */
 export async function verifyFace(passportDataUrl, selfieDataUrl) {
-  const token = localStorage.getItem('accessToken') || ''
-
   const formData = new FormData()
   formData.append('id_photo', dataUrlToBlob(passportDataUrl), 'passport.jpg')
   formData.append('selfie', dataUrlToBlob(selfieDataUrl), 'selfie.jpg')
 
-  const res = await fetch(`${AI_BASE_URL}/api/v1/face/verify`, {
+  const res = await fetch('/ai/api/v1/face/verify', {
     method: 'POST',
     body: formData,
   })

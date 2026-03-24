@@ -117,14 +117,27 @@ export default function CarFaceAuthPage() {
     stopCamera()
     setStep('processing')
 
-    // TODO: 임시 완료처리 - AI 복구 후 아래 주석 해제
+
+    verifyFace(licenseImage, selfieData)
+      .then((result) => {
+        if (result.verified) setStep('success')
+        else { setFailMsg('동일인이 아닌 것 같아요. 다시 시도해 주세요.'); setStep('fail') }
+      })
+      .catch((e) => {
+        console.error('[FaceAuth] 인증 실패:', e)
+        setFailMsg(e.message || '인증 중 오류가 발생했어요.')
+        setStep('fail')
+      })
+
+
     setStep('success')
-    // verifyFace(licenseImage, selfieData)
-    //   .then((result) => {
-    //     if (result.verified) setStep('success')
-    //     else { setFailMsg('동일인이 아닌 것 같아요. 다시 시도해 주세요.'); setStep('fail') }
-    //   })
+     verifyFace(licenseImage, selfieData)
+      .then((result) => {
+         if (result.verified) setStep('success')
+        else { setFailMsg('동일인이 아닌 것 같아요. 다시 시도해 주세요.'); setStep('fail') }
+       })
       .catch((e) => { setFailMsg(e.message || '인증 중 오류가 발생했어요.'); setStep('fail') })
+
   }, [livenessComplete]) // eslint-disable-line
 
   // ── 성공 후 localStorage 저장 ─────────────────────────────────

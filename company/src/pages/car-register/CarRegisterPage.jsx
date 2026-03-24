@@ -13,15 +13,19 @@ export default function CarRegisterPage() {
     dailyPrice: '',
     frontImage: null,
     rearImage: null,
-    leftImage: null,
-    rightImage: null
+    frontLeftImage: null,
+    frontRightImage: null,
+    rearLeftImage: null,
+    rearRightImage: null
   })
 
   const [previews, setPreviews] = useState({
     frontImage: null,
     rearImage: null,
-    leftImage: null,
-    rightImage: null
+    frontLeftImage: null,
+    frontRightImage: null,
+    rearLeftImage: null,
+    rearRightImage: null
   })
 
   const [loading, setLoading] = useState(false)
@@ -102,8 +106,10 @@ export default function CarRegisterPage() {
       dailyPrice: formData.dailyPrice,
       frontImage: formData.frontImage,
       rearImage: formData.rearImage,
-      leftImage: formData.leftImage,
-      rightImage: formData.rightImage
+      frontLeftImage: formData.frontLeftImage,
+      frontRightImage: formData.frontRightImage,
+      rearLeftImage: formData.rearLeftImage,
+      rearRightImage: formData.rearRightImage
     })
 
     if (!companyId) {
@@ -129,10 +135,12 @@ export default function CarRegisterPage() {
     if (
       !formData.frontImage ||
       !formData.rearImage ||
-      !formData.leftImage ||
-      !formData.rightImage
+      !formData.frontLeftImage ||
+      !formData.frontRightImage ||
+      !formData.rearLeftImage ||
+      !formData.rearRightImage
     ) {
-      setError('전후좌우 이미지를 모두 업로드해주세요.')
+      setError('모든 방향의 차량 이미지를 업로드해주세요.')
       return
     }
 
@@ -216,9 +224,9 @@ export default function CarRegisterPage() {
           </div>
 
           <div className="form-section">
-            <h2 className="section-title">차량 사진 (4방향) *</h2>
+            <h2 className="section-title">차량 사진 (6방향) *</h2>
             <p className="section-description">
-              차량의 전면, 후면, 좌측, 우측 이미지를 업로드해주세요.
+              차량의 전면, 후면, 전면좌측, 전면우측, 후면좌측, 후면우측 이미지를 업로드해주세요.
             </p>
 
             <div className="image-upload-grid">
@@ -282,14 +290,14 @@ export default function CarRegisterPage() {
 
               <div className="image-upload-item">
                 <label className="image-upload-label">
-                  <span className="upload-title">좌측</span>
-                  {previews.leftImage ? (
+                  <span className="upload-title">전면 좌측</span>
+                  {previews.frontLeftImage ? (
                     <div className="preview-container">
-                      <img src={previews.leftImage} alt="좌측" />
+                      <img src={previews.frontLeftImage} alt="전면 좌측" />
                       <button
                         type="button"
                         className="remove-image"
-                        onClick={() => removeImage('leftImage')}
+                        onClick={() => removeImage('frontLeftImage')}
                       >
                         ✕
                       </button>
@@ -303,7 +311,7 @@ export default function CarRegisterPage() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => handleImageChange(e, 'leftImage')}
+                    onChange={(e) => handleImageChange(e, 'frontLeftImage')}
                     hidden
                   />
                 </label>
@@ -311,14 +319,14 @@ export default function CarRegisterPage() {
 
               <div className="image-upload-item">
                 <label className="image-upload-label">
-                  <span className="upload-title">우측</span>
-                  {previews.rightImage ? (
+                  <span className="upload-title">전면 우측</span>
+                  {previews.frontRightImage ? (
                     <div className="preview-container">
-                      <img src={previews.rightImage} alt="우측" />
+                      <img src={previews.frontRightImage} alt="전면 우측" />
                       <button
                         type="button"
                         className="remove-image"
-                        onClick={() => removeImage('rightImage')}
+                        onClick={() => removeImage('frontRightImage')}
                       >
                         ✕
                       </button>
@@ -332,7 +340,65 @@ export default function CarRegisterPage() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => handleImageChange(e, 'rightImage')}
+                    onChange={(e) => handleImageChange(e, 'frontRightImage')}
+                    hidden
+                  />
+                </label>
+              </div>
+
+              <div className="image-upload-item">
+                <label className="image-upload-label">
+                  <span className="upload-title">후면 좌측</span>
+                  {previews.rearLeftImage ? (
+                    <div className="preview-container">
+                      <img src={previews.rearLeftImage} alt="후면 좌측" />
+                      <button
+                        type="button"
+                        className="remove-image"
+                        onClick={() => removeImage('rearLeftImage')}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="upload-placeholder">
+                      <span className="upload-icon">📷</span>
+                      <span className="upload-text">클릭하여 업로드</span>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageChange(e, 'rearLeftImage')}
+                    hidden
+                  />
+                </label>
+              </div>
+
+              <div className="image-upload-item">
+                <label className="image-upload-label">
+                  <span className="upload-title">후면 우측</span>
+                  {previews.rearRightImage ? (
+                    <div className="preview-container">
+                      <img src={previews.rearRightImage} alt="후면 우측" />
+                      <button
+                        type="button"
+                        className="remove-image"
+                        onClick={() => removeImage('rearRightImage')}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="upload-placeholder">
+                      <span className="upload-icon">📷</span>
+                      <span className="upload-text">클릭하여 업로드</span>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageChange(e, 'rearRightImage')}
                     hidden
                   />
                 </label>

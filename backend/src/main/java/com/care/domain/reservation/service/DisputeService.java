@@ -3,9 +3,12 @@ package com.care.domain.reservation.service;
 import com.care.domain.reservation.controller.dto.request.DisputeCreateRequest;
 import com.care.domain.reservation.controller.dto.request.DisputeDefenseRequest;
 import com.care.domain.reservation.controller.dto.request.DisputeSettleRequest;
+import com.care.domain.reservation.controller.dto.response.DisputeAiAnalysisResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeCreateResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDefenseResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDetailResponse;
+import com.care.domain.reservation.controller.dto.response.DisputeAiAnalysisResponse;
+import com.care.domain.reservation.controller.dto.response.DisputePreviousScratchResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeSettleResponse;
 import com.care.domain.reservation.entity.Dispute;
 import com.care.domain.reservation.entity.DisputeStatus;
@@ -17,11 +20,16 @@ import com.care.domain.reservation.repository.ReservationRepository;
 import com.care.domain.scan.repository.ScratchRepository;
 import com.care.global.blockchain.CareTokenService;
 import com.care.global.blockchain.DisputeSettlementService;
+import com.care.global.ai.AiScratchSimilarityClient;
+import com.care.global.ai.AiScratchSimilarityResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +40,7 @@ public class DisputeService {
 	private final ScratchRepository scratchRepository;
 	private final DisputeSettlementService disputeSettlementService;
 	private final CareTokenService careTokenService;
+	private final AiScratchSimilarityClient aiScratchSimilarityClient;
 
 	@Transactional
 	public DisputeCreateResponse createDispute(String requesterId,
@@ -77,6 +86,67 @@ public class DisputeService {
 		return DisputeDetailResponse.from(dispute);
 	}
 
+	@Transactional(readOnly = true)
+	public List<DisputePreviousScratchResponse> getReservationScratchLogs(String requesterId,
+																			  String reservationId) {
+		Reservation reservation = reservationRepository.findByReservationId(reservationId)
+				.orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
+
+		validateParticipantAccess(requesterId, reservation);
+
+		List<Scratch> beforeScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "BEFORE");
+		List<Scratch> afterScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "AFTER");
+
+		return Stream.concat(beforeScratches.stream(), afterScratches.stream())
+				.filter(scratch -> !scratch.isManual())
+				.map(DisputePreviousScratchResponse::from)
+				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public DisputeAiAnalysisResponse getDisputeAiAnalysis(String requesterId, String disputeId) {
+		Dispute dispute = disputeRepository.findByDisputeId(disputeId)
+				.orElseThrow(() -> new IllegalArgumentException("분쟁을 찾을 수 없습니다: " + disputeId));
+
+		Reservation reservation = dispute.getReservation();
+		validateParticipantAccess(requesterId, reservation);
+
+		String reservationId = reservation.getReservationId();
+		List<Scratch> beforeScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "BEFORE")
+				.stream()
+				.filter(scratch -> !scratch.isManual())
+				.filter(scratch -> scratch.getCropS3Url() != null && !scratch.getCropS3Url().isBlank())
+				.toList();
+		List<Scratch> afterScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "AFTER")
+				.stream()
+				.filter(scratch -> !scratch.isManual())
+				.filter(scratch -> scratch.getCropS3Url() != null && !scratch.getCropS3Url().isBlank())
+				.toList();
+
+		List<DisputeAiAnalysisResponse.ComparisonItem> comparisons = new ArrayList<>();
+		for (Scratch before : beforeScratches) {
+			for (Scratch after : afterScratches) {
+				AiScratchSimilarityResult result = aiScratchSimilarityClient
+						.compareByUrls(before.getCropS3Url(), after.getCropS3Url());
+				comparisons.add(new DisputeAiAnalysisResponse.ComparisonItem(
+						before.getLogId(),
+						after.getLogId(),
+						before.getCropS3Url(),
+						after.getCropS3Url(),
+						result.similarity(),
+						result.diffScore()
+				));
+			}
+		}
+
+		return new DisputeAiAnalysisResponse(
+				dispute.getDisputeId(),
+				reservationId,
+				beforeScratches.size(),
+				afterScratches.size(),
+				comparisons
+		);
+	}
 	@Transactional
 	public DisputeDefenseResponse defendDispute(String requesterId,
 												String reservationId,
@@ -136,27 +206,58 @@ public class DisputeService {
         Dispute dispute = disputeRepository.findByDisputeId(disputeId)
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 분쟁입니다: " + disputeId));
 		Reservation reservation = dispute.getReservation();
-		validateCompanyAccess(requesterId, reservation);
+		validateParticipantAccess(requesterId, reservation);
+
+		if (dispute.getStatusEnum() == DisputeStatus.RESOLVED) {
+			throw new IllegalStateException("이미 정산이 완료된 분쟁입니다.");
+		}
 
 		SettlementStatus targetStatus = SettlementStatus.from(request.getStatus());
 		if (targetStatus == SettlementStatus.PENDING) {
 			throw new IllegalArgumentException("정산 API에서는 PENDING 상태를 사용할 수 없습니다.");
 		}
 
+		long finalAmount = request.getFinalAmount();
+		long maxBurden = reservation.getTotalPrice();
+		if (finalAmount > maxBurden) {
+			throw new IllegalArgumentException("최종 정산 금액은 예약 시 최대부담금을 초과할 수 없습니다.");
+		}
+
+		dispute.validateSettlementProposal(finalAmount, targetStatus);
+		dispute.proposeSettlement(finalAmount, targetStatus);
+
+		String companyId = reservation.getOwnedCar().getCompany().getCompanyId();
+		if (companyId.equals(requesterId)) {
+			dispute.agreeSettlementByCompany();
+		} else {
+			dispute.agreeSettlementByRenter();
+		}
+
+		if (!dispute.isSettlementFullyAgreed()) {
+			return DisputeSettleResponse.of(
+					disputeId,
+					reservation.getReservationId(),
+					finalAmount,
+					SettlementStatus.PENDING.name(),
+					null,
+					null
+			);
+		}
+
 		String settlementRecordTxHash;
 		try {
 			settlementRecordTxHash = disputeSettlementService.recordSettlement(
 					disputeId,
-					request.getFinalAmount()
+					finalAmount
 			);
 		} catch (Exception e) {
 			throw new RuntimeException("온체인 정산 처리에 실패했습니다.", e);
 		}
 
 		String usdcTxHash = settlementRecordTxHash;
-		if (request.getFinalAmount() > 0) {
+		if (finalAmount > 0) {
 			try {
-				usdcTxHash = transferUsdcByStatus(reservation, request.getFinalAmount(), targetStatus);
+				usdcTxHash = transferUsdcByStatus(reservation, finalAmount, targetStatus);
 			} catch (Exception e) {
 				throw new RuntimeException("자동 이체에 실패했습니다.", e);
 			}
@@ -167,7 +268,7 @@ public class DisputeService {
 		return DisputeSettleResponse.of(
 				disputeId,
 				reservation.getReservationId(),
-				request.getFinalAmount(),
+				finalAmount,
 				targetStatus.name(),
 				LocalDateTime.now(),
 				usdcTxHash

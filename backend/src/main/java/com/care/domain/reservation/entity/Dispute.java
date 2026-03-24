@@ -4,6 +4,7 @@ import com.care.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -39,6 +40,21 @@ public class Dispute extends BaseEntity {
     @Column(name = "claim_amount", nullable = false)
     private int claimAmount;
 
+    @Column(name = "settlement_final_amount")
+    private Long settlementFinalAmount;
+
+    @Column(name = "settlement_status", length = 20)
+    private String settlementStatus;
+
+    @Column(name = "company_settlement_agreed", nullable = false)
+    private boolean companySettlementAgreed;
+
+    @Column(name = "renter_settlement_agreed", nullable = false)
+    private boolean renterSettlementAgreed;
+
+    @Column(name = "settlement_agreed_at")
+    private LocalDateTime settlementAgreedAt;
+
     public static Dispute create(Reservation reservation,
                                  Scratch targetScratch,
                                  String reason,
@@ -62,6 +78,8 @@ public class Dispute extends BaseEntity {
         dispute.targetScratch = targetScratch;
         dispute.reason = reason;
         dispute.claimAmount = claimAmount;
+        dispute.companySettlementAgreed = false;
+        dispute.renterSettlementAgreed = false;
         dispute.setStatus(DisputeStatus.OPEN);
         return dispute;
     }
@@ -93,6 +111,45 @@ public class Dispute extends BaseEntity {
             throw new IllegalStateException("현재 상태에서는 해결 처리할 수 없습니다: " + current.name());
         }
         setStatus(DisputeStatus.RESOLVED);
+    }
+
+    public void proposeSettlement(long finalAmount, SettlementStatus settlementStatus) {
+        if (finalAmount < 0) {
+            throw new IllegalArgumentException("최종 정산 금액은 0 이상이어야 합니다.");
+        }
+        if (settlementStatus == null || settlementStatus == SettlementStatus.PENDING) {
+            throw new IllegalArgumentException("정산 상태는 COMPLETED 또는 REFUNDED여야 합니다.");
+        }
+
+        this.settlementFinalAmount = finalAmount;
+        this.settlementStatus = settlementStatus.name();
+    }
+
+    public void validateSettlementProposal(long finalAmount, SettlementStatus settlementStatus) {
+        if (this.settlementFinalAmount == null || this.settlementStatus == null) {
+            return;
+        }
+        if (this.settlementFinalAmount != finalAmount || !this.settlementStatus.equals(settlementStatus.name())) {
+            throw new IllegalArgumentException("이미 다른 정산안으로 합의가 진행 중입니다.");
+        }
+    }
+
+    public void agreeSettlementByCompany() {
+        this.companySettlementAgreed = true;
+        if (isSettlementFullyAgreed()) {
+            this.settlementAgreedAt = LocalDateTime.now();
+        }
+    }
+
+    public void agreeSettlementByRenter() {
+        this.renterSettlementAgreed = true;
+        if (isSettlementFullyAgreed()) {
+            this.settlementAgreedAt = LocalDateTime.now();
+        }
+    }
+
+    public boolean isSettlementFullyAgreed() {
+        return this.companySettlementAgreed && this.renterSettlementAgreed;
     }
 
     private void assertStatus(DisputeStatus expected) {

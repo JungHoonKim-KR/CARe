@@ -3,6 +3,7 @@ package com.care.domain.reservation.controller;
 import com.care.domain.reservation.controller.dto.response.DisputeCreateResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDefenseResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDetailResponse;
+import com.care.domain.reservation.controller.dto.response.DisputePreviousScratchResponse;
 import com.care.domain.reservation.service.DisputeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -117,6 +119,46 @@ class DisputeControllerTest {
                 .andExpect(jsonPath("$.reservationId").value("reservation-1"))
                 .andExpect(jsonPath("$.targetLogId").value("after-log-1"))
                 .andExpect(jsonPath("$.status").value("OPEN"));
+    }
+
+    @Test
+        void 예약_탐지_흠집_로그_조회_API_성공() throws Exception {
+        DisputePreviousScratchResponse item1 = new DisputePreviousScratchResponse(
+                "before-log-1",
+                "BEFORE",
+                "FRONT",
+                10.0f,
+                20.0f,
+                "https://example.com/original1.jpg",
+                "https://example.com/crop1.jpg",
+                "QmCid1",
+                false,
+                false,
+                LocalDateTime.now()
+        );
+        DisputePreviousScratchResponse item2 = new DisputePreviousScratchResponse(
+                "after-log-1",
+                "AFTER",
+                "REAR",
+                15.0f,
+                25.0f,
+                "https://example.com/original2.jpg",
+                "https://example.com/crop2.jpg",
+                "QmCid2",
+                false,
+                false,
+                LocalDateTime.now()
+        );
+
+        given(disputeService.getReservationScratchLogs(nullable(String.class), anyString()))
+                .willReturn(List.of(item1, item2));
+
+        mockMvc.perform(get("/reservations/{reservationId}/disputes/scratch-logs", "reservation-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].logId").value("before-log-1"))
+                .andExpect(jsonPath("$[0].logType").value("BEFORE"))
+                .andExpect(jsonPath("$[1].logId").value("after-log-1"))
+                .andExpect(jsonPath("$[1].logType").value("AFTER"));
     }
 
     @Test

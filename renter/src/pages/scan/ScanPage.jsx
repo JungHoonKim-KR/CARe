@@ -97,12 +97,19 @@ export default function ScanPage() {
     }
   }, [matchStatus])
 
-  // 마운트 시 전체 흠집 조회
+  // 마운트 시 전체 흠집 조회 (BEFORE + AFTER)
   useEffect(() => {
     if (!reservationId) return
-    getScanResult(reservationId, 'BEFORE')
-      .then(data => setAllScratches(Array.isArray(data) ? data : []))
-      .catch(() => setAllScratches([]))
+    Promise.all([
+      getScanResult(reservationId, 'BEFORE').catch(() => []),
+      getScanResult(reservationId, 'AFTER').catch(() => []),
+    ]).then(([before, after]) => {
+      const merged = [
+        ...(Array.isArray(before) ? before : []),
+        ...(Array.isArray(after)  ? after  : []),
+      ]
+      setAllScratches(merged)
+    })
   }, [])
 
   // 폰트 로드
@@ -133,9 +140,22 @@ export default function ScanPage() {
         const video = videoRef.current
         const vw = video?.videoWidth  || 640
         const vh = video?.videoHeight || 360
-        const scale = 640 / Math.max(vw, vh)
-        const capW  = Math.round(vw * scale)
-        const capH  = Math.round(vh * scale)
+        const isPortrait  = window.innerHeight > window.innerWidth
+        const needsRotate = isPortrait && vw > vh
+        let capW, capH
+        if (needsRotate) {
+          const scale = 640 / Math.max(vh, vw)
+          capW = Math.round(vh * scale)
+          capH = Math.round(vw * scale)
+        } else if (isPortrait) {
+          const scale = 640 / vw
+          capW = 640
+          capH = Math.round(vh * scale)
+        } else {
+          const scale = 640 / Math.max(vw, vh)
+          capW = Math.round(vw * scale)
+          capH = Math.round(vh * scale)
+        }
         updateARBoxes(data.boxes, capW, capH)
       }
     }
@@ -149,14 +169,40 @@ export default function ScanPage() {
 
       const vw = video.videoWidth  || 640
       const vh = video.videoHeight || 360
-      const scale  = 640 / Math.max(vw, vh)
-      const capW   = Math.round(vw * scale)
-      const capH   = Math.round(vh * scale)
+      const isPortrait   = window.innerHeight > window.innerWidth
+      const needsRotate  = isPortrait && vw > vh
+
+      // 세로 모드: width를 640 기준으로 → AI가 가로 비율로 받도록
+      // 가로 모드: 긴 쪽을 640 기준으로
+      let capW, capH
+      if (needsRotate) {
+        const scale = 640 / Math.max(vh, vw)
+        capW = Math.round(vh * scale)
+        capH = Math.round(vw * scale)
+      } else if (isPortrait) {
+        // 세로 모드 — width 기준 640으로 키워서 가로 비율처럼 전송
+        const scale = 640 / vw
+        capW = 640
+        capH = Math.round(vh * scale)
+      } else {
+        const scale = 640 / Math.max(vw, vh)
+        capW = Math.round(vw * scale)
+        capH = Math.round(vh * scale)
+      }
 
       const c = document.createElement('canvas')
       c.width  = capW
       c.height = capH
-      c.getContext('2d').drawImage(video, 0, 0, capW, capH)
+      const ctx = c.getContext('2d')
+
+      if (needsRotate) {
+        // 중심 기준 -90도 회전
+        ctx.translate(capW / 2, capH / 2)
+        ctx.rotate(-Math.PI / 2)
+        ctx.drawImage(video, -capH / 2, -capW / 2, capH, capW)
+      } else {
+        ctx.drawImage(video, 0, 0, capW, capH)
+      }
 
       c.toBlob(blob => {
         if (blob && ws.readyState === WebSocket.OPEN) {
@@ -346,11 +392,12 @@ export default function ScanPage() {
                 <span className={styles.summaryZoneCount}>흠집 {boxes.length}개</span>
               </div>
               <div className={styles.summaryZoneScroll}>
-                {boxes.map((box, i) => (
-                  box.cropS3Url
-                    ? <img key={i} src={box.cropS3Url} alt={`흠집 ${i + 1}`} className={styles.summaryCropImg} />
-                    : <div key={i} className={styles.summaryCropImgEmpty} />
-                ))}
+                {boxes.map((box, i) => {
+                  const src = box.cropS3Url || cap?.dataUrl || null
+                  return src
+                    ? <img key={i} src={src} alt={`흠집 ${i + 1}`} className={styles.summaryCropImg} />
+                    : <div key={i} className={styles.summaryCropImgEmpty}><span style={{fontSize:11,color:'#bbb'}}>이미지 없음</span></div>
+                })}
               </div>
             </div>
           )
@@ -435,6 +482,17 @@ export default function ScanPage() {
               <div className={`${styles.plateCorner} ${styles.br}`} />
               <span className={styles.plateHint}>번호판</span>
             </div>
+          </div>
+        )}
+
+        {currentZone.type === 'hood' && matchStatus !== 'captured' && (
+          <div className={`${styles.guideHood} ${matchStatus === 'matched' ? styles.matched : styles.detecting}`}>
+            <div className={styles.hoodBorder} />
+            <div className={`${styles.hoodCorner} ${styles.tl}`} />
+            <div className={`${styles.hoodCorner} ${styles.tr}`} />
+            <div className={`${styles.hoodCorner} ${styles.bl}`} />
+            <div className={`${styles.hoodCorner} ${styles.br}`} />
+            <span className={styles.hoodHint}>{currentZone.label}</span>
           </div>
         )}
 

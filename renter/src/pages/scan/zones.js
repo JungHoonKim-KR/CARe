@@ -22,9 +22,9 @@ export const ZONES = [
   {
     id:          'front',
     name:        'FRONT',
-    label:       '앞범퍼',
-    type:        'plate',
-    instruction: '<strong>번호판</strong>을 가이드 선에 맞춰주세요.<br>인식되면 자동으로 스캔이 시작됩니다.',
+    label:       '보닛',
+    type:        'hood',
+    instruction: '<strong>보닛</strong>이 가이드 안에 들어오도록 맞춰주세요.<br>인식되면 자동으로 스캔이 시작됩니다.',
     icon:        '🚗',
   },
   {

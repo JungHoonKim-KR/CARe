@@ -27,4 +27,13 @@ public class Insurance extends BaseEntity {
     @Column(name = "price", nullable = false)
     private int price;
 
+    public static Insurance create(String insuranceId, Company company, String name, String description, int price) {
+        Insurance ins = new Insurance();
+        ins.insuranceId = insuranceId;
+        ins.company = company;
+        ins.name = name;
+        ins.description = description;
+        ins.price = price;
+        return ins;
+    }
 }

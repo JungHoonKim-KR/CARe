@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { chargeToken } from '../../api/auth'
+import { addTokenHistory } from '../../utils/careToken'
 import './ChargePage.css'
 
 const PRESET_AMOUNTS = [10, 50, 100, 500]
@@ -22,6 +23,7 @@ export default function ChargePage() {
     setLoading(true)
     try {
       const data = await chargeToken(parsed)
+      addTokenHistory({ type: 'charge', amount: parsed, desc: 'CARE 토큰 충전', txHash: data.txHash })
       setResult(data)
     } catch (e) {
       console.error('[Charge] 충전 실패:', e)

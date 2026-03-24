@@ -72,6 +72,24 @@ export const unlockSmartKey = async (reservationId) => {
   return response.data
 }
 
+// 반납 완료 (예약 상태 COMPLETED로 변경)
+export const completeReservation = async (reservationId) => {
+  const response = await api.post(`/api/reservations/${reservationId}/return`)
+  return response.data
+}
+
+// 반납 후 스캔 (zone: front | rear | left | right, imageDataUrl: base64)
+export const scanAfter = async (reservationId, zone, imageDataUrl) => {
+  const formData = new FormData()
+  formData.append('zone', zone)
+  const blob = await fetch(imageDataUrl).then(r => r.blob())
+  formData.append('image', blob, `${zone}.jpg`)
+  const response = await api.post(`/api/scan/${reservationId}/after`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return response.data
+}
+
 // 분쟁 상세 조회
 export const getDisputeDetail = async (reservationId, disputeId) => {
   const response = await api.get(`/api/reservations/${reservationId}/disputes/${disputeId}`)
@@ -79,7 +97,7 @@ export const getDisputeDetail = async (reservationId, disputeId) => {
 }
 
 // 예약 생성
-export const createReservation = async (carId, insuranceId, totalPrice, pickupDate, pickupTime, returnDate, returnTime) => {
+export const createReservation = async (carId, insuranceId, pickupDate, pickupTime, returnDate, returnTime) => {
   const toDateTime = (date, time) => {
     if (!date) return null
     const t = time || '10:00'

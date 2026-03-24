@@ -14,7 +14,6 @@ import com.care.domain.reservation.entity.Reservation;
 import com.care.domain.reservation.entity.Scratch;
 import com.care.domain.reservation.repository.DisputeRepository;
 import com.care.domain.reservation.repository.ReservationRepository;
-import com.care.domain.reservation.repository.SettlementRepository;
 import com.care.domain.renter.entity.Renter;
 import com.care.domain.scan.repository.ScratchRepository;
 import com.care.global.blockchain.CareTokenService;
@@ -49,9 +48,6 @@ class DisputeServiceTest {
 
     @Mock
     private ScratchRepository scratchRepository;
-
-    @Mock
-    private SettlementRepository settlementRepository;
 
     @Mock
     private DisputeSettlementService disputeSettlementService;
@@ -170,7 +166,6 @@ class DisputeServiceTest {
         setField(request, "status", "COMPLETED");
 
         given(disputeRepository.findByDisputeId("dispute-1")).willReturn(Optional.of(dispute));
-        given(settlementRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
         given(disputeSettlementService.recordSettlement(any(), anyLong())).willReturn("0xrecord");
         given(careTokenService.transfer("0xrenter", "0xcompany", 120000d)).willReturn("0xusdc");
 
@@ -195,7 +190,6 @@ class DisputeServiceTest {
         setField(request, "status", "REFUNDED");
 
         given(disputeRepository.findByDisputeId("dispute-2")).willReturn(Optional.of(dispute));
-        given(settlementRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
         given(disputeSettlementService.recordSettlement(any(), anyLong())).willReturn("0xrecord2");
         given(careTokenService.transfer("0xcompany", "0xrenter", 10000d)).willReturn("0xrefund");
 

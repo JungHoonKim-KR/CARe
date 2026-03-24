@@ -10,6 +10,7 @@ import com.care.domain.reservation.controller.dto.response.DisputeDetailResponse
 import com.care.domain.reservation.controller.dto.response.DisputeAiAnalysisResponse;
 import com.care.domain.reservation.controller.dto.response.DisputePreviousScratchResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeSettleResponse;
+import com.care.domain.reservation.controller.dto.response.DisputeSummaryResponse;
 import com.care.domain.reservation.entity.Dispute;
 import com.care.domain.reservation.entity.DisputeStatus;
 import com.care.domain.reservation.entity.Reservation;
@@ -73,6 +74,23 @@ public class DisputeService {
 		targetScratch.markDisputed();
 		Dispute saved = disputeRepository.save(dispute);
 		return DisputeCreateResponse.from(saved);
+	}
+
+	@Transactional(readOnly = true)
+	public List<DisputeSummaryResponse> getCompanyDisputes(String companyId) {
+		return disputeRepository.findByReservation_OwnedCar_Company_CompanyIdOrderByCreatedAtDesc(companyId)
+				.stream()
+				.map(DisputeSummaryResponse::from)
+				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public DisputeDetailResponse getDisputeDetail(String requesterId, String disputeId) {
+		Dispute dispute = disputeRepository.findByDisputeId(disputeId)
+				.orElseThrow(() -> new IllegalArgumentException("분쟁을 찾을 수 없습니다: " + disputeId));
+
+		validateParticipantAccess(requesterId, dispute.getReservation());
+		return DisputeDetailResponse.from(dispute);
 	}
 
 	@Transactional(readOnly = true)

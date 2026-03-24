@@ -26,3 +26,26 @@ export async function callFaucet(privateKey, toAddress) {
   await tx.wait()
   return tx
 }
+
+// ── 토큰 사용 내역 (localStorage) ──────────────────────────────
+const HISTORY_KEY = 'care_token_history'
+
+export function addTokenHistory({ type, amount, desc, txHash }) {
+  const prev = getTokenHistory()
+  const entry = {
+    type,       // 'charge' | 'payment'
+    amount,
+    desc,
+    txHash: txHash || null,
+    date: new Date().toISOString(),
+  }
+  localStorage.setItem(HISTORY_KEY, JSON.stringify([entry, ...prev]))
+}
+
+export function getTokenHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')
+  } catch {
+    return []
+  }
+}

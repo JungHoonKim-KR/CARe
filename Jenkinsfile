@@ -80,7 +80,7 @@ pipeline {
                     def renterChanged       = changes.any { it.startsWith('renter/') }
                     def companyChanged      = changes.any { it.startsWith('company/') }
                     def nginxConfChanged    = changes.any { it.startsWith('infra/nginx/') }
-                    def aiFaceChanged       = changes.any { it.startsWith('ai-verify/') }
+                    def aiFaceChanged       = changes.any { it.startsWith('ai/') }
 
                     // Jenkinsfile 변경 시 전체 빌드
                     env.BUILD_BACKEND  = (jenkinsfileChanged || backendChanged)  ? 'true' : 'false'
@@ -92,7 +92,7 @@ pipeline {
                     if (!jenkinsfileChanged && !backendChanged && !renterChanged && !companyChanged && !nginxConfChanged && !aiFaceChanged) {
                         echo "No relevant changes detected. Skipping deployment."
                         currentBuild.result = 'NOT_BUILT'
-                        error("No changes detected in backend, renter, company, nginx, or ai-verify")
+                        error("No changes detected in backend, renter, company, nginx, or ai")
                     }
 
                     echo "Build Triggered - Backend: ${env.BUILD_BACKEND}, Renter: ${env.BUILD_RENTER}, Company: ${env.BUILD_COMPANY}, Nginx: ${env.BUILD_NGINX_CONF}, AI-Face: ${env.BUILD_AI_VERIFY}"
@@ -320,7 +320,7 @@ pipeline {
                             cp ${AI_FACE_ENV_PATH} /home/ubuntu/ai-verify/.env
 
                             echo "Building AI-Face Docker image..."
-                            docker build -t ${AI_VERIFY_IMAGE} ai-verify/
+                            docker build -t ${AI_VERIFY_IMAGE} ai/
 
                             echo "Restarting ai-verify container..."
                             docker stop ${AI_VERIFY_CONTAINER} 2>/dev/null || true

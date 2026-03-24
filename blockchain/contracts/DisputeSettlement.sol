@@ -12,11 +12,34 @@ contract DisputeSettlement is Ownable {
         address recordedBy;
     }
 
+    struct SettlementAgreement {
+        address company;
+        address renter;
+        uint256 finalAmount;
+        bool companyAgreed;
+        bool renterAgreed;
+        bool initialized;
+    }
+
     mapping(bytes32 => Settlement) private settlements;
+    mapping(bytes32 => SettlementAgreement) private agreements;
     mapping(bytes32 => bool) private settled;
     mapping(address => bool) public settlementOperators;
 
     event SettlementOperatorUpdated(address indexed operator, bool allowed);
+    event SettlementAgreementInitialized(
+        bytes32 indexed settlementKey,
+        address indexed company,
+        address indexed renter,
+        uint256 finalAmount,
+        address initializedBy
+    );
+    event SettlementAgreed(
+        bytes32 indexed settlementKey,
+        address indexed participant,
+        bool companyAgreed,
+        bool renterAgreed
+    );
     event SettlementRecorded(
         bytes32 indexed settlementKey,
         uint256 finalAmount,
@@ -28,6 +51,13 @@ contract DisputeSettlement is Ownable {
     error InvalidOperatorAddress();
     error InvalidSettlementKey();
     error AlreadySettled(bytes32 settlementKey);
+    error AgreementAlreadyInitialized(bytes32 settlementKey);
+    error AgreementNotInitialized(bytes32 settlementKey);
+    error InvalidParticipantAddress();
+    error NotSettlementParticipant();
+    error AlreadyAgreed();
+    error SettlementAmountMismatch(uint256 expected, uint256 provided);
+    error SettlementConsentIncomplete(bytes32 settlementKey);
 
     modifier onlySettlementOperator() {
         if (msg.sender != owner() && !settlementOperators[msg.sender]) {
@@ -53,6 +83,71 @@ contract DisputeSettlement is Ownable {
     }
 
     /// @notice 정산 결과(finalAmount)를 settlementKey 기준으로 1회만 기록합니다.
+    function initializeSettlementAgreement(
+        bytes32 settlementKey,
+        address company,
+        address renter,
+        uint256 finalAmount
+    ) external onlySettlementOperator {
+        if (settlementKey == bytes32(0)) {
+            revert InvalidSettlementKey();
+        }
+        if (company == address(0) || renter == address(0)) {
+            revert InvalidParticipantAddress();
+        }
+        if (agreements[settlementKey].initialized) {
+            revert AgreementAlreadyInitialized(settlementKey);
+        }
+
+        agreements[settlementKey] = SettlementAgreement({
+            company: company,
+            renter: renter,
+            finalAmount: finalAmount,
+            companyAgreed: false,
+            renterAgreed: false,
+            initialized: true
+        });
+
+        emit SettlementAgreementInitialized(
+            settlementKey,
+            company,
+            renter,
+            finalAmount,
+            msg.sender
+        );
+    }
+
+    /// @notice 업체/렌터가 settlementKey 정산안에 동의합니다.
+    function agreeSettlement(bytes32 settlementKey) external {
+        SettlementAgreement storage agreement = agreements[settlementKey];
+
+        if (!agreement.initialized) {
+            revert AgreementNotInitialized(settlementKey);
+        }
+
+        if (msg.sender == agreement.company) {
+            if (agreement.companyAgreed) {
+                revert AlreadyAgreed();
+            }
+            agreement.companyAgreed = true;
+        } else if (msg.sender == agreement.renter) {
+            if (agreement.renterAgreed) {
+                revert AlreadyAgreed();
+            }
+            agreement.renterAgreed = true;
+        } else {
+            revert NotSettlementParticipant();
+        }
+
+        emit SettlementAgreed(
+            settlementKey,
+            msg.sender,
+            agreement.companyAgreed,
+            agreement.renterAgreed
+        );
+    }
+
+    /// @notice 정산 결과(finalAmount)를 settlementKey 기준으로 1회만 기록합니다.
     function recordSettlement(
         bytes32 settlementKey,
         uint256 finalAmount
@@ -62,6 +157,17 @@ contract DisputeSettlement is Ownable {
         }
         if (settled[settlementKey]) {
             revert AlreadySettled(settlementKey);
+        }
+
+        SettlementAgreement memory agreement = agreements[settlementKey];
+        if (!agreement.initialized) {
+            revert AgreementNotInitialized(settlementKey);
+        }
+        if (!(agreement.companyAgreed && agreement.renterAgreed)) {
+            revert SettlementConsentIncomplete(settlementKey);
+        }
+        if (agreement.finalAmount != finalAmount) {
+            revert SettlementAmountMismatch(agreement.finalAmount, finalAmount);
         }
 
         settlements[settlementKey] = Settlement({
@@ -85,5 +191,9 @@ contract DisputeSettlement is Ownable {
 
     function getSettlement(bytes32 settlementKey) external view returns (Settlement memory) {
         return settlements[settlementKey];
+    }
+
+    function getSettlementAgreement(bytes32 settlementKey) external view returns (SettlementAgreement memory) {
+        return agreements[settlementKey];
     }
 }

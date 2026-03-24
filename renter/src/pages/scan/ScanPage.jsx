@@ -25,17 +25,21 @@ export default function ScanPage() {
   const arCanvasRef = useRef(null)
   const wsRef       = useRef(null)
 
-  const [zoneIndex,    setZoneIndex]    = useState(0)
-  const [captures,     setCaptures]     = useState({})
-  const [isDone,       setIsDone]       = useState(false)
-  const [matchStatus,  setMatchStatus]  = useState('detecting')
-  const [matchValue,   setMatchValue]   = useState(0)
-  const [showToast,    setShowToast]    = useState(false)
-  const [canCapture,   setCanCapture]   = useState(false)
-  const [isCapturing,  setIsCapturing]  = useState(false)
-  const [allScratches, setAllScratches] = useState([])
-  const [activeCard,   setActiveCard]   = useState(null)
-  const [debugLog,     setDebugLog]     = useState('')  // ✅ 모바일 디버그용
+  const [zoneIndex,       setZoneIndex]       = useState(0)
+  const [captures,        setCaptures]        = useState({})
+  const [isDone,          setIsDone]          = useState(false)
+  const [matchStatus,     setMatchStatus]     = useState('detecting')
+  const [matchValue,      setMatchValue]      = useState(0)
+  const [showToast,       setShowToast]       = useState(false)
+  const [canCapture,      setCanCapture]      = useState(false)
+  const [isCapturing,     setIsCapturing]     = useState(false)
+  const [allScratches,    setAllScratches]    = useState([])
+  const [activeCard,      setActiveCard]      = useState(null)
+  const [debugLog,        setDebugLog]        = useState('')
+  // ── 가이드 멘트 오버레이
+  const [showGuideOverlay,  setShowGuideOverlay]  = useState(false)
+  const [overlayHidden,     setOverlayHidden]     = useState(false)
+  const [showScanStartToast, setShowScanStartToast] = useState(false)
 
   const currentZone = ZONES[zoneIndex]
   const history     = allScratches.filter(s => s.carPart === currentZone?.id)
@@ -45,6 +49,52 @@ export default function ScanPage() {
   const matchStatusRef = useRef(matchStatus)
   useEffect(() => { matchStatusRef.current = matchStatus }, [matchStatus])
   useEffect(() => { setActiveCard(null) }, [zoneIndex])
+
+  // 구역 변경 시 가이드 오버레이 초기화
+  const overlayVisibleRef = useRef(false)
+  const overlayShownAtRef = useRef(0)          // 오버레이가 실제로 뜬 시각
+  const OVERLAY_MIN_SHOW  =1500               // 최소 3초는 유지
+
+  useEffect(() => {
+    if (currentZone?.type === 'wheel') {
+      setOverlayHidden(false)
+      setShowGuideOverlay(false)
+      setShowScanStartToast(false)
+      overlayVisibleRef.current = false
+      overlayShownAtRef.current = 0
+      const t = setTimeout(() => {
+        setShowGuideOverlay(true)
+        overlayVisibleRef.current = true
+        overlayShownAtRef.current = Date.now()
+      }, 150)
+      return () => clearTimeout(t)
+    } else {
+      setShowGuideOverlay(false)
+      overlayVisibleRef.current = false
+    }
+  }, [zoneIndex])
+
+  // matchValue > 5 이면 오버레이 페이드아웃 — 단 최소 유지 시간 지난 후에만
+  useEffect(() => {
+    if (matchValue > 5 && overlayVisibleRef.current) {
+      const elapsed = Date.now() - overlayShownAtRef.current
+      const delay   = Math.max(0, OVERLAY_MIN_SHOW - elapsed)
+      setTimeout(() => {
+        if (!overlayVisibleRef.current) return
+        overlayVisibleRef.current = false
+        setOverlayHidden(true)
+        setTimeout(() => setShowGuideOverlay(false), 650)
+      }, delay)
+    }
+  }, [matchValue])
+
+  // matched 되면 "흠집 탐지 시작!" 토스트
+  useEffect(() => {
+    if (matchStatus === 'matched') {
+      setShowScanStartToast(true)
+      setTimeout(() => setShowScanStartToast(false), 1800)
+    }
+  }, [matchStatus])
 
   // 마운트 시 전체 흠집 조회
   useEffect(() => {
@@ -86,8 +136,6 @@ export default function ScanPage() {
         const scale = 640 / Math.max(vw, vh)
         const capW  = Math.round(vw * scale)
         const capH  = Math.round(vh * scale)
-
-        // ✅ 실제 캡처 해상도 기준으로 스케일 변환
         updateARBoxes(data.boxes, capW, capH)
       }
     }
@@ -99,11 +147,8 @@ export default function ScanPage() {
       const video = videoRef.current, ws = wsRef.current
       if (!video || !ws || ws.readyState !== WebSocket.OPEN) return
 
-      // ✅ 비디오 실제 비율 유지
       const vw = video.videoWidth  || 640
       const vh = video.videoHeight || 360
-
-      // 긴 쪽을 640 기준으로 스케일
       const scale  = 640 / Math.max(vw, vh)
       const capW   = Math.round(vw * scale)
       const capH   = Math.round(vh * scale)
@@ -140,7 +185,6 @@ export default function ScanPage() {
         if (!video) return
         video.srcObject = s
 
-        // ✅ onloadedmetadata: play만 (모바일은 이 시점에 videoWidth=0일 수 있음)
         video.onloadedmetadata = () => {
           const msg = `meta:${video.videoWidth}x${video.videoHeight} ready:${video.readyState}`
           console.log('📱', msg)
@@ -148,7 +192,6 @@ export default function ScanPage() {
           if (!cancelled) video.play().catch(() => {})
         }
 
-        // ✅ onloadeddata: 실제 프레임 나온 후 AR 시작 — 모바일 핵심 수정
         video.onloadeddata = () => {
           const msg = `data:${video.videoWidth}x${video.videoHeight}`
           console.log('📱', msg)
@@ -185,13 +228,9 @@ export default function ScanPage() {
     scanner.onCapture = (zoneId, dataUrl, boxes) => {
       setCaptures(prev => ({ ...prev, [zoneId]: { dataUrl, boxes } }))
       setMatchStatus('captured'); setCanCapture(false); setIsCapturing(false)
-      // scanner.onCapture 안에 추가
-      if (boxes.length > 0 && navigator.vibrate) {
-        navigator.vibrate(200)  // ✅ 흠집 발견 시 진동
-      }
+      if (boxes.length > 0 && navigator.vibrate) navigator.vibrate(200)
       stopARLoop()
       clearOverlay(arCanvasRef.current)
-      if (canvasRef.current && videoRef.current)
       if (boxes.length > 0) { setShowToast(true); setTimeout(() => setShowToast(false), 2000) }
     }
     scanner.setZone(currentZone)
@@ -242,6 +281,21 @@ export default function ScanPage() {
     if (matchStatus === 'matched')
       return `<strong style="color:#F7A633">촬영 버튼</strong>을 눌러 흠집을 저장하세요.`
     return currentZone.instruction
+  }
+
+  // wheelPosition 기반 위치 클래스 결정
+  function getWheelPositionClass() {
+    const pos = currentZone.wheelPosition
+    if (pos === 'bottom-left')  return styles.wheelBottomLeft
+    if (pos === 'bottom-right') return styles.wheelBottomRight
+    // 폴백 — wheelSide
+    return currentZone.wheelSide === 'left' ? styles.left : styles.right
+  }
+
+  // 화살표 방향 (가이드 오버레이에서 바퀴 위치 가리킴)
+  function getArrowDirection() {
+    const pos = currentZone.wheelPosition || (currentZone.wheelSide === 'left' ? 'bottom-right' : 'bottom-left')
+    return pos === 'bottom-left' ? 'Left' : 'Right'
   }
 
   // ── 완료 화면
@@ -301,11 +355,13 @@ export default function ScanPage() {
     </div>
   )
 
+  const arrowDir = getArrowDirection()
+
   // ── 스캔 화면
   return (
     <div className={styles.page}>
 
-      {/* ✅ 모바일 디버그 오버레이 — 확인 후 제거 */}
+      {/* 모바일 디버그 오버레이 — 확인 후 제거 */}
       {debugLog ? (
         <div style={{
           position: 'fixed', top: 0, left: 0, zIndex: 9999,
@@ -332,6 +388,41 @@ export default function ScanPage() {
           ✓ 흠집이 저장되었습니다
         </div>
 
+        {/* ── 바퀴 가이드 멘트 오버레이 */}
+        {currentZone.type === 'wheel' && showGuideOverlay && (
+          <div className={`${styles.guideOverlay} ${overlayHidden ? styles.hidden : ''}`}>
+            <div className={styles.guideOverlayInner}>
+
+              {/* 바퀴 아이콘 */}
+              <div className={styles.guideOverlayIcon}>
+                <svg className={styles.guideOverlayIconSvg} viewBox="0 0 40 40" fill="none">
+                  <circle cx="20" cy="20" r="17" stroke="rgba(247,166,51,0.9)" strokeWidth="2"/>
+                  <circle cx="20" cy="20" r="6"  stroke="rgba(247,166,51,0.9)" strokeWidth="1.5"/>
+                  <line x1="20" y1="3"  x2="20" y2="37" stroke="rgba(247,166,51,0.5)" strokeWidth="1"/>
+                  <line x1="3"  y1="20" x2="37" y2="20" stroke="rgba(247,166,51,0.5)" strokeWidth="1"/>
+                  <line x1="7"  y1="7"  x2="33" y2="33" stroke="rgba(247,166,51,0.3)" strokeWidth="1"/>
+                  <line x1="33" y1="7"  x2="7"  y2="33" stroke="rgba(247,166,51,0.3)" strokeWidth="1"/>
+                </svg>
+              </div>
+
+              <div className={styles.guideOverlayTitle}>{currentZone.label}를<br/>가이드에 맞춰주세요</div>
+              <div className={styles.guideOverlaySubtitle}>원형 가이드 안에 바퀴를 위치시키면<br/>자동으로 흠집 탐지가 시작됩니다</div>
+
+              {/* 방향 화살표 */}
+              <div className={`${styles.guideOverlayArrow} ${styles[`guideOverlayArrow${arrowDir}`]}`}>
+                <div className={styles.guideOverlayArrowLine} />
+                <div className={styles.guideOverlayArrowHead} />
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* 흠집 탐지 시작 토스트 */}
+        <div className={`${styles.scanStartToast} ${showScanStartToast ? styles.visible : ''}`}>
+          🔍 흠집 탐지 시작
+        </div>
+
         {currentZone.type === 'plate' && matchStatus !== 'captured' && (
           <div className={`${styles.guidePlate} ${styles[matchStatus] || styles.detecting}`}>
             <div className={styles.guidePlateInner}>
@@ -345,24 +436,18 @@ export default function ScanPage() {
         )}
 
         {currentZone.type === 'wheel' && matchStatus !== 'captured' && (
-          <>
-            {currentZone.wheelSide === 'left' && (
-              <div className={`${styles.guideWheel} ${styles.left} ${styles[matchStatus] || styles.detecting}`}>
-                <div className={styles.wheelCircle}><div className={styles.wheelHub} /></div>
-                <div className={styles.wheelProgress} ref={wheelLRef}>
-                  <svg viewBox="0 0 96 96"><circle cx="48" cy="48" r="44" /></svg>
-                </div>
-              </div>
-            )}
-            {currentZone.wheelSide === 'right' && (
-              <div className={`${styles.guideWheel} ${styles.right} ${styles[matchStatus] || styles.detecting}`}>
-                <div className={styles.wheelCircle}><div className={styles.wheelHub} /></div>
-                <div className={styles.wheelProgress} ref={wheelRRef}>
-                  <svg viewBox="0 0 96 96"><circle cx="48" cy="48" r="44" /></svg>
-                </div>
-              </div>
-            )}
-          </>
+          <div className={`${styles.guideWheel} ${getWheelPositionClass()} ${styles[matchStatus] || styles.detecting}`}>
+            <div className={styles.wheelCircle}>
+              <div className={styles.wheelSpokes} />
+              <div className={styles.wheelHub} />
+            </div>
+            <div
+              className={styles.wheelProgress}
+              ref={currentZone.wheelSide === 'left' ? wheelLRef : wheelRRef}
+            >
+              <svg viewBox="0 0 96 96"><circle cx="48" cy="48" r="44" /></svg>
+            </div>
+          </div>
         )}
 
         <div className={styles.stepbar}>

@@ -329,14 +329,44 @@ public class DisputeService {
 			throw new IllegalArgumentException("최종 정산 금액은 예약 시 최대부담금을 초과할 수 없습니다.");
 		}
 
+		String companyWallet = reservation.getOwnedCar().getCompany().getWalletAddress();
+		String renterWallet = reservation.getRenter().getWalletAddress();
+		validateSettlementWallets(companyWallet, renterWallet);
+
 		dispute.validateSettlementProposal(finalAmount, targetStatus);
 		dispute.proposeSettlement(finalAmount, targetStatus);
 
 		String companyId = reservation.getOwnedCar().getCompany().getCompanyId();
-		if (companyId.equals(requesterId)) {
-			dispute.agreeSettlementByCompany();
-		} else {
-			dispute.agreeSettlementByRenter();
+		boolean requesterIsCompany = companyId.equals(requesterId);
+		boolean hadAnyAgreementBefore = dispute.isCompanySettlementAgreed() || dispute.isRenterSettlementAgreed();
+		boolean alreadyAgreedByRequester = requesterIsCompany
+				? dispute.isCompanySettlementAgreed()
+				: dispute.isRenterSettlementAgreed();
+
+		if (!alreadyAgreedByRequester) {
+			if (requesterIsCompany) {
+				dispute.agreeSettlementByCompany();
+			} else {
+				dispute.agreeSettlementByRenter();
+			}
+
+			try {
+				if (!hadAnyAgreementBefore) {
+					disputeSettlementService.initializeSettlementAgreement(
+							disputeId,
+							companyWallet,
+							renterWallet,
+							finalAmount
+					);
+				}
+
+				disputeSettlementService.agreeSettlementByOperator(
+						disputeId,
+						requesterIsCompany ? companyWallet : renterWallet
+				);
+			} catch (Exception e) {
+				throw new RuntimeException("온체인 합의 반영에 실패했습니다.", e);
+			}
 		}
 
 		if (!dispute.isSettlementFullyAgreed()) {
@@ -384,13 +414,7 @@ public class DisputeService {
 	private String transferUsdcByStatus(Reservation reservation, long finalAmount, SettlementStatus targetStatus) throws Exception {
 		String renterWallet = reservation.getRenter().getWalletAddress();
 		String companyWallet = reservation.getOwnedCar().getCompany().getWalletAddress();
-
-		if (renterWallet == null || renterWallet.isBlank()) {
-			throw new IllegalArgumentException("임차인 지갑 주소가 없습니다.");
-		}
-		if (companyWallet == null || companyWallet.isBlank()) {
-			throw new IllegalArgumentException("임대인 지갑 주소가 없습니다.");
-		}
+		validateSettlementWallets(companyWallet, renterWallet);
 
 		double amount = (double) finalAmount;
 		if (targetStatus == SettlementStatus.COMPLETED) {
@@ -401,5 +425,14 @@ public class DisputeService {
 		}
 
 		throw new IllegalArgumentException("지원하지 않는 정산 상태입니다: " + targetStatus.name());
+	}
+
+	private void validateSettlementWallets(String companyWallet, String renterWallet) {
+		if (renterWallet == null || renterWallet.isBlank()) {
+			throw new IllegalArgumentException("임차인 지갑 주소가 없습니다.");
+		}
+		if (companyWallet == null || companyWallet.isBlank()) {
+			throw new IllegalArgumentException("임대인 지갑 주소가 없습니다.");
+		}
 	}
 }

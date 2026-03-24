@@ -41,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
@@ -317,6 +318,8 @@ class DisputeServiceTest {
         assertThat(second.finalAmount()).isEqualTo(100000L);
         assertThat(second.status()).isEqualTo("COMPLETED");
         assertThat(second.txHash()).isEqualTo("0xusdc");
+        verify(disputeSettlementService, times(1)).initializeSettlementAgreement(anyString(), anyString(), anyString(), anyLong());
+        verify(disputeSettlementService, times(2)).agreeSettlementByOperator(anyString(), anyString());
         verify(disputeSettlementService).recordSettlement(any(), anyLong());
         verify(careTokenService).transfer("0xrenter", "0xcompany", 100000d);
         verify(targetScratch).clearDisputed();
@@ -342,6 +345,8 @@ class DisputeServiceTest {
         assertThat(first.status()).isEqualTo("PENDING");
         assertThat(second.status()).isEqualTo("REFUNDED");
         assertThat(second.txHash()).isEqualTo("0xrefund");
+        verify(disputeSettlementService, times(1)).initializeSettlementAgreement(anyString(), anyString(), anyString(), anyLong());
+        verify(disputeSettlementService, times(2)).agreeSettlementByOperator(anyString(), anyString());
         verify(careTokenService).transfer("0xcompany", "0xrenter", 10000d);
     }
 
@@ -366,6 +371,8 @@ class DisputeServiceTest {
         assertThat(second.status()).isEqualTo("COMPLETED");
         assertThat(second.finalAmount()).isEqualTo(70000L);
         assertThat(second.txHash()).isEqualTo("0xusdc-legacy");
+        verify(disputeSettlementService, times(1)).initializeSettlementAgreement(anyString(), anyString(), anyString(), anyLong());
+        verify(disputeSettlementService, times(2)).agreeSettlementByOperator(anyString(), anyString());
         verify(careTokenService).transfer("0xrenter", "0xcompany", 70000d);
     }
 

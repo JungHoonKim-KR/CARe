@@ -41,7 +41,13 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
-        changeOrigin: true }
+        changeOrigin: true
+      },
+      '/ai': {
+        target: 'https://j14e201.p.ssafy.io',
+        changeOrigin: true,
+        secure: false
+      }
     }
   }
 })

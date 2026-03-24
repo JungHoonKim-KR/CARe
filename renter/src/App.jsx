@@ -33,6 +33,7 @@ import DisputeHistoryPage from './pages/dispute/DisputeHistoryPage'
 import ReservationListPage from './pages/reservations/ReservationListPage'
 import ReturnGuidePage from './pages/car-return/ReturnGuidePage'
 import CarReturnPage from './pages/car-return/CarReturnPage'
+import CarCrackPage from './pages/car-crack/CarCrackPage'
 
 function App() {
   return (
@@ -72,6 +73,7 @@ function App() {
           <Route path="/reservations" element={<ReservationListPage />} />
           <Route path="/return-guide" element={<ReturnGuidePage />} />
           <Route path="/car-return" element={<CarReturnPage />} />
+          <Route path="/car-crack" element={<CarCrackPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

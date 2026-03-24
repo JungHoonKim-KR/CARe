@@ -15,22 +15,27 @@ export async function getCareBalance(address) {
   const provider = new JsonRpcProvider(RPC_URL)
   const contract = new Contract(CARE_TOKEN_ADDRESS, ABI, provider)
   const raw = await contract.balanceOf(address)
-  return (Number(raw) / 1_000_000).toFixed(2) // decimals = 6
+  return Number(raw).toLocaleString()
+
 }
 
 export async function callFaucet(privateKey, toAddress) {
   const provider = new JsonRpcProvider(RPC_URL)
   const signer = new Wallet(privateKey, provider)
   const contract = new Contract(CARE_TOKEN_ADDRESS, ABI, signer)
-  const tx = await contract.faucet(toAddress, BigInt(FAUCET_AMOUNT) * 1_000_000n)
+  const tx = await contract.faucet(toAddress, BigInt(FAUCET_AMOUNT))
   await tx.wait()
   return tx
 }
 
-// ── 토큰 사용 내역 (localStorage) ──────────────────────────────
-const HISTORY_KEY = 'care_token_history'
+// ── 토큰 사용 내역 (localStorage, 계정별) ──────────────────────
+function getHistoryKey() {
+  const email = localStorage.getItem('userEmail') || 'default'
+  return `care_token_history_${email}`
+}
 
 export function addTokenHistory({ type, amount, desc, txHash }) {
+  const key = getHistoryKey()
   const prev = getTokenHistory()
   const entry = {
     type,       // 'charge' | 'payment'
@@ -39,12 +44,13 @@ export function addTokenHistory({ type, amount, desc, txHash }) {
     txHash: txHash || null,
     date: new Date().toISOString(),
   }
-  localStorage.setItem(HISTORY_KEY, JSON.stringify([entry, ...prev]))
+  localStorage.setItem(key, JSON.stringify([entry, ...prev]))
 }
 
 export function getTokenHistory() {
   try {
-    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')
+    const key = getHistoryKey()
+    return JSON.parse(localStorage.getItem(key) || '[]')
   } catch {
     return []
   }

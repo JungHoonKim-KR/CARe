@@ -80,7 +80,7 @@ pipeline {
                     def renterChanged       = changes.any { it.startsWith('renter/') }
                     def companyChanged      = changes.any { it.startsWith('company/') }
                     def nginxConfChanged    = changes.any { it.startsWith('infra/nginx/') }
-                    def aiFaceChanged       = changes.any { it.startsWith('ai-verify/') }
+                    def aiFaceChanged       = changes.any { it.startsWith('ai/') }
 
                     // Jenkinsfile 변경 시 전체 빌드
                     env.BUILD_BACKEND  = (jenkinsfileChanged || backendChanged)  ? 'true' : 'false'
@@ -92,7 +92,7 @@ pipeline {
                     if (!jenkinsfileChanged && !backendChanged && !renterChanged && !companyChanged && !nginxConfChanged && !aiFaceChanged) {
                         echo "No relevant changes detected. Skipping deployment."
                         currentBuild.result = 'NOT_BUILT'
-                        error("No changes detected in backend, renter, company, nginx, or ai-verify")
+                        error("No changes detected in backend, renter, company, nginx, or ai")
                     }
 
                     echo "Build Triggered - Backend: ${env.BUILD_BACKEND}, Renter: ${env.BUILD_RENTER}, Company: ${env.BUILD_COMPANY}, Nginx: ${env.BUILD_NGINX_CONF}, AI-Face: ${env.BUILD_AI_VERIFY}"
@@ -179,6 +179,7 @@ pipeline {
                                     --network ${DOCKER_NETWORK} \
                                     --restart unless-stopped \
                                     --env-file ${SECRET_ENV_PATH} \
+                                    -e TZ=Asia/Seoul \
                                     ${BACKEND_IMAGE}
 
                                 echo "Waiting for backend-$TARGET_COLOR to be healthy..."
@@ -259,40 +260,45 @@ pipeline {
                 expression { env.BUILD_COMPANY == 'true' }
             }
             steps {
-                sh '''
-                    set -euo pipefail
-                    echo "=== Company Blue-Green Deployment ==="
+                withCredentials([file(credentialsId: 'renter-env-file', variable: 'RENTER_ENV_FILE')]) {
+                    sh '''
+                        set -euo pipefail
+                        echo "=== Company Blue-Green Deployment ==="
 
-                    # 디렉토리 초기화 (최초 실행 시)
-                    mkdir -p /home/ubuntu/company/dist-blue
-                    mkdir -p /home/ubuntu/company/dist-green
+                        # .env.production 주입
+                        cp "$RENTER_ENV_FILE" company/.env.production
 
-                    # 현재 활성 색상 확인 (없으면 blue가 기본)
-                    CURRENT_COLOR=$(cat /home/ubuntu/company/active_color 2>/dev/null || echo "blue")
+                        # 디렉토리 초기화 (최초 실행 시)
+                        mkdir -p /home/ubuntu/company/dist-blue
+                        mkdir -p /home/ubuntu/company/dist-green
 
-                    # 배포 대상 색상 결정 (토글)
-                    if [ "$CURRENT_COLOR" = "blue" ]; then
-                        TARGET_COLOR="green"
-                    else
-                        TARGET_COLOR="blue"
-                    fi
+                        # 현재 활성 색상 확인 (없으면 blue가 기본)
+                        CURRENT_COLOR=$(cat /home/ubuntu/company/active_color 2>/dev/null || echo "blue")
 
-                    echo "Company: $CURRENT_COLOR -> $TARGET_COLOR"
+                        # 배포 대상 색상 결정 (토글)
+                        if [ "$CURRENT_COLOR" = "blue" ]; then
+                            TARGET_COLOR="green"
+                        else
+                            TARGET_COLOR="blue"
+                        fi
 
-                    # 1. React 빌드
-                    echo "Building Company application..."
-                    docker build --no-cache -t company-builder -f company/Dockerfile .
+                        echo "Company: $CURRENT_COLOR -> $TARGET_COLOR"
 
-                    # 2. 빌드 결과물을 대상 디렉토리에 복사
-                    echo "Copying build output to dist-$TARGET_COLOR..."
-                    rm -rf /home/ubuntu/company/dist-$TARGET_COLOR/*
-                    docker run --rm -v /home/ubuntu/company/dist-$TARGET_COLOR:/output company-builder sh -c "cp -r /tmp/dist/* /output/"
+                        # 1. React 빌드
+                        echo "Building Company application..."
+                        docker build --no-cache -t company-builder -f company/Dockerfile .
 
-                    # 3. 활성 색상 업데이트
-                    echo "$TARGET_COLOR" > /home/ubuntu/company/active_color
+                        # 2. 빌드 결과물을 대상 디렉토리에 복사
+                        echo "Copying build output to dist-$TARGET_COLOR..."
+                        rm -rf /home/ubuntu/company/dist-$TARGET_COLOR/*
+                        docker run --rm -v /home/ubuntu/company/dist-$TARGET_COLOR:/output company-builder sh -c "cp -r /tmp/dist/* /output/"
 
-                    echo "=== Company deployed to $TARGET_COLOR ==="
-                '''
+                        # 3. 활성 색상 업데이트
+                        echo "$TARGET_COLOR" > /home/ubuntu/company/active_color
+
+                        echo "=== Company deployed to $TARGET_COLOR ==="
+                    '''
+                }
             }
         }
 
@@ -314,7 +320,7 @@ pipeline {
                             cp ${AI_FACE_ENV_PATH} /home/ubuntu/ai-verify/.env
 
                             echo "Building AI-Face Docker image..."
-                            docker build -t ${AI_VERIFY_IMAGE} ai-verify/
+                            docker build -t ${AI_VERIFY_IMAGE} ai/
 
                             echo "Restarting ai-verify container..."
                             docker stop ${AI_VERIFY_CONTAINER} 2>/dev/null || true

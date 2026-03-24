@@ -120,3 +120,18 @@ export const submitDefense = async (reservationId, disputeId, defenseLogId) => {
   )
   return response.data
 }
+
+export const lockSmartKey = async (reservationId) => {
+  const response = await api.post(`/api/reservations/${reservationId}/smart-key/lock`)
+  return response.data
+}
+
+export const getSmartKeyStatus = async (reservationId) => {
+  const response = await api.get(`/api/reservations/${reservationId}/smart-key/status`)
+  return response.data
+}
+
+export const revokeSmartKey = async (reservationId) => {
+  const response = await api.post(`/api/reservations/${reservationId}/smart-key/revoke`)
+  return response.data
+}

@@ -32,16 +32,25 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        navigateFallbackDenylist: [/^\/jenkins/, /^\/api/, /^\/company/],
+        navigateFallbackDenylist: [/^\/jenkins/, /^\/api/, /^\/company/, /^\/ai/],
       },
     }),
   ],
   server: {
     port: 5174,
     proxy: {
+      '/ai': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ai/, '')
+      },
       '/api': {
         target: 'http://localhost:8080',
-        changeOrigin: true }
+        changeOrigin: true },
+      '/ai/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ai/, '') }
     }
   }
 })

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import BottomNav from '../../components/BottomNav'
 import { createReservation } from '../../api/reservation'
 import { getTokenBalance } from '../../api/auth'
+import { addTokenHistory } from '../../utils/careToken'
 import './PaymentPage.css'
 
 export default function PaymentPage() {
@@ -36,6 +37,8 @@ export default function PaymentPage() {
     setError('')
     try {
       const result = await createReservation(carId, insuranceId, searchInfo.pickupDate, searchInfo.pickupTime, searchInfo.returnDate, searchInfo.returnTime)
+      const modelName = car.name ? car.name.split(' ').slice(-2).join(' ') : '차량'
+      addTokenHistory({ type: 'payment', amount: total, desc: `${modelName} 렌탈 결제`, txHash: result.paymentTxHash || result.data?.paymentTxHash })
       navigate('/booking-complete', {
         state: {
           car,

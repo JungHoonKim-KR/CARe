@@ -8,14 +8,41 @@ import com.care.domain.reservation.entity.Dispute;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 @RequiredArgsConstructor
 public class RenterNotificationService {
 
+    private static final long SSE_TIMEOUT_MILLIS = 60L * 60L * 1000L;
+
     private final RenterNotificationRepository renterNotificationRepository;
+    private final Map<String, CopyOnWriteArrayList<SseEmitter>> emitterStore = new ConcurrentHashMap<>();
+
+    public SseEmitter subscribe(String userId) {
+        SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MILLIS);
+        CopyOnWriteArrayList<SseEmitter> emitters = emitterStore.computeIfAbsent(userId, key -> new CopyOnWriteArrayList<>());
+        emitters.add(emitter);
+
+        emitter.onCompletion(() -> removeEmitter(userId, emitter));
+        emitter.onTimeout(() -> {
+            removeEmitter(userId, emitter);
+            emitter.complete();
+        });
+        emitter.onError(throwable -> {
+            removeEmitter(userId, emitter);
+            emitter.completeWithError(throwable);
+        });
+
+        sendEvent(userId, emitter, "CONNECTED", Map.of("message", "notification stream connected"));
+        return emitter;
+    }
 
     @Transactional
     public void createDisputeCreatedNotification(Renter renter, Dispute dispute) {
@@ -32,7 +59,8 @@ public class RenterNotificationService {
                 dispute.getDisputeId(),
                 dispute.getReason()
         );
-        renterNotificationRepository.save(notification);
+            RenterNotification saved = renterNotificationRepository.save(notification);
+            pushNotification(renter.getUserId(), RenterNotificationResponse.from(saved));
     }
 
     @Transactional(readOnly = true)
@@ -51,5 +79,34 @@ public class RenterNotificationService {
 
         notification.markAsRead();
         return RenterNotificationResponse.from(notification);
+    }
+
+    private void pushNotification(String userId, RenterNotificationResponse response) {
+        List<SseEmitter> emitters = emitterStore.get(userId);
+        if (emitters == null || emitters.isEmpty()) {
+            return;
+        }
+        for (SseEmitter emitter : emitters) {
+            sendEvent(userId, emitter, "NOTIFICATION", response);
+        }
+    }
+
+    private void sendEvent(String userId, SseEmitter emitter, String eventName, Object data) {
+        try {
+            emitter.send(SseEmitter.event().name(eventName).data(data));
+        } catch (IOException | IllegalStateException e) {
+            removeEmitter(userId, emitter);
+        }
+    }
+
+    private void removeEmitter(String userId, SseEmitter emitter) {
+        List<SseEmitter> emitters = emitterStore.get(userId);
+        if (emitters == null) {
+            return;
+        }
+        emitters.remove(emitter);
+        if (emitters.isEmpty()) {
+            emitterStore.remove(userId);
+        }
     }
 }

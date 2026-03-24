@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +24,7 @@ import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -102,4 +104,13 @@ class RenterControllerTest {
                 .andExpect(jsonPath("$.notificationId").value("noti-1"))
                 .andExpect(jsonPath("$.read").value(true));
     }
+
+        @Test
+        void 렌터_알림_SSE_구독_API_성공() throws Exception {
+                given(renterNotificationService.subscribe(nullable(String.class)))
+                                .willReturn(new SseEmitter(60_000L));
+
+                mockMvc.perform(get("/renters/me/notifications/subscribe"))
+                                .andExpect(request().asyncStarted());
+        }
 }

@@ -19,9 +19,11 @@ import com.care.domain.renter.service.RenterService;
 import com.care.domain.renter.service.RenterTokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 import java.util.Map;
@@ -113,6 +115,15 @@ public class RenterController {
     public ResponseEntity<List<RenterNotificationResponse>> getNotifications(
             @AuthenticationPrincipal String userId) {
         return ResponseEntity.ok(renterNotificationService.getMyNotifications(userId));
+    }
+
+    /**
+     * GET /renters/me/notifications/subscribe
+     * 렌터 알림 SSE 구독
+     */
+    @GetMapping(value = "/notifications/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter subscribeNotifications(@AuthenticationPrincipal String userId) {
+        return renterNotificationService.subscribe(userId);
     }
 
     /**

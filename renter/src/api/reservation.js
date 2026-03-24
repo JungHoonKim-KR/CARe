@@ -1,4 +1,5 @@
 import api from './auth'
+import { fetchEventSource } from '@microsoft/fetch-event-source'
 
 // 차량 목록 조회
 export const getCarList = async ({ brand, airportCode, carSize } = {}) => {
@@ -119,6 +120,59 @@ export const submitDefense = async (reservationId, disputeId, defenseLogId) => {
     { defenseLogId }
   )
   return response.data
+}
+
+// 내 알림 목록 조회
+export const getMyNotifications = async () => {
+  const response = await api.get('/api/renters/me/notifications')
+  return response.data
+}
+
+// 알림 읽음 처리
+export const markNotificationAsRead = async (notificationId) => {
+  const response = await api.patch(`/api/renters/me/notifications/${notificationId}/read`)
+  return response.data
+}
+
+// SSE 실시간 알림 구독
+export const subscribeNotifications = ({ token, signal, onNotification, onError }) => {
+  if (!token) {
+    return Promise.resolve()
+  }
+
+  return fetchEventSource('/api/renters/me/notifications/subscribe', {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'text/event-stream',
+    },
+    signal,
+    openWhenHidden: true,
+    async onopen(response) {
+      if (!response.ok) {
+        throw new Error(`SSE 연결 실패: ${response.status}`)
+      }
+      const contentType = response.headers.get('content-type') || ''
+      if (!contentType.includes('text/event-stream')) {
+        throw new Error('SSE 스트림 응답이 아닙니다.')
+      }
+    },
+    onmessage(event) {
+      if (event.event !== 'NOTIFICATION' || !event.data) {
+        return
+      }
+      try {
+        const payload = JSON.parse(event.data)
+        onNotification?.(payload)
+      } catch {
+        // 파싱 실패는 무시
+      }
+    },
+    onerror(error) {
+      onError?.(error)
+      throw error
+    },
+  })
 }
 
 export const lockSmartKey = async (reservationId) => {

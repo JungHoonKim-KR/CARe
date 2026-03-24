@@ -35,11 +35,12 @@ export default function ScanPage() {
   const [isCapturing,     setIsCapturing]     = useState(false)
   const [allScratches,    setAllScratches]    = useState([])
   const [activeCard,      setActiveCard]      = useState(null)
-  const [debugLog,        setDebugLog]        = useState('')
   // ── 가이드 멘트 오버레이
   const [showGuideOverlay,  setShowGuideOverlay]  = useState(false)
   const [overlayHidden,     setOverlayHidden]     = useState(false)
   const [showScanStartToast, setShowScanStartToast] = useState(false)
+  const [autoNextCountdown,  setAutoNextCountdown]  = useState(0)   // 남은 초 표시용
+  const autoNextTimerRef = useRef(null)
 
   const currentZone = ZONES[zoneIndex]
   const history     = allScratches.filter(s => s.carPart === currentZone?.id)
@@ -53,7 +54,7 @@ export default function ScanPage() {
   // 구역 변경 시 가이드 오버레이 초기화
   const overlayVisibleRef = useRef(false)
   const overlayShownAtRef = useRef(0)          // 오버레이가 실제로 뜬 시각
-  const OVERLAY_MIN_SHOW  =1500               // 최소 3초는 유지
+  const OVERLAY_MIN_SHOW  = 3000               // 최소 3초는 유지
 
   useEffect(() => {
     if (currentZone?.type === 'wheel') {
@@ -120,7 +121,6 @@ export default function ScanPage() {
     wsRef.current   = new WebSocket(wsUrl)
     wsRef.current.onopen = () => {
       console.log('🟢 [WS] 연결 성공!')
-      setDebugLog(prev => prev + ' | WS연결OK')
     }
 
     wsRef.current.onmessage = (event) => {
@@ -186,22 +186,17 @@ export default function ScanPage() {
         video.srcObject = s
 
         video.onloadedmetadata = () => {
-          const msg = `meta:${video.videoWidth}x${video.videoHeight} ready:${video.readyState}`
-          console.log('📱', msg)
-          setDebugLog(prev => prev + ' | ' + msg)
+          console.log('📱', `meta:${video.videoWidth}x${video.videoHeight}`)
           if (!cancelled) video.play().catch(() => {})
         }
 
         video.onloadeddata = () => {
-          const msg = `data:${video.videoWidth}x${video.videoHeight}`
-          console.log('📱', msg)
-          setDebugLog(prev => prev + ' | ' + msg)
+          console.log('📱', `data:${video.videoWidth}x${video.videoHeight}`)
           if (!cancelled) startARLoop(arCanvasRef.current, video)
         }
       })
       .catch(err => {
         console.error('[ScanPage] 카메라 실패', err)
-        setDebugLog(prev => prev + ' | 카메라실패:' + err.message)
       })
     return () => { cancelled = true; stream?.getTracks().forEach(t => t.stop()) }
   }, [])
@@ -232,6 +227,21 @@ export default function ScanPage() {
       stopARLoop()
       clearOverlay(arCanvasRef.current)
       if (boxes.length > 0) { setShowToast(true); setTimeout(() => setShowToast(false), 2000) }
+
+      // 1.5초 후 자동으로 다음 구역 이동
+      setAutoNextCountdown(2)
+      let count = 1
+      const tick = setInterval(() => {
+        count--
+        setAutoNextCountdown(count)
+        if (count <= 0) {
+          clearInterval(tick)
+          setAutoNextCountdown(0)
+          if (zoneIndex < ZONES.length - 1) setZoneIndex(zi => zi + 1)
+          else setIsDone(true)
+        }
+      }, 750)
+      autoNextTimerRef.current = tick
     }
     scanner.setZone(currentZone)
     scanner.startMatching()
@@ -252,12 +262,17 @@ export default function ScanPage() {
     await scannerRef.current.capture()
   }
   function handleNext() {
+    if (autoNextTimerRef.current) { clearInterval(autoNextTimerRef.current); autoNextTimerRef.current = null }
+    setAutoNextCountdown(0)
     if (zoneIndex < ZONES.length - 1) setZoneIndex(zoneIndex + 1)
     else setIsDone(true)
   }
   function handleSkip() {
+    if (autoNextTimerRef.current) { clearInterval(autoNextTimerRef.current); autoNextTimerRef.current = null }
+    setAutoNextCountdown(0)
     setCaptures(prev => ({ ...prev, [currentZone.id]: { dataUrl: null, boxes: [] } }))
-    handleNext()
+    if (zoneIndex < ZONES.length - 1) setZoneIndex(zoneIndex + 1)
+    else setIsDone(true)
   }
   function handleCardClick(i) {
     const newActive = activeCard === i ? null : i
@@ -360,18 +375,6 @@ export default function ScanPage() {
   // ── 스캔 화면
   return (
     <div className={styles.page}>
-
-      {/* 모바일 디버그 오버레이 — 확인 후 제거 */}
-      {debugLog ? (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, zIndex: 9999,
-          background: 'rgba(0,0,0,0.75)', color: '#00ff88',
-          fontSize: 10, padding: '6px 8px', wordBreak: 'break-all',
-          maxWidth: '100vw', pointerEvents: 'none',
-        }}>
-          {debugLog}
-        </div>
-      ) : null}
 
       <div className={styles.cameraWrap}>
         <video ref={videoRef} className={styles.video} playsInline muted />
@@ -486,7 +489,10 @@ export default function ScanPage() {
           </button>
         ) : (
           <button className={styles.btnNext} onClick={handleNext}>
-            {zoneIndex < ZONES.length - 1 ? '다음 구역 →' : '스캔 완료 →'}
+            {autoNextCountdown > 0
+              ? `${autoNextCountdown}초 후 자동 이동...`
+              : (zoneIndex < ZONES.length - 1 ? '다음 구역 →' : '스캔 완료 →')
+            }
           </button>
         )}
       </div>

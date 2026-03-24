@@ -94,16 +94,6 @@ export default function WalletPage() {
                 {careBalance ?? '--'} <span className="token-balance-unit">CARE</span>
               </p>
             )}
-            {walletAddress && (
-              <div
-                className="token-addr-wrap"
-                onClick={() => setShowFullAddr((v) => !v)}
-              >
-                <span className="token-addr-text">
-                  {showFullAddr ? walletAddress : shortAddr(walletAddress)}
-                </span>
-              </div>
-            )}
           </div>
 
           <div className="token-card-hint">사용 내역 보기 ›</div>

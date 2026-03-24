@@ -13,11 +13,40 @@ const TERMS = [
 ]
 
 const AI_SUMMARY = {
+  service: [
+    { icon: '📋', title: '서비스 범위', desc: '렌터카 이용 시간, 반납 조건, 추가 운전자 등록 등이 포함됩니다.' },
+    { icon: '⚠️', title: '위반 시 불이익', desc: '약관 위반 시 보증금 차감 또는 추가 비용이 청구될 수 있습니다.' },
+    { icon: '📌', title: '긴급 상황 대응', desc: '사고·고장 시 24시간 긴급 출동 서비스가 제공됩니다.' },
+  ],
   insurance: [
-    { icon: '🛡', title: '고가 차량 보호',    desc: 'SL65 AMG는 고가 차량으로, 사고 시 수리비가 높습니다.' },
-    { icon: '⚠️', title: '첫 한국 방문',     desc: '해외 운전 경험이 적은 고객에게 종합 보험을 권장합니다.' },
+    { icon: '🛡', title: '고가 차량 보호', desc: '고가 차량의 경우 사고 시 수리비가 높으므로 종합 보험을 권장합니다.' },
+    { icon: '⚠️', title: '해외 운전 보장', desc: '해외 운전 경험이 적은 고객에게 종합 보험을 권장합니다.' },
     { icon: '📈', title: '85%의 고객 선택', desc: '유사 조건의 고객 중 대다수가 이 플랜을 선택했습니다.' },
   ],
+  cancel: [
+    { icon: '🔄', title: '무료 취소 기간', desc: '픽업 24시간 전까지 무료 취소가 가능합니다.' },
+    { icon: '💸', title: '취소 수수료', desc: '픽업 24시간 이내 취소 시 대여료의 10%가 수수료로 부과됩니다.' },
+    { icon: '📅', title: '노쇼(No-show)', desc: '사전 연락 없이 미픽업 시 전액 환불이 불가합니다.' },
+  ],
+  privacy: [
+    { icon: '🔒', title: '개인정보 수집', desc: '이름, 연락처, 면허정보 등 렌탈에 필요한 최소 정보만 수집합니다.' },
+    { icon: '🗑', title: '보관 기간', desc: '이용 종료 후 6개월 이내 개인정보가 파기됩니다.' },
+    { icon: '🌐', title: '제3자 제공', desc: '보험사·결제사에 한해 최소 정보가 공유될 수 있습니다.' },
+  ],
+}
+
+const TERM_TRANSLATIONS = {
+  service: '렌터카 서비스 이용 시 차량 인수·반납 절차, 추가 운전자 등록 요건, 연료 정책, 주행거리 제한 및 위반 시 추가 요금에 관한 사항이 포함되어 있습니다.',
+  insurance: '보험 약관의 주요 내용입니다. 차량 손해, 대인·대물 배상 및 자기 신체 손해에 관한 보상 범위와 자기부담금이 명시되어 있습니다.',
+  cancel: '픽업 24시간 전 무료 취소, 24시간 이내 취소 시 대여료 10% 수수료 부과, 노쇼 시 전액 환불 불가 등 취소·환불 조건이 명시되어 있습니다.',
+  privacy: '렌탈 서비스 제공을 위해 수집되는 개인정보 항목, 이용 목적, 보관 기간 및 제3자 제공 범위에 관한 내용이 포함되어 있습니다.',
+}
+
+const TERM_ORIGINALS = {
+  service: 'This agreement sets forth the terms and conditions for the rental of vehicles, including vehicle pick-up and return procedures, additional driver registration requirements, fuel policies, mileage limitations, and any surcharges for violations thereof.',
+  insurance: 'This policy covers vehicle damage, third-party liability for personal injury and property damage, and personal accident protection. Deductible amounts and coverage limits are specified herein.',
+  cancel: 'Free cancellation is available up to 24 hours before the scheduled pick-up time. Cancellations within 24 hours will incur a fee of 10% of the rental charge. No-shows are non-refundable.',
+  privacy: 'We collect personal information including name, contact details, and license information solely for the purpose of providing rental services. Data is retained for up to 6 months after service completion and may be shared with insurance and payment partners as required.',
 }
 
 export default function CarDetailPage() {
@@ -226,35 +255,27 @@ export default function CarDetailPage() {
 
               {expandedTerm === term.id && (
                 <div className="cd-ai-box">
-                  {AI_SUMMARY[term.id] ? (
-                    <>
-                      <button className="cd-ai-btn">⭐ AI 요약</button>
-                      <div className="cd-ai-list">
-                        {AI_SUMMARY[term.id].map(pt => (
-                          <div key={pt.title} className="cd-ai-item">
-                            <span className="cd-ai-ico">{pt.icon}</span>
-                            <div>
-                              <p className="cd-ai-ttl">{pt.title}</p>
-                              <p className="cd-ai-dsc">{pt.desc}</p>
-                            </div>
-                          </div>
-                        ))}
+                  <button className="cd-ai-btn">⭐ AI 요약</button>
+                  <div className="cd-ai-list">
+                    {(AI_SUMMARY[term.id] || []).map(pt => (
+                      <div key={pt.title} className="cd-ai-item">
+                        <span className="cd-ai-ico">{pt.icon}</span>
+                        <div>
+                          <p className="cd-ai-ttl">{pt.title}</p>
+                          <p className="cd-ai-dsc">{pt.desc}</p>
+                        </div>
                       </div>
-                      <div className="cd-trans-row">
-                        <button className={`cd-trans${!showTranslation ? ' trans-on' : ''}`} onClick={() => setShowTranslation(false)}>번역보기</button>
-                        <button className={`cd-trans${showTranslation ? ' trans-on' : ''}`}  onClick={() => setShowTranslation(true)}>원문보기</button>
-                      </div>
-                      <p className="cd-term-body">
-                        {showTranslation
-                          ? '心が傷ついた時、その心を元の健康な状態に戻すことを「リカバリー」と言います。今この時身で耐え立ち直っていくことがとても大切だと思います。'
-                          : '보험 약관의 주요 내용입니다. 차량 손해, 대인·대물 배상 및 자기 신체 손해에 관한 보상 범위와 자기부담금이 명시되어 있습니다.'}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="cd-term-body">
-                      해당 약관의 상세 내용을 확인하세요. 서비스 이용에 관한 권리, 의무 및 제한 사항이 포함되어 있습니다.
-                    </p>
-                  )}
+                    ))}
+                  </div>
+                  <div className="cd-trans-row">
+                    <button className={`cd-trans${!showTranslation ? ' trans-on' : ''}`} onClick={() => setShowTranslation(false)}>번역보기</button>
+                    <button className={`cd-trans${showTranslation ? ' trans-on' : ''}`}  onClick={() => setShowTranslation(true)}>원문보기</button>
+                  </div>
+                  <p className="cd-term-body">
+                    {showTranslation
+                      ? TERM_ORIGINALS[term.id]
+                      : TERM_TRANSLATIONS[term.id]}
+                  </p>
                 </div>
               )}
             </div>
@@ -268,7 +289,7 @@ export default function CarDetailPage() {
       <div className="cd-bar">
         <div className="cd-bar-price">
           <p className="cd-bar-lbl">총 금액</p>
-          <p className="cd-bar-amt">{totalPrice.toLocaleString()} <span className="cd-bar-unit">USDC</span></p>
+          <p className="cd-bar-amt">{totalPrice.toLocaleString()} <span className="cd-bar-unit">CARE</span></p>
         </div>
         <button className="cd-bar-btn" onClick={handleReserve}>예약하기 ›</button>
       </div>

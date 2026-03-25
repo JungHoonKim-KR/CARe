@@ -13,8 +13,9 @@ export default function DisputePage() {
   const [scratchLogs, setScratchLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const actionLoading = false
+  const [actionLoading, setActionLoading] = useState(false)
   const [loadingScratchLogs, setLoadingScratchLogs] = useState(false)
+  const [isDefenseModalOpen, setIsDefenseModalOpen] = useState(false)
 
   useEffect(() => {
     fetchDisputeDetail()
@@ -65,25 +66,74 @@ export default function DisputePage() {
     .filter((log) => log.logId === dispute?.targetLogId || log.logId === dispute?.defenseLogId)
     .flatMap((log) => [log.originalS3Url, log.cropS3Url].filter(Boolean))
 
+  const defenseLog = scratchLogs.find((log) => log.logId === dispute?.defenseLogId)
+  const defenseImages = [
+    dispute?.defenseOriginalS3Url || defenseLog?.originalS3Url,
+    dispute?.defenseCropS3Url || defenseLog?.cropS3Url,
+  ].filter(Boolean)
+
   const timeline = dispute
     ? [
       { date: formatDateTime(dispute.createdAt), action: '분쟁 요청', user: '업체' },
+      ...(dispute.defenseLogId ? [{ date: formatDateTime(dispute.updatedAt), action: '렌터 증거 제출', user: '렌터' }] : []),
       { date: formatDateTime(dispute.updatedAt), action: '상태 업데이트', user: '시스템' }
     ]
     : []
 
-  const handleResolve = () => {
-    console.log('분쟁 해결:', dispute?.disputeId)
-    // TODO: API 호출
-    alert('분쟁이 해결 처리되었습니다.')
-    navigate('/disputes')
+  const handleResolve = async () => {
+    if (!dispute?.disputeId) return
+
+    setActionLoading(true)
+    try {
+      const result = await DisputeService.resolveDispute(dispute.disputeId, {
+        finalAmount: dispute.claimAmount || 0,
+        status: 'COMPLETED',
+      })
+
+      if (!result.success) {
+        alert(result.message)
+        return
+      }
+
+      if (result.data?.status === 'PENDING') {
+        alert('업체 동의가 등록되었습니다. 상대방 동의를 기다립니다.')
+        await fetchDisputeDetail()
+      } else {
+        alert('분쟁 정산이 완료되었습니다.')
+        navigate('/disputes')
+      }
+    } finally {
+      setActionLoading(false)
+      setIsResolveModalOpen(false)
+    }
   }
 
-  const handleReject = () => {
-    console.log('분쟁 반려:', dispute?.disputeId)
-    // TODO: API 호출
-    alert('분쟁이 반려되었습니다.')
-    navigate('/disputes')
+  const handleReject = async () => {
+    if (!dispute?.disputeId) return
+
+    setActionLoading(true)
+    try {
+      const result = await DisputeService.resolveDispute(dispute.disputeId, {
+        finalAmount: 0,
+        status: 'REFUNDED',
+      })
+
+      if (!result.success) {
+        alert(result.message)
+        return
+      }
+
+      if (result.data?.status === 'PENDING') {
+        alert('렌터 증거 인정으로 동의가 등록되었습니다. 상대방 동의를 기다립니다.')
+        await fetchDisputeDetail()
+      } else {
+        alert('렌터 증거 인정 처리와 정산이 완료되었습니다.')
+        navigate('/disputes')
+      }
+    } finally {
+      setActionLoading(false)
+      setIsRejectModalOpen(false)
+    }
   }
 
   if (loading) {
@@ -184,6 +234,22 @@ export default function DisputePage() {
               <p className="description">{dispute.reason || '-'}</p>
             </div>
 
+            {dispute.defenseLogId && (
+              <div className="card">
+                <h2 className="section-title">렌터 제출 증거</h2>
+                <p className="description defense-description">
+                  렌터가 반납 전 흠집 기록을 증거로 제출했습니다. 아래 버튼으로 증거 이미지를 확인할 수 있습니다.
+                </p>
+                <div className="defense-meta">
+                  <span>방어 로그 ID: {dispute.defenseLogId}</span>
+                  <span>제출 상태: 확인 필요</span>
+                </div>
+                <button className="btn btn-outline" onClick={() => setIsDefenseModalOpen(true)}>
+                  사용자 제출 증거 이미지 보기
+                </button>
+              </div>
+            )}
+
             {/* Evidence Images */}
             <div className="card">
               <h2 className="section-title">증거 자료</h2>
@@ -260,14 +326,14 @@ export default function DisputePage() {
                     disabled={actionLoading}
                     onClick={() => setIsRejectModalOpen(true)}
                   >
-                    분쟁 반려
+                    렌터 증거 인정
                   </button>
                   <button
                     className="btn btn-primary"
                     disabled={actionLoading}
                     onClick={() => setIsResolveModalOpen(true)}
                   >
-                    분쟁 해결
+                    청구 유지 정산
                   </button>
                 </div>
               </div>
@@ -276,14 +342,36 @@ export default function DisputePage() {
         </div>
       </div>
 
+      {isDefenseModalOpen && (
+        <div className="defense-modal-overlay" onClick={() => setIsDefenseModalOpen(false)}>
+          <div className="defense-modal" onClick={(event) => event.stopPropagation()}>
+            <h3>렌터 제출 증거 이미지</h3>
+            <p className="defense-modal-sub">분쟁 ID: {dispute.disputeId}</p>
+            <div className="defense-images-grid">
+              {defenseImages.length === 0 && <p className="no-data-text">표시할 증거 이미지가 없습니다.</p>}
+              {defenseImages.map((imageUrl, index) => (
+                <div key={index} className="image-item">
+                  <img src={imageUrl} alt={`렌터 증거 ${index + 1}`} />
+                </div>
+              ))}
+            </div>
+            <div className="defense-modal-actions">
+              <button className="btn btn-outline" onClick={() => setIsDefenseModalOpen(false)}>
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Resolve Modal */}
       <ConfirmModal
         isOpen={isResolveModalOpen}
         onClose={() => setIsResolveModalOpen(false)}
         onConfirm={handleResolve}
-        title="분쟁을 해결하시겠습니까?"
-        message="분쟁을 해결하면 렌터에게 알림이 전송되고 금액이 청구됩니다."
-        confirmText="해결하기"
+        title="청구를 유지해 정산하시겠습니까?"
+        message="업체 동의로 정산 프로세스를 진행합니다. 상대방 동의까지 완료되면 스마트 컨트랙트가 실행됩니다."
+        confirmText="정산 진행"
         cancelText="취소하기"
         confirmButtonStyle="primary"
       />
@@ -293,9 +381,9 @@ export default function DisputePage() {
         isOpen={isRejectModalOpen}
         onClose={() => setIsRejectModalOpen(false)}
         onConfirm={handleReject}
-        title="분쟁을 반려하시겠습니까?"
-        message="분쟁을 반려하면 렌터에게 알림이 전송됩니다."
-        confirmText="반려하기"
+        title="렌터 제출 증거를 인정하시겠습니까?"
+        message="증거 인정으로 정산 동의가 진행되며, 상대방 동의까지 완료되면 스마트 컨트랙트가 실행됩니다."
+        confirmText="인정하기"
         cancelText="취소하기"
         confirmButtonStyle="danger"
       />

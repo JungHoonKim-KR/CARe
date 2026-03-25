@@ -1,7 +1,7 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --sidebar-w: 240px;
+  --sidebar-w: clamp(220px, 17vw, 260px);
   --header-h: 60px;
   --bg: #f0f4f8;
   --white: #ffffff;
@@ -29,11 +29,17 @@ body {
   font-family: 'Inter', 'Malgun Gothic', sans-serif;
   background: var(--bg);
   color: var(--text);
-  height: 100vh;
+  min-height: 100vh;
   overflow: hidden;
 }
 
-#root { height: 100vh; display: flex; }
+#root {
+  height: 100dvh;
+  min-height: 100vh;
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+}
 
 button { cursor: pointer; border: none; font-family: inherit; }
 input, select, textarea { font-family: inherit; }

@@ -49,6 +49,9 @@ public class DisputeService {
 	@Value("${ai.scratch.similarity-threshold:60.0}")
 	private double similarityThreshold;
 
+	@Value("${ai.scratch.similarity-threshold:60.0}")
+	private double similarityThreshold;
+
 	@Transactional
 	public DisputeCreateResponse createDispute(String requesterId,
 											   String reservationId,

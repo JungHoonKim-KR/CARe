@@ -1,6 +1,7 @@
 package com.care.domain.reservation.service;
 
 import com.care.domain.car.entity.OwnedCar;
+import com.care.domain.car.entity.CarModel;
 import com.care.domain.company.entity.Company;
 import com.care.domain.reservation.controller.dto.request.DisputeCreateRequest;
 import com.care.domain.reservation.controller.dto.request.DisputeDefenseRequest;
@@ -9,6 +10,7 @@ import com.care.domain.reservation.controller.dto.response.DisputeCreateResponse
 import com.care.domain.reservation.controller.dto.response.DisputeDefenseResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDetailResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeAiAnalysisResponse;
+import com.care.domain.reservation.controller.dto.response.DisputeSummaryResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeSettleResponse;
 import com.care.domain.reservation.entity.Dispute;
 import com.care.domain.reservation.entity.Reservation;
@@ -75,6 +77,42 @@ class DisputeServiceTest {
         reservation = mockReservation("reservation-1", "company-1", "renter-1");
         targetScratch = mockScratch("after-log-1", "AFTER", reservation, false);
         defenseScratch = mockScratch("before-log-1", "BEFORE", reservation, false);
+    }
+
+    @Test
+    void 업체_분쟁_목록_조회_성공() {
+        // given
+        Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
+        given(disputeRepository.findByReservation_OwnedCar_Company_CompanyIdOrderByCreatedAtDesc("company-1"))
+                .willReturn(List.of(dispute));
+
+        // when
+        List<DisputeSummaryResponse> result = disputeService.getCompanyDisputes("company-1");
+
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).reservationId()).isEqualTo("reservation-1");
+        assertThat(result.get(0).carId()).isEqualTo("car-1");
+        assertThat(result.get(0).plateNumber()).isEqualTo("12가3456");
+        assertThat(result.get(0).renterName()).isEqualTo("renter-name");
+        assertThat(result.get(0).claimAmount()).isEqualTo(50000);
+        assertThat(result.get(0).status()).isEqualTo("OPEN");
+    }
+
+    @Test
+    void 분쟁_상세_단건조회_성공() {
+        // given
+        Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
+        given(disputeRepository.findByDisputeId("dispute-1"))
+                .willReturn(Optional.of(dispute));
+
+        // when
+        DisputeDetailResponse result = disputeService.getDisputeDetail("company-1", "dispute-1");
+
+        // then
+        assertThat(result.reservationId()).isEqualTo("reservation-1");
+        assertThat(result.targetLogId()).isEqualTo("after-log-1");
+        assertThat(result.status()).isEqualTo("OPEN");
     }
 
     @Test
@@ -328,16 +366,23 @@ class DisputeServiceTest {
     private Reservation mockReservation(String reservationId, String companyId, String renterId) {
         Reservation reservationMock = org.mockito.Mockito.mock(Reservation.class);
         OwnedCar ownedCarMock = org.mockito.Mockito.mock(OwnedCar.class);
+        CarModel carModelMock = org.mockito.Mockito.mock(CarModel.class);
         Company companyMock = org.mockito.Mockito.mock(Company.class);
         Renter renterMock = org.mockito.Mockito.mock(Renter.class);
 
         lenient().when(reservationMock.getReservationId()).thenReturn(reservationId);
         lenient().when(reservationMock.getOwnedCar()).thenReturn(ownedCarMock);
         lenient().when(ownedCarMock.getCompany()).thenReturn(companyMock);
+        lenient().when(ownedCarMock.getCarId()).thenReturn("car-1");
+        lenient().when(ownedCarMock.getPlateNumber()).thenReturn("12가3456");
+        lenient().when(ownedCarMock.getCarModel()).thenReturn(carModelMock);
+        lenient().when(carModelMock.getBrand()).thenReturn("Hyundai");
+        lenient().when(carModelMock.getModelName()).thenReturn("Sonata");
         lenient().when(companyMock.getCompanyId()).thenReturn(companyId);
         lenient().when(companyMock.getWalletAddress()).thenReturn("0xcompany");
         lenient().when(reservationMock.getRenter()).thenReturn(renterMock);
         lenient().when(renterMock.getUserId()).thenReturn(renterId);
+        lenient().when(renterMock.getName()).thenReturn("renter-name");
         lenient().when(renterMock.getWalletAddress()).thenReturn("0xrenter");
         lenient().when(reservationMock.getTotalPrice()).thenReturn(200000);
 

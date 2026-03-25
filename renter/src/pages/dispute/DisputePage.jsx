@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import careLogo from '../../assets/care_logo.png'
 import { getDisputeDetail, settleDispute } from '../../api/reservation'
 import './DisputePage.css'
@@ -21,6 +22,7 @@ function formatDateTime(dateStr) {
 }
 
 export default function DisputePage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { state } = useLocation()
   const reservation = state?.reservation
@@ -59,9 +61,9 @@ export default function DisputePage() {
       const result = await settleDispute(dispute.disputeId, dispute.claimAmount || 0, 'COMPLETED')
 
       if (result?.status === 'PENDING') {
-        alert('정산 동의가 접수되었어요. 상대방 동의를 기다리는 중입니다.')
+        alert(t('dispute.settlePending'))
       } else {
-        alert('정산이 완료되었습니다.')
+        alert(t('dispute.settleComplete'))
       }
 
       if (reservation?.reservationId) {
@@ -108,15 +110,15 @@ export default function DisputePage() {
             </svg>
           </div>
           <div className="dp-banner-text">
-            <p className="dp-banner-title">분쟁이 발생했어요!</p>
-            <p className="dp-banner-sub">이전 흠집 로그 확인하기 →</p>
+            <p className="dp-banner-title">{t('dispute.bannerTitle')}</p>
+            <p className="dp-banner-sub">{t('dispute.bannerSub')}</p>
           </div>
         </button>
 
         {/* 로딩 / 에러 */}
         {loading && (
           <div className="dp-desc-box">
-            <p className="dp-desc-text">분쟁 정보를 불러오는 중...</p>
+            <p className="dp-desc-text">{t('dispute.loading')}</p>
           </div>
         )}
         {error && (
@@ -128,33 +130,33 @@ export default function DisputePage() {
         {/* 분쟁 상세 정보 (API 데이터) */}
         {dispute && !loading && (
           <div className="dp-section">
-            <p className="dp-section-title">분쟁 상세 정보</p>
+            <p className="dp-section-title">{t('dispute.sectionTitle')}</p>
             <div className="dp-info-list">
               <div className="dp-info-row">
-                <span className="dp-info-label">상태</span>
-                <span className="dp-info-value">{STATUS_LABELS[dispute.status] ?? dispute.status}</span>
+                <span className="dp-info-label">{t('dispute.status')}</span>
+                <span className="dp-info-value">{t(`dispute.status${dispute.status.charAt(0)+dispute.status.slice(1).toLowerCase()}`) || dispute.status}</span>
               </div>
               {dispute.reason && (
                 <div className="dp-info-row">
-                  <span className="dp-info-label">사유</span>
+                  <span className="dp-info-label">{t('dispute.reason')}</span>
                   <span className="dp-info-value">{dispute.reason}</span>
                 </div>
               )}
               {dispute.claimAmount != null && (
                 <div className="dp-info-row">
-                  <span className="dp-info-label">청구 금액</span>
+                  <span className="dp-info-label">{t('dispute.claimAmount')}</span>
                   <span className="dp-info-value">{dispute.claimAmount.toLocaleString('ko-KR')}원</span>
                 </div>
               )}
               {dispute.createdAt && (
                 <div className="dp-info-row">
-                  <span className="dp-info-label">신청일</span>
+                  <span className="dp-info-label">{t('dispute.appliedAt')}</span>
                   <span className="dp-info-value">{formatDateTime(dispute.createdAt)}</span>
                 </div>
               )}
               {dispute.updatedAt && (
                 <div className="dp-info-row">
-                  <span className="dp-info-label">최종 수정</span>
+                  <span className="dp-info-label">{t('dispute.lastUpdated')}</span>
                   <span className="dp-info-value">{formatDateTime(dispute.updatedAt)}</span>
                 </div>
               )}
@@ -164,7 +166,7 @@ export default function DisputePage() {
 
         {/* AI 유사도 판별 결과 */}
         <div className="dp-section">
-          <p className="dp-section-title">AI 유사도 판별 결과</p>
+          <p className="dp-section-title">{t('dispute.aiTitle')}</p>
           <div className="dp-compare-row">
             {/* Before */}
             <div className="dp-compare-card">

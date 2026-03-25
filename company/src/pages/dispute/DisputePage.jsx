@@ -14,6 +14,7 @@ export default function DisputePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [loadingScratchLogs, setLoadingScratchLogs] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
     fetchDisputeDetail()
@@ -71,18 +72,41 @@ export default function DisputePage() {
     ]
     : []
 
-  const handleResolve = () => {
-    console.log('분쟁 해결:', dispute?.disputeId)
-    // TODO: API 호출
-    alert('분쟁이 해결 처리되었습니다.')
-    navigate('/disputes')
+  const handleResolve = async () => {
+    if (!dispute?.disputeId) return
+
+    setActionLoading(true)
+    const result = await DisputeService.resolveDispute(dispute.disputeId, {
+      finalAmount: dispute.claimAmount || 0,
+      status: 'COMPLETED'
+    })
+    setActionLoading(false)
+
+    if (!result.success) {
+      alert(result.message || '분쟁 해결 처리에 실패했습니다.')
+      return
+    }
+
+    alert('분쟁 해결 요청이 반영되었습니다. 상대 동의가 완료되면 최종 정산됩니다.')
+    setIsResolveModalOpen(false)
+    fetchDisputeDetail()
   }
 
-  const handleReject = () => {
-    console.log('분쟁 반려:', dispute?.disputeId)
-    // TODO: API 호출
-    alert('분쟁이 반려되었습니다.')
-    navigate('/disputes')
+  const handleReject = async () => {
+    if (!dispute?.disputeId) return
+
+    setActionLoading(true)
+    const result = await DisputeService.rejectDispute(dispute.disputeId)
+    setActionLoading(false)
+
+    if (!result.success) {
+      alert(result.message || '분쟁 반려 처리에 실패했습니다.')
+      return
+    }
+
+    alert('분쟁 반려 요청이 반영되었습니다. 상대 동의가 완료되면 최종 정산됩니다.')
+    setIsRejectModalOpen(false)
+    fetchDisputeDetail()
   }
 
   if (loading) {
@@ -256,12 +280,14 @@ export default function DisputePage() {
                 <div className="actions-buttons">
                   <button
                     className="btn btn-danger"
+                    disabled={actionLoading}
                     onClick={() => setIsRejectModalOpen(true)}
                   >
                     분쟁 반려
                   </button>
                   <button
                     className="btn btn-primary"
+                    disabled={actionLoading}
                     onClick={() => setIsResolveModalOpen(true)}
                   >
                     분쟁 해결

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import careLogo from '../../assets/care_logo.png'
 import BottomNav from '../../components/BottomNav'
 import api from '../../api/auth'
@@ -50,6 +51,7 @@ const TERM_ORIGINALS = {
 }
 
 export default function CarDetailPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { state } = useLocation()
   const car        = state?.car        || {}
@@ -98,7 +100,7 @@ export default function CarDetailPage() {
 
   const handleReserve = () => {
     if (!allRequired) {
-      alert('필수 약관에 모두 동의해 주세요.')
+      alert(t('carDetail.termsRequired'))
       return
     }
     navigate('/payment', {
@@ -160,18 +162,18 @@ export default function CarDetailPage() {
 
         {/* 차량 상세 사양 */}
         <div className="cd-section">
-          <p className="cd-sec-title">차량 상세 사양</p>
+          <p className="cd-sec-title">{t('carDetail.specTitle')}</p>
           <div className="cd-spec-grid">
             <div className="cd-spec-cell">
-              <p className="cd-spec-lbl">생산년도</p>
+              <p className="cd-spec-lbl">{t('carDetail.year')}</p>
               <p className="cd-spec-val">{car.year || '2024년 3월'}</p>
             </div>
             <div className="cd-spec-cell cd-spec-mid">
-              <p className="cd-spec-lbl">주행거리</p>
+              <p className="cd-spec-lbl">{t('carDetail.mileage')}</p>
               <p className="cd-spec-val">{car.mileage || '12,450 km/h'}</p>
             </div>
             <div className="cd-spec-cell">
-              <p className="cd-spec-lbl">연료</p>
+              <p className="cd-spec-lbl">{t('carDetail.fuel')}</p>
               <p className="cd-spec-val">{car.fuel || '가솔린'}</p>
             </div>
           </div>
@@ -179,7 +181,7 @@ export default function CarDetailPage() {
 
         {/* 보험 */}
         <div className="cd-section">
-          <p className="cd-sec-title">보험</p>
+          <p className="cd-sec-title">{t('carDetail.insurance')}</p>
           <div className="cd-ins-row">
             {insurancePlans.map(plan => (
               <button
@@ -197,7 +199,7 @@ export default function CarDetailPage() {
 
         {/* 포함 서비스 */}
         <div className="cd-section">
-          <p className="cd-sec-title">포함 서비스</p>
+          <p className="cd-sec-title">{t('carDetail.includedServices')}</p>
           <div className="cd-svc-box">
             <div className="cd-svc-grid">
               {services.included.map(s => (
@@ -216,19 +218,19 @@ export default function CarDetailPage() {
             <div className="cd-company">
               <div className="cd-co-logo">O</div>
               <span className="cd-co-name">{car.company || 'ORIX Rent-A-Car'}</span>
-              <button className="cd-co-link">업체 정보 보기</button>
+              <button className="cd-co-link">{t('carDetail.companyInfo')}</button>
             </div>
           </div>
         </div>
 
         {/* 약관 동의 */}
         <div className="cd-section cd-section-last">
-          <p className="cd-sec-title">약관 동의</p>
+          <p className="cd-sec-title">{t('carDetail.termsTitle')}</p>
 
           {/* 전체 동의 */}
           <div className="cd-term-all" onClick={toggleAll}>
             <span className={`cd-chk${allChecked ? ' chk-on' : ''}`}>{allChecked && '✓'}</span>
-            <span className="cd-term-all-txt">전체 동의하기</span>
+            <span className="cd-term-all-txt">{t('carDetail.agreeAll')}</span>
           </div>
 
           {/* 개별 약관 */}
@@ -240,7 +242,7 @@ export default function CarDetailPage() {
                   onClick={() => toggleTerm(term.id)}
                 >{termChecks[term.id] && '✓'}</span>
                 <span className="cd-term-txt">{term.label}</span>
-                <span className="cd-term-req">(필수)</span>
+                <span className="cd-term-req">{t('carDetail.required')}</span>
                 <button
                   className="cd-chev"
                   onClick={() => setExpandedTerm(expandedTerm === term.id ? null : term.id)}
@@ -268,8 +270,8 @@ export default function CarDetailPage() {
                     ))}
                   </div>
                   <div className="cd-trans-row">
-                    <button className={`cd-trans${!showTranslation ? ' trans-on' : ''}`} onClick={() => setShowTranslation(false)}>번역보기</button>
-                    <button className={`cd-trans${showTranslation ? ' trans-on' : ''}`}  onClick={() => setShowTranslation(true)}>원문보기</button>
+                    <button className={`cd-trans${!showTranslation ? ' trans-on' : ''}`} onClick={() => setShowTranslation(false)}>{t('carDetail.seeTranslation')}</button>
+                    <button className={`cd-trans${showTranslation ? ' trans-on' : ''}`}  onClick={() => setShowTranslation(true)}>{t('carDetail.seeOriginal')}</button>
                   </div>
                   <p className="cd-term-body">
                     {showTranslation
@@ -288,10 +290,10 @@ export default function CarDetailPage() {
       {/* 하단 고정 바 */}
       <div className="cd-bar">
         <div className="cd-bar-price">
-          <p className="cd-bar-lbl">총 금액</p>
+          <p className="cd-bar-lbl">{t('carDetail.totalAmount')}</p>
           <p className="cd-bar-amt">{totalPrice.toLocaleString()} <span className="cd-bar-unit">CARE</span></p>
         </div>
-        <button className="cd-bar-btn" onClick={handleReserve}>예약하기 ›</button>
+        <button className="cd-bar-btn" onClick={handleReserve}>{t('carDetail.reserve')}</button>
       </div>
 
       <BottomNav />

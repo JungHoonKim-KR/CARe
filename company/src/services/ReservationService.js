@@ -158,6 +158,27 @@ class ReservationService {
       }
     }
   }
+
+  /**
+   * 차량 반납 리포트 조회
+   */
+  async getReturnReport(carId, reservationId) {
+    try {
+      const query = reservationId ? `?reservationId=${reservationId}` : ''
+      const response = await api.get(`/api/cars/${carId}/return-report${query}`)
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      console.error('반납 리포트 조회 실패:', error)
+      return {
+        success: false,
+        message: error?.response?.data?.message || '반납 리포트를 불러오지 못했습니다.'
+      }
+    }
+  }
 }
 
 export default new ReservationService()

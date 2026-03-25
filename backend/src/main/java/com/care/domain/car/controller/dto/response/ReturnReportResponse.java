@@ -8,7 +8,10 @@ import java.util.List;
 public record ReturnReportResponse(
         String reservationId,
         String carId,
-        List<ScratchDetail> scratches
+    List<ScratchDetail> scratches,
+    double similarityThreshold,
+    int warningCount,
+    List<ComparisonDetail> comparisons
 ) {
     public record ScratchDetail(
             String logId,
@@ -40,11 +43,32 @@ public record ReturnReportResponse(
         }
     }
 
-    public static ReturnReportResponse of(String reservationId, String carId, List<Scratch> scratches) {
+        public record ComparisonDetail(
+            String beforeLogId,
+            String afterLogId,
+            String beforeCropS3Url,
+            String afterCropS3Url,
+            double similarity,
+            double diffScore,
+            boolean warning
+        ) {
+        }
+
+        public static ReturnReportResponse of(
+            String reservationId,
+            String carId,
+            List<Scratch> scratches,
+            double similarityThreshold,
+            List<ComparisonDetail> comparisons
+        ) {
+        int warningCount = (int) comparisons.stream().filter(ComparisonDetail::warning).count();
         return new ReturnReportResponse(
                 reservationId,
                 carId,
-                scratches.stream().map(ScratchDetail::from).toList()
+            scratches.stream().map(ScratchDetail::from).toList(),
+            similarityThreshold,
+            warningCount,
+            comparisons
         );
     }
 }

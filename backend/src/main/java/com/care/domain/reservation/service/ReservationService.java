@@ -118,7 +118,7 @@ public class ReservationService {
         }
 
         String status = reservation.getStatus();
-        if (!"COMPLETED".equals(status) && !"IN_USE".equals(status) && !"AFTER_SCAN".equals(status)) {
+        if ("COMPLETED".equals(status)) {
             throw new BusinessException(ReservationErrorCode.INVALID_RETURN_STATUS);
         }
 

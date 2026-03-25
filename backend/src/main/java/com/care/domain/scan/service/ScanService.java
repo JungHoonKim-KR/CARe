@@ -62,6 +62,11 @@ public class ScanService {
 
         if (defects == null || defects.isEmpty()) {
             log.info("[Scan] 흠집 없음 - reservationId: {}, zone: {}", reservationId, zone);
+            if (logType.equals("BEFORE")) {
+                reservation.updateStatusToInUse();
+            } else {
+                reservation.updateStatusToAfterScan();
+            }
             return Collections.emptyList();
         }
 

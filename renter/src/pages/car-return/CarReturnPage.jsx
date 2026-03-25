@@ -25,10 +25,12 @@ export default function CarReturnPage() {
   const { state } = useLocation()
   const reservation = state?.reservation
   const fromScan = state?.fromScan || false
+  const returnDone = state?.returnDone || false
 
   // intro → select → camera → submitting → done
-  // fromScan=true 일 때는 바로 confirm 단계로 진입
-  const [step, setStep] = useState(fromScan ? 'confirm' : 'intro')
+  // returnDone=true: 이미 반납 API 완료됨 → 바로 done 화면
+  // fromScan=true: 스캔 후 반납 확인 → confirm 단계
+  const [step, setStep] = useState(returnDone ? 'done' : fromScan ? 'confirm' : 'intro')
   const [currentPanel, setCurrentPanel] = useState(null)
   const [photos, setPhotos] = useState({})
 

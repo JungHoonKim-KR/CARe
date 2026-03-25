@@ -27,6 +27,7 @@ const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 const STATUS_LABEL = {
   RESERVED: '예약 완료',
   IN_USE: '이용 중',
+  AFTER_SCAN: '스캔 완료',
   COMPLETED: '반납 완료',
   CANCELLED: '취소됨',
 }
@@ -82,7 +83,8 @@ export default function MyCarPage() {
   const [reservation, setReservation] = useState(state?.reservation || null)
   const [loading, setLoading] = useState(!state?.reservation)
   const [showDisputeModal, setShowDisputeModal] = useState(false)
-  const [hasMultiple, setHasMultiple] = useState(false)
+  const [activeList, setActiveList] = useState([])
+  const [showSelector, setShowSelector] = useState(false)
 
   useEffect(() => {
     if (state?.reservation) return
@@ -93,9 +95,9 @@ export default function MyCarPage() {
         const sorted = [...list].sort((a, b) =>
           new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
         )
-        const activeList = sorted.filter((r) => r.status === 'IN_USE' || r.status === 'RESERVED' || r.status === 'COMPLETED')
-        const active = activeList[0]
-        if (activeList.length > 1) setHasMultiple(true)
+        const filtered = sorted.filter((r) => r.status === 'IN_USE' || r.status === 'RESERVED' || r.status === 'AFTER_SCAN')
+        setActiveList(filtered)
+        const active = filtered[0]
         if (active) {
           setReservation(active)
           const pending = localStorage.getItem(`disputePending_${active.reservationId}`) === 'true'
@@ -273,10 +275,52 @@ export default function MyCarPage() {
           </div>
         </div>
 
-        {/* 다중 예약 안내 */}
-        {hasMultiple && (
-          <div style={{ margin: '0 16px 12px', padding: '12px 16px', background: '#FFF8EC', borderRadius: 12, fontSize: 13, color: '#B8860B', textAlign: 'center' }}>
-            다른 예약은 내 예약 목록에서 확인할 수 있습니다.
+        {/* 다중 예약 선택 */}
+        {activeList.length > 1 && (
+          <div style={{ margin: '0 16px 12px' }}>
+            <button
+              onClick={() => setShowSelector(!showSelector)}
+              style={{
+                width: '100%', padding: '12px 16px', background: '#FFF8EC', borderRadius: 12,
+                fontSize: 13, color: '#B8860B', textAlign: 'center', border: 'none', cursor: 'pointer',
+              }}
+            >
+              {showSelector ? '접기 ▲' : `다른 예약 ${activeList.length - 1}건 보기 ▼`}
+            </button>
+            {showSelector && (
+              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {activeList.filter(r => r.reservationId !== reservation?.reservationId).map(r => {
+                  const name = r.brand && r.modelName ? `${r.brand} ${r.modelName}` : r.carName || '차량'
+                  const pickup = r.pickupDate ? String(r.pickupDate).split('T')[0] : ''
+                  const ret = r.returnDate ? String(r.returnDate).split('T')[0] : ''
+                  return (
+                    <button
+                      key={r.reservationId}
+                      onClick={() => { setReservation(r); setShowSelector(false) }}
+                      style={{
+                        padding: '12px 16px', background: '#fff', border: '1px solid #eee',
+                        borderRadius: 12, textAlign: 'left', cursor: 'pointer',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#222' }}>{name}</div>
+                        <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
+                          {pickup} → {ret}
+                        </div>
+                      </div>
+                      <span style={{
+                        fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 8,
+                        background: r.status === 'IN_USE' ? '#E8F5E9' : '#E3F2FD',
+                        color: r.status === 'IN_USE' ? '#4CAF50' : '#5B8DEF',
+                      }}>
+                        {STATUS_LABEL[r.status] || r.status}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 

@@ -3,25 +3,26 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import carIconCute from '../../assets/car_icon_cute.png'
 import carIconTop from '../../assets/car_icon_top.png'
 import carIconFront from '../../assets/car_icon_front.png'
+import { completeReservation, lockSmartKey } from '../../api/reservation'
 import './CarCrackPage.css'
 
-// 4방향 패널 정의
+// 6방향 패널 정의 (zones.js 기준)
 const PANELS = [
-  { id: 'front', label: '전면부', icon: 'front' },
-  { id: 'rear',  label: '후면부', icon: 'rear'  },
-  { id: 'left',  label: '좌측면', icon: 'left'  },
-  { id: 'right', label: '우측면', icon: 'right' },
+  { id: 'front',       label: '보닛(전면)', icon: 'front' },
+  { id: 'rear',        label: '뒷범퍼(후면)', icon: 'rear'  },
+  { id: 'front-left',  label: '좌측 앞바퀴', icon: 'left'  },
+  { id: 'rear-left',   label: '좌측 뒷바퀴', icon: 'left'  },
+  { id: 'front-right', label: '우측 앞바퀴', icon: 'right' },
+  { id: 'rear-right',  label: '우측 뒷바퀴', icon: 'right' },
 ]
 
-// 결과 화면에서 크랙 위치 (car_icon2 top-view 기준 %)
+// 결과 화면에서 크랙 위치 (car_icon_top 기준 %)
 const CRACK_POSITIONS = {
   'front':       { top: '14%',  left: '50%' },
   'rear':        { top: '86%',  left: '50%' },
-  'left':        { top: '50%',  left: '18%' },
-  'right':       { top: '50%',  left: '82%' },
   'front-left':  { top: '30%',  left: '18%' },
-  'front-right': { top: '30%',  left: '82%' },
   'rear-left':   { top: '70%',  left: '18%' },
+  'front-right': { top: '30%',  left: '82%' },
   'rear-right':  { top: '70%',  left: '82%' },
 }
 
@@ -76,9 +77,12 @@ export default function CarCrackPage() {
   const { state } = useLocation()
   const reservation = state?.reservation
   const scanResult = state?.scanResult // ScanPage에서 넘어온 결과
+  const logType = state?.logType || 'BEFORE' // BEFORE=픽업, AFTER=반납
+  const isReturn = logType === 'AFTER'
 
   // 플로우 단계: intro → select → camera → analyzing → result
   const [step, setStep] = useState(scanResult ? 'report' : 'intro')
+  const [returning, setReturning] = useState(false)
   const [currentPanel, setCurrentPanel] = useState(null)  // 현재 촬영 중인 패널 id
   const [photos, setPhotos] = useState({})                 // { front: dataUrl, ... }
   const [analyzeResult, setAnalyzeResult] = useState(null) // { cracks, blockchainHash }
@@ -359,34 +363,70 @@ export default function CarCrackPage() {
         </div>
 
         <div className="cp-footer">
-          <button
-            className="cp-primary-btn cp-smartkey-btn"
-            onClick={() => {
-              if (reservation?.reservationId) {
-                localStorage.setItem(`crackDone_${reservation.reservationId}`, 'true')
-              }
-              navigate('/car-smartkey', { state: { reservation } })
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="white" style={{ flexShrink: 0 }}>
-              <path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
-            </svg>
-            스마트키 열기
-          </button>
-          <div className="cp-result-sub-row">
-            <button
-              className="cp-sub-btn"
-              onClick={() => navigate('/damage-history', { state: { reservation } })}
-            >
-              흠집 내역 확인
-            </button>
-            <button
-              className="cp-sub-btn"
-              onClick={() => navigate('/my-car')}
-            >
-              닫기
-            </button>
-          </div>
+          {isReturn ? (
+            <>
+              <button
+                className="cp-primary-btn"
+                disabled={returning}
+                onClick={async () => {
+                  const rid = reservation?.reservationId
+                  if (!rid || returning) return
+                  setReturning(true)
+                  try {
+                    await completeReservation(rid)
+                    lockSmartKey(rid).catch(e => console.error('[Return] 스마트키 반납 실패:', e))
+                    localStorage.setItem(`disputePending_${rid}`, 'true')
+                    localStorage.setItem(`disputeDate_${rid}`, reservation.endDate || '')
+                    setStep('done')
+                  } catch (e) {
+                    console.error('[Return] 반납 실패:', e)
+                    setReturning(false)
+                  }
+                }}
+              >
+                {returning ? '반납 처리 중...' : '반납 완료하기'}
+              </button>
+              <div className="cp-result-sub-row">
+                <button
+                  className="cp-sub-btn"
+                  onClick={() => navigate('/damage-history', { state: { reservation } })}
+                >
+                  흠집 내역 확인
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <button
+                className="cp-primary-btn cp-smartkey-btn"
+                onClick={() => {
+                  if (reservation?.reservationId) {
+                    localStorage.setItem(`crackDone_${reservation.reservationId}`, 'true')
+                  }
+                  navigate('/car-smartkey', { state: { reservation } })
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white" style={{ flexShrink: 0 }}>
+                  <path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+                </svg>
+                스마트키 열기
+              </button>
+              <div className="cp-result-sub-row">
+                <button
+                  className="cp-sub-btn"
+                  onClick={() => navigate('/damage-history', { state: { reservation } })}
+                >
+                  흠집 내역 확인
+                </button>
+                <button
+                  className="cp-sub-btn"
+                  onClick={() => navigate('/my-car')}
+                >
+                  닫기
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     )
@@ -470,38 +510,102 @@ export default function CarCrackPage() {
         </div>
 
         <div className="cp-footer">
-          <button
-            className="cp-primary-btn cp-smartkey-btn"
-            onClick={() => {
-              if (reservation?.reservationId) {
-                localStorage.setItem(`crackDone_${reservation.reservationId}`, 'true')
-              }
-              navigate('/car-smartkey', { state: { reservation } })
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="white" style={{ flexShrink: 0 }}>
-              <path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
-            </svg>
-            스마트키 열기
-          </button>
-          <div className="cp-result-sub-row">
-            <button
-              className="cp-sub-btn"
-              onClick={() => navigate('/damage-history', { state: { reservation } })}
-            >
-              흠집 내역 확인
-            </button>
-            <button
-              className="cp-sub-btn"
-              onClick={() => navigate('/my-car')}
-            >
-              닫기
-            </button>
-          </div>
+          {isReturn ? (
+            <>
+              <button
+                className="cp-primary-btn"
+                disabled={returning}
+                onClick={async () => {
+                  const rid = reservation?.reservationId
+                  if (!rid || returning) return
+                  setReturning(true)
+                  try {
+                    await completeReservation(rid)
+                    lockSmartKey(rid).catch(e => console.error('[Return] 스마트키 반납 실패:', e))
+                    localStorage.setItem(`disputePending_${rid}`, 'true')
+                    localStorage.setItem(`disputeDate_${rid}`, reservation.endDate || '')
+                    setStep('done')
+                  } catch (e) {
+                    console.error('[Return] 반납 실패:', e)
+                    setReturning(false)
+                  }
+                }}
+              >
+                {returning ? '반납 처리 중...' : '반납 완료하기'}
+              </button>
+              <div className="cp-result-sub-row">
+                <button
+                  className="cp-sub-btn"
+                  onClick={() => navigate('/damage-history', { state: { reservation } })}
+                >
+                  흠집 내역 확인
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <button
+                className="cp-primary-btn cp-smartkey-btn"
+                onClick={() => {
+                  if (reservation?.reservationId) {
+                    localStorage.setItem(`crackDone_${reservation.reservationId}`, 'true')
+                  }
+                  navigate('/car-smartkey', { state: { reservation } })
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white" style={{ flexShrink: 0 }}>
+                  <path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+                </svg>
+                스마트키 열기
+              </button>
+              <div className="cp-result-sub-row">
+                <button
+                  className="cp-sub-btn"
+                  onClick={() => navigate('/damage-history', { state: { reservation } })}
+                >
+                  흠집 내역 확인
+                </button>
+                <button
+                  className="cp-sub-btn"
+                  onClick={() => navigate('/my-car')}
+                >
+                  닫기
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     )
   }
+
+  // ─── 반납 완료 ─────────────────────────────────────────────
+  if (step === 'done') return (
+    <div className="cp-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+      <div style={{
+        width: 72, height: 72, borderRadius: '50%', background: '#4CAF50',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24,
+      }}>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+          <path d="M20 6L9 17L4 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#222', marginBottom: 8 }}>반납이 완료되었습니다</h1>
+      <p style={{ fontSize: 14, color: '#888', textAlign: 'center', lineHeight: 1.6 }}>
+        사진이 블록체인에 안전하게 저장됐어요.<br/>
+        이용해 주셔서 감사합니다.
+      </p>
+      <button
+        onClick={() => navigate('/landing')}
+        style={{
+          marginTop: 32, padding: '14px 48px', background: '#F7A633', color: '#fff',
+          fontSize: 16, fontWeight: 600, border: 'none', borderRadius: 12, cursor: 'pointer',
+        }}
+      >
+        홈으로 돌아가기
+      </button>
+    </div>
+  )
 
   return null
 }

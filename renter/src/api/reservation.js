@@ -78,6 +78,18 @@ export const completeReservation = async (reservationId) => {
   return response.data
 }
 
+// 반납 전 스캔 (zone: front | rear | left | right, imageDataUrl: base64)
+export const scanBefore = async (reservationId, zone, imageDataUrl) => {
+  const formData = new FormData()
+  formData.append('zone', zone)
+  const blob = await fetch(imageDataUrl).then(r => r.blob())
+  formData.append('image', blob, `${zone}.jpg`)
+  const response = await api.post(`/api/scan/${reservationId}/before`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return response.data
+}
+
 // 반납 후 스캔 (zone: front | rear | left | right, imageDataUrl: base64)
 export const scanAfter = async (reservationId, zone, imageDataUrl) => {
   const formData = new FormData()

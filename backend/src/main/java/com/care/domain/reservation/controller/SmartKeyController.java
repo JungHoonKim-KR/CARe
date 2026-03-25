@@ -35,7 +35,8 @@ public class SmartKeyController {
     public ResponseEntity<SmartKeyResponse> lock(
             @AuthenticationPrincipal String userId,
             @PathVariable String reservationId) {
-        return ResponseEntity.ok(smartKeyService.lock(userId, reservationId));
+        SmartKeyResponse response = smartKeyService.lock(userId, reservationId);
+        return response != null ? ResponseEntity.ok(response) : ResponseEntity.ok().build();
     }
 
     /** 상태 조회 */

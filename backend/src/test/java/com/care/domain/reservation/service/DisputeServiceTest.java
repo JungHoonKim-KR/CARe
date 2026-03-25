@@ -160,7 +160,6 @@ class DisputeServiceTest {
         assertThat(captor.getValue().getSnapshotBeforeLogId()).isEqualTo("before-log-1");
         assertThat(captor.getValue().getSnapshotAfterCropS3Url()).isEqualTo("https://example.com/after-log-1.jpg");
         assertThat(captor.getValue().isSnapshotWarning()).isTrue();
-
         verify(renterNotificationService).createDisputeCreatedNotification(any(), any());
     }
 

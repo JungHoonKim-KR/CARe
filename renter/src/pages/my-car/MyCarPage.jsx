@@ -2,7 +2,12 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import carIcon from '../../assets/car_icon.png'
 import BottomNav from '../../components/BottomNav'
-import { getMyReservations } from '../../api/reservation'
+import {
+  getMyReservations,
+  getMyNotifications,
+  markNotificationAsRead,
+  subscribeNotifications,
+} from '../../api/reservation'
 import './MyCarPage.css'
 
 const MOCK_RESERVATION = {
@@ -82,13 +87,27 @@ export default function MyCarPage() {
   const [reservation, setReservation] = useState(state?.reservation || null)
   const [loading, setLoading] = useState(!state?.reservation)
   const [showDisputeModal, setShowDisputeModal] = useState(false)
+  const [pendingDisputeNotification, setPendingDisputeNotification] = useState(null)
   const [hasMultiple, setHasMultiple] = useState(false)
+
+  const applyDisputeNotification = (notification) => {
+    if (!notification) return
+    if (notification.notificationType !== 'DISPUTE_CREATED') return
+    if (notification.read) return
+    setPendingDisputeNotification(notification)
+    setShowDisputeModal(true)
+  }
 
   useEffect(() => {
     if (state?.reservation) return
     const fetchData = async () => {
       try {
-        const data = await getMyReservations()
+        const [reservationData, notificationData] = await Promise.all([
+          getMyReservations(),
+          getMyNotifications(),
+        ])
+
+        const data = reservationData
         const list = Array.isArray(data) ? data : (data?.data ?? [])
         const sorted = [...list].sort((a, b) =>
           new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
@@ -98,11 +117,15 @@ export default function MyCarPage() {
         if (activeList.length > 1) setHasMultiple(true)
         if (active) {
           setReservation(active)
-          const pending = localStorage.getItem(`disputePending_${active.reservationId}`) === 'true'
-          if (pending) setShowDisputeModal(true)
         } else {
           setReservation(null)
         }
+
+        const notificationList = Array.isArray(notificationData) ? notificationData : (notificationData?.data ?? [])
+        const unreadDispute = notificationList.find(
+          (item) => item.notificationType === 'DISPUTE_CREATED' && item.read === false,
+        )
+        applyDisputeNotification(unreadDispute || null)
       } catch {
         setReservation(null)
       } finally {
@@ -110,6 +133,30 @@ export default function MyCarPage() {
       }
     }
     fetchData()
+  }, [])
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken')
+    if (!token) return
+
+    const abortController = new AbortController()
+    subscribeNotifications({
+      token,
+      signal: abortController.signal,
+      onNotification: (notification) => {
+        applyDisputeNotification(notification)
+      },
+      onError: (error) => {
+        console.error('알림 SSE 연결 오류:', error)
+      },
+    }).catch((error) => {
+      if (abortController.signal.aborted) return
+      console.error('알림 SSE 구독 실패:', error)
+    })
+
+    return () => {
+      abortController.abort()
+    }
   }, [])
 
   if (loading) {
@@ -313,7 +360,7 @@ export default function MyCarPage() {
               </button>
               <button
                 className="mc-action-btn mc-return-btn"
-                onClick={() => navigate('/return-guide', { state: { reservation } })}
+                onClick={() => navigate('/return-guide', { state: { reservation, logType: 'AFTER' } })}
               >
                 <div className="mc-action-btn-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -372,16 +419,30 @@ export default function MyCarPage() {
               <span>!</span>
             </div>
             <p className="mc-dispute-modal-text">
-              {(endDate || '').replace(/-/g, '-')} 반납하신<br/>
-              차량에 대해서 업체에서<br/>
-              금액을 청구했어요.
+              {pendingDisputeNotification?.message || '분쟁이 접수되었습니다.'}
             </p>
             <div className="mc-dispute-modal-btns">
               <button
                 className="mc-dispute-modal-confirm"
-                onClick={() => {
+                onClick={async () => {
+                  if (pendingDisputeNotification?.notificationId) {
+                    try {
+                      await markNotificationAsRead(pendingDisputeNotification.notificationId)
+                    } catch (error) {
+                      console.error('알림 읽음 처리 실패:', error)
+                    }
+                  }
+
+                  const targetReservationId = pendingDisputeNotification?.reservationId
+                  const targetDisputeId = pendingDisputeNotification?.disputeId
+                  const targetReservation =
+                    reservation?.reservationId === targetReservationId
+                      ? reservation
+                      : { reservationId: targetReservationId }
+
                   setShowDisputeModal(false)
-                  navigate('/dispute', { state: { reservation } })
+                  setPendingDisputeNotification(null)
+                  navigate('/dispute', { state: { reservation: targetReservation, disputeId: targetDisputeId } })
                 }}
               >
                 확인하기

@@ -28,12 +28,15 @@ import com.care.domain.reservation.exception.ReservationErrorCode;
 import com.care.domain.reservation.repository.ReservationRepository;
 import com.care.domain.reservation.repository.ReviewRepository;
 import com.care.domain.scan.repository.ScratchRepository;
+import com.care.global.ai.AiScratchSimilarityClient;
+import com.care.global.ai.AiScratchSimilarityResult;
 import com.care.global.exception.BusinessException;
 import com.care.global.ipfs.PinataService;
 import com.care.global.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -55,9 +58,13 @@ public class CarService {
     private final ReservationRepository reservationRepository;
     private final ReviewRepository reviewRepository;
     private final ScratchRepository scratchRepository;
+        private final AiScratchSimilarityClient aiScratchSimilarityClient;
     private final S3Service s3Service;
     private final PinataService pinataService;
     private final ApplicationEventPublisher eventPublisher;
+
+        @Value("${ai.scratch.similarity-threshold:60.0}")
+        private double similarityThreshold;
 
     /**
      * 차량 등록
@@ -226,7 +233,106 @@ public class CarService {
         var scratches = reservationId != null
                 ? scratchRepository.findByOwnedCar_CarIdAndReservation_ReservationId(carId, reservationId)
                 : scratchRepository.findByOwnedCar_CarId(carId);
-        return ReturnReportResponse.of(reservationId, carId, scratches);
+        List<ReturnReportResponse.ComparisonDetail> comparisons = reservationId != null
+                ? buildComparisons(scratches)
+                : List.of();
+
+        return ReturnReportResponse.of(reservationId, carId, scratches, similarityThreshold, comparisons);
+    }
+
+    private List<ReturnReportResponse.ComparisonDetail> buildComparisons(List<com.care.domain.reservation.entity.Scratch> scratches) {
+        List<com.care.domain.reservation.entity.Scratch> beforeScratches = scratches.stream()
+                .filter(scratch -> "BEFORE".equalsIgnoreCase(scratch.getLogType()))
+                .filter(scratch -> !scratch.isManual())
+                .filter(scratch -> scratch.getCropS3Url() != null && !scratch.getCropS3Url().isBlank())
+                .toList();
+
+        List<com.care.domain.reservation.entity.Scratch> afterScratches = scratches.stream()
+                .filter(scratch -> "AFTER".equalsIgnoreCase(scratch.getLogType()))
+                .filter(scratch -> !scratch.isManual())
+                .filter(scratch -> scratch.getCropS3Url() != null && !scratch.getCropS3Url().isBlank())
+                .toList();
+
+        return afterScratches.stream()
+                .map(after -> compareWithBestBefore(beforeScratches, after))
+                .toList();
+    }
+
+    private ReturnReportResponse.ComparisonDetail compareWithBestBefore(
+            List<com.care.domain.reservation.entity.Scratch> beforeScratches,
+            com.care.domain.reservation.entity.Scratch afterScratch
+    ) {
+        List<com.care.domain.reservation.entity.Scratch> candidates = beforeScratches.stream()
+                .filter(before -> before.getCarPart().equalsIgnoreCase(afterScratch.getCarPart()))
+                .toList();
+
+        if (candidates.isEmpty()) {
+            candidates = beforeScratches;
+        }
+
+        if (candidates.isEmpty()) {
+            return new ReturnReportResponse.ComparisonDetail(
+                    null,
+                    afterScratch.getLogId(),
+                    null,
+                    afterScratch.getCropS3Url(),
+                    0.0,
+                    100.0,
+                    true
+            );
+        }
+
+        com.care.domain.reservation.entity.Scratch bestBefore = null;
+        double bestSimilarity = -1.0;
+        double bestDiffScore = 100.0;
+
+        for (com.care.domain.reservation.entity.Scratch before : candidates) {
+            try {
+                AiScratchSimilarityResult result = aiScratchSimilarityClient.compareByUrls(
+                        before.getCropS3Url(),
+                        afterScratch.getCropS3Url()
+                );
+                double similarityPercent = normalizeToPercent(result.similarity());
+                if (similarityPercent > bestSimilarity) {
+                    bestSimilarity = similarityPercent;
+                    bestDiffScore = result.diffScore();
+                    bestBefore = before;
+                }
+            } catch (Exception e) {
+                log.warn("[ReturnReport] AI 유사도 비교 실패 | beforeLogId: {}, afterLogId: {}, reason: {}",
+                        before.getLogId(), afterScratch.getLogId(), e.getMessage());
+            }
+        }
+
+        if (bestBefore == null) {
+            return new ReturnReportResponse.ComparisonDetail(
+                    null,
+                    afterScratch.getLogId(),
+                    null,
+                    afterScratch.getCropS3Url(),
+                    0.0,
+                    100.0,
+                    true
+            );
+        }
+
+        boolean warning = bestSimilarity < similarityThreshold;
+        return new ReturnReportResponse.ComparisonDetail(
+                bestBefore.getLogId(),
+                afterScratch.getLogId(),
+                bestBefore.getCropS3Url(),
+                afterScratch.getCropS3Url(),
+                bestSimilarity,
+                bestDiffScore,
+                warning
+        );
+    }
+
+    private double normalizeToPercent(double similarity) {
+        if (similarity <= 1.0) {
+            return similarity * 100.0;
+        }
+        return similarity;
     }
 
     /**

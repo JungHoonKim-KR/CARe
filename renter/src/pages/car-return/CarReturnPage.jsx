@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import carIconCute from '../../assets/car_icon_cute.png'
 import carIconFront from '../../assets/car_icon_front.png'
 import { scanAfter, completeReservation, lockSmartKey } from '../../api/reservation'
@@ -21,6 +22,7 @@ function PanelIcon({ icon }) {
 }
 
 export default function CarReturnPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { state } = useLocation()
   const reservation = state?.reservation
@@ -113,16 +115,15 @@ export default function CarReturnPage() {
           <img src={carIconCute} alt="차량" className="cr-car-icon" />
         </div>
         <div className="cr-intro-text">
-          <h1 className="cr-intro-title">반납을 완료하시겠습니까?</h1>
+          <h1 className="cr-intro-title">{t('carReturn.confirmTitle')}</h1>
           <p className="cr-intro-desc">
-            확인 시 스마트키가 반납되고<br/>
-            차량 상태가 반납완료로 변경돼요
+            {t('carReturn.confirmDesc').split('\n').map((line, i) => <span key={i}>{line}<br/></span>)}
           </p>
         </div>
       </div>
       <div className="cr-footer">
         <button className="cr-primary-btn" onClick={submitReturn}>
-          반납 완료하기
+          {t('carReturn.completeBtn')}
         </button>
       </div>
     </div>
@@ -143,10 +144,9 @@ export default function CarReturnPage() {
           <img src={carIconCute} alt="차량" className="cr-car-icon" />
         </div>
         <div className="cr-intro-text">
-          <h1 className="cr-intro-title">반납 전 차량 외관을<br/>촬영해주세요</h1>
+          <h1 className="cr-intro-title">{t('carReturn.introTitle').split('\n').map((line,i)=><span key={i}>{line}<br/></span>)}</h1>
           <p className="cr-intro-desc">
-            촬영 사진은 블록체인에 저장되며<br/>
-            업체에게 반납 알림이 전송돼요
+            {t('carReturn.introDesc').split('\n').map((line,i)=><span key={i}>{line}<br/></span>)}
           </p>
         </div>
         <div className="cr-intro-notice">
@@ -155,13 +155,13 @@ export default function CarReturnPage() {
               stroke="#F7A633" strokeWidth="2"/>
             <path d="M12 8v4M12 16h.01" stroke="#F7A633" strokeWidth="2" strokeLinecap="round"/>
           </svg>
-          <span>4방향 모두 촬영해야 반납할 수 있어요</span>
+          <span>{t('carReturn.introNotice')}</span>
         </div>
       </div>
 
       <div className="cr-footer">
         <button className="cr-primary-btn" onClick={() => setStep('select')}>
-          촬영하러 가기
+          {t('carReturn.goCamera')}
         </button>
       </div>
     </div>
@@ -177,7 +177,7 @@ export default function CarReturnPage() {
               strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
-        <h2 className="cr-select-title">반납 외관 촬영</h2>
+        <h2 className="cr-select-title">{t('carReturn.selectTitle')}</h2>
       </div>
 
       <div className="cr-progress-row">
@@ -211,7 +211,7 @@ export default function CarReturnPage() {
               </div>
               <p className="cr-panel-label">{panel.label}</p>
               <span className={`cr-panel-badge${taken ? ' done' : ''}`}>
-                {taken ? '촬영완료' : '미촬영'}
+                {taken ? t('carReturn.taken') : t('carReturn.notTaken')}
               </span>
             </button>
           )
@@ -224,10 +224,10 @@ export default function CarReturnPage() {
           onClick={allCaptured ? submitReturn : undefined}
           disabled={!allCaptured}
         >
-          반납 완료하기
+          {t('carReturn.completeBtn')}
         </button>
         {!allCaptured && (
-          <p className="cr-hint">4방향 모두 촬영 후 반납할 수 있어요</p>
+          <p className="cr-hint">{t('carReturn.shootHint')}</p>
         )}
       </div>
     </div>
@@ -245,16 +245,16 @@ export default function CarReturnPage() {
             </svg>
           </button>
           <div>
-            <p className="cr-cam-title">{panel?.label} 촬영</p>
-            <p className="cr-cam-sub">차량을 가이드 선에 맞춰주세요</p>
+            <p className="cr-cam-title">{t('carReturn.cameraTitle', { panel: panel?.label })}</p>
+            <p className="cr-cam-sub">{t('carReturn.cameraGuide')}</p>
           </div>
         </div>
 
         <div className="cr-cam-area">
           {camError ? (
             <div className="cr-cam-error">
-              <p>카메라 접근 권한이 필요합니다</p>
-              <button onClick={startCamera}>다시 시도</button>
+              <p>{t('carReturn.cameraPermission')}</p>
+              <button onClick={startCamera}>{t('carReturn.retry')}</button>
             </div>
           ) : (
             <video ref={videoRef} autoPlay playsInline muted className="cr-cam-video" />
@@ -283,8 +283,8 @@ export default function CarReturnPage() {
   if (step === 'submitting') return (
     <div className="cr-loading-page">
       <div className="cr-loading-spinner" />
-      <p className="cr-loading-title">반납 처리 중...</p>
-      <p className="cr-loading-desc">촬영 사진을 저장하고<br/>임대인에게 반납 알림을 전송하고 있어요</p>
+      <p className="cr-loading-title">{t('carReturn.submittingTitle')}</p>
+      <p className="cr-loading-desc">{t('carReturn.submittingDesc').split('\n').map((line,i)=><span key={i}>{line}<br/></span>)}</p>
     </div>
   )
 
@@ -304,9 +304,7 @@ export default function CarReturnPage() {
           이용해 주셔서 감사합니다.
         </p>
       </div>
-      <button className="cr-done-btn" onClick={() => navigate('/landing')}>
-        홈으로 돌아가기
-      </button>
+        <button className="cr-done-btn" onClick={() => navigate('/landing')}>{t('carReturn.goHome')}</button>
     </div>
   )
 

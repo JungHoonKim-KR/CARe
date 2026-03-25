@@ -35,6 +35,10 @@ export default function AIReportPage() {
   const [error, setError] = useState('')
   const [reportData, setReportData] = useState(null)
   const [selectedAfterLogId, setSelectedAfterLogId] = useState(null)
+  const [createReason, setCreateReason] = useState('')
+  const [createAmount, setCreateAmount] = useState('')
+  const [createLoading, setCreateLoading] = useState(false)
+  const [createError, setCreateError] = useState('')
 
   useEffect(() => {
     fetchAiReport()
@@ -43,17 +47,23 @@ export default function AIReportPage() {
   const fetchAiReport = async () => {
     setLoading(true)
     setError('')
+    setCreateError('')
+
+    let mode = 'reservation'
+    let dispute = null
+    let reservationId = id
 
     const detailResult = await DisputeService.getDisputeDetail(id)
-    if (!detailResult.success || !detailResult.data) {
-      setError(detailResult.message || '분쟁 정보를 불러오지 못했습니다.')
-      setLoading(false)
-      return
+    if (detailResult.success && detailResult.data) {
+      mode = 'dispute'
+      dispute = detailResult.data
+      reservationId = detailResult.data.reservationId
     }
 
-    const dispute = detailResult.data
-    const aiResult = await DisputeService.getAiAnalysis(id)
-    const reservationResult = await ReservationService.getReservationDetail(dispute.reservationId)
+    const aiResult = mode === 'dispute'
+      ? await DisputeService.getAiAnalysis(id)
+      : { success: false, data: null }
+    const reservationResult = await ReservationService.getReservationDetail(reservationId)
 
     if (!reservationResult.success || !reservationResult.data) {
       setError(reservationResult.message || '예약 정보를 불러오지 못했습니다.')
@@ -69,7 +79,7 @@ export default function AIReportPage() {
       return
     }
 
-    const returnReportResult = await ReservationService.getReturnReport(carId, dispute.reservationId)
+    const returnReportResult = await ReservationService.getReturnReport(carId, reservationId)
     if (!returnReportResult.success || !returnReportResult.data) {
       setError(returnReportResult.message || '반납 리포트를 불러오지 못했습니다.')
       setLoading(false)
@@ -114,6 +124,8 @@ export default function AIReportPage() {
 
     setReportData({
       dispute,
+      mode,
+      reservationId,
       reservation,
       threshold,
       scratches,
@@ -124,7 +136,7 @@ export default function AIReportPage() {
       afterScratchMap
     })
 
-    setSelectedAfterLogId(dispute.targetLogId || comparisons[0]?.afterLogId || null)
+    setSelectedAfterLogId(dispute?.targetLogId || comparisons[0]?.afterLogId || null)
     setLoading(false)
   }
 
@@ -144,7 +156,47 @@ export default function AIReportPage() {
   }
 
   const handleDispute = () => {
-    navigate(`/disputes/${id}`)
+    if (reportData?.mode === 'dispute') {
+      navigate(`/disputes/${id}`)
+      return
+    }
+    const targetLogId = selectedComparison?.afterLogId
+    if (!targetLogId) {
+      alert('분쟁 생성 대상 로그가 없습니다.')
+      return
+    }
+    if (!createReason.trim()) {
+      alert('분쟁 사유를 입력해 주세요.')
+      return
+    }
+    const claimAmount = Number(createAmount)
+    if (!Number.isFinite(claimAmount) || claimAmount <= 0) {
+      alert('청구 금액을 1원 이상 입력해 주세요.')
+      return
+    }
+
+    createDispute(targetLogId, claimAmount)
+  }
+
+  const createDispute = async (targetLogId, claimAmount) => {
+    setCreateLoading(true)
+    setCreateError('')
+
+    const result = await DisputeService.createDispute(reportData.reservationId, {
+      targetLogId,
+      reason: createReason.trim(),
+      claimAmount
+    })
+
+    setCreateLoading(false)
+
+    if (!result.success || !result.data) {
+      setCreateError(result.message || '분쟁 생성에 실패했습니다.')
+      return
+    }
+
+    alert('분쟁이 생성되었습니다.')
+    navigate(`/disputes/${result.data.disputeId}`)
   }
 
   const handleDownloadIPFS = () => {
@@ -186,6 +238,7 @@ export default function AIReportPage() {
   const warningCount = reportData.warningCount || 0
   const threshold = reportData.threshold
   const hasWarning = warningCount > 0
+  const isReservationMode = reportData.mode === 'reservation'
 
   return (
     <div className="ai-report-page">
@@ -332,9 +385,33 @@ export default function AIReportPage() {
                 ✓ 정상 승인 (완전성)
               </button>
               <button className="dispute-btn" onClick={handleDispute}>
-                🛠️ 수리비 청구 (분쟁 제기)
+                {isReservationMode ? '🛠️ 선택 항목으로 분쟁 생성' : '🛠️ 수리비 청구 (분쟁 상세 이동)'}
               </button>
             </div>
+            {isReservationMode && (
+              <div className="dispute-create-box">
+                <p className="dispute-create-title">분쟁 생성 정보</p>
+                <p className="dispute-create-meta">
+                  대상 AFTER 로그: {selectedComparison?.afterLogId || '-'}
+                </p>
+                <textarea
+                  className="dispute-input dispute-reason"
+                  placeholder="분쟁 사유를 입력해 주세요."
+                  value={createReason}
+                  onChange={(e) => setCreateReason(e.target.value)}
+                />
+                <input
+                  className="dispute-input"
+                  type="number"
+                  min="1"
+                  placeholder="청구 금액(원)"
+                  value={createAmount}
+                  onChange={(e) => setCreateAmount(e.target.value)}
+                />
+                {createError && <p className="create-error">{createError}</p>}
+                {createLoading && <p className="create-loading">분쟁 생성 중...</p>}
+              </div>
+            )}
             <p className="action-note">
               BEFORE {reportData.beforeCount}건 / AFTER {reportData.afterCount}건 분석 완료
             </p>

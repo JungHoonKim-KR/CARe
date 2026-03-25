@@ -2,6 +2,7 @@ package com.care.domain.reservation.controller;
 
 import com.care.domain.reservation.controller.dto.response.DisputeAiAnalysisResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDetailResponse;
+import com.care.domain.reservation.controller.dto.response.DisputeSettleResponse;
 import com.care.domain.reservation.service.DisputeService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +16,12 @@ import java.util.List;
 import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -96,5 +100,63 @@ class DisputeSettlementControllerTest {
                 .andExpect(jsonPath("$.afterCount").value(1))
                 .andExpect(jsonPath("$.comparisons[0].beforeLogId").value("before-log-1"))
                 .andExpect(jsonPath("$.comparisons[0].afterLogId").value("after-log-1"));
+    }
+
+    @Test
+    void 분쟁_정산_API_성공_현재_스키마() throws Exception {
+        DisputeSettleResponse response = DisputeSettleResponse.of(
+                "dispute-1",
+                "reservation-1",
+                100000L,
+                "PENDING",
+                null,
+                null
+        );
+
+        given(disputeService.settleDispute(nullable(String.class), anyString(), any()))
+                .willReturn(response);
+
+        String body = """
+                {
+                  "finalAmount": 100000,
+                  "status": "COMPLETED"
+                }
+                """;
+
+        mockMvc.perform(post("/disputes/{disputeId}/settle", "dispute-1")
+                        .contentType(APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.settlementId").value("dispute-1"))
+                .andExpect(jsonPath("$.status").value("PENDING"));
+    }
+
+    @Test
+    void 분쟁_정산_API_성공_레거시_스키마() throws Exception {
+        DisputeSettleResponse response = DisputeSettleResponse.of(
+                "dispute-legacy",
+                "reservation-legacy",
+                70000L,
+                "PENDING",
+                null,
+                null
+        );
+
+        given(disputeService.settleDispute(nullable(String.class), anyString(), any()))
+                .willReturn(response);
+
+        String body = """
+                {
+                  "companyRefundAmount": 70000,
+                  "resolution": "COMPANY_WIN"
+                }
+                """;
+
+        mockMvc.perform(post("/disputes/{disputeId}/settle", "dispute-legacy")
+                        .contentType(APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.settlementId").value("dispute-legacy"))
+                .andExpect(jsonPath("$.status").value("PENDING"));
     }
 }

@@ -159,6 +159,78 @@ class DisputeServiceTest {
     }
 
     @Test
+    void 업체_분쟁_목록_조회_성공() {
+        // given
+        Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
+        given(disputeRepository.findByReservation_OwnedCar_Company_CompanyIdOrderByCreatedAtDesc("company-1"))
+                .willReturn(List.of(dispute));
+
+        // when
+        List<DisputeSummaryResponse> result = disputeService.getCompanyDisputes("company-1");
+
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).reservationId()).isEqualTo("reservation-1");
+        assertThat(result.get(0).carId()).isEqualTo("car-1");
+        assertThat(result.get(0).plateNumber()).isEqualTo("12가3456");
+        assertThat(result.get(0).renterName()).isEqualTo("renter-name");
+        assertThat(result.get(0).claimAmount()).isEqualTo(50000);
+        assertThat(result.get(0).status()).isEqualTo("OPEN");
+    }
+
+    @Test
+    void 분쟁_상세_단건조회_성공() {
+        // given
+        Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
+        given(disputeRepository.findByDisputeId("dispute-1"))
+                .willReturn(Optional.of(dispute));
+
+        // when
+        DisputeDetailResponse result = disputeService.getDisputeDetail("company-1", "dispute-1");
+
+        // then
+        assertThat(result.reservationId()).isEqualTo("reservation-1");
+        assertThat(result.targetLogId()).isEqualTo("after-log-1");
+        assertThat(result.status()).isEqualTo("OPEN");
+    }
+
+    @Test
+    void 업체_분쟁_목록_조회_성공() {
+        // given
+        Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
+        given(disputeRepository.findByReservation_OwnedCar_Company_CompanyIdOrderByCreatedAtDesc("company-1"))
+                .willReturn(List.of(dispute));
+
+        // when
+        List<DisputeSummaryResponse> result = disputeService.getCompanyDisputes("company-1");
+
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).reservationId()).isEqualTo("reservation-1");
+        assertThat(result.get(0).carId()).isEqualTo("car-1");
+        assertThat(result.get(0).plateNumber()).isEqualTo("12가3456");
+        assertThat(result.get(0).renterName()).isEqualTo("renter-name");
+        assertThat(result.get(0).claimAmount()).isEqualTo(50000);
+        assertThat(result.get(0).status()).isEqualTo("OPEN");
+    }
+
+    @Test
+    void 분쟁_상세_단건조회_성공() {
+        // given
+        Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
+        given(disputeRepository.findByDisputeId("dispute-1"))
+                .willReturn(Optional.of(dispute));
+
+        // when
+        DisputeDetailResponse result = disputeService.getDisputeDetail("company-1", "dispute-1");
+
+        // then
+        assertThat(result.reservationId()).isEqualTo("reservation-1");
+        assertThat(result.targetLogId()).isEqualTo("after-log-1");
+        assertThat(result.status()).isEqualTo("OPEN");
+    }
+
+    @Test
     void 분쟁_생성_성공() {
         // given
         DisputeCreateRequest request = new DisputeCreateRequest();

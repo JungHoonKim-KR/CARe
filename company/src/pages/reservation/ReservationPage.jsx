@@ -1,83 +1,85 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import TabFilter from '../../components/TabFilter'
 import ReservationTable from '../../components/ReservationTable'
+import ReservationService from '../../services/ReservationService'
 import './ReservationPage.css'
 
 export default function ReservationPage() {
   const [activeTab, setActiveTab] = useState('ongoing')
+  const [reservations, setReservations] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const tabs = [
-    { id: 'ongoing', label: '진행중', count: 2 },
-    { id: 'completed', label: '완료', count: 1 },
-    { id: 'dispute', label: '분쟁', count: 1 },
-  ]
+  useEffect(() => {
+    fetchReservations()
+  }, [])
 
+  const formatDate = (isoDate) => {
+    if (!isoDate) return '-'
+    const date = new Date(isoDate)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    return `${year}.${month}.${day} ${hours}:${minutes}`
+  }
 
-  // 백엔드 연동 시
-  // const [reservations, setReservations] = useState([])
-  // useEffect(() => {
-  //   fetchAllReservations()
-  // }, [activeTab])
+  const getStatusLabel = (status) => {
+    const statusMap = {
+      RESERVED: '예약완료',
+      IN_USE: '이용중',
+      AFTER_SCAN: '반납대기',
+      COMPLETED: '반납완료',
+      DISPUTE: '분쟁중'
+    }
+    return statusMap[status] || status
+  }
 
+  const getCategoryFromStatus = (status) => {
+    if (status === 'DISPUTE') return 'dispute'
+    if (status === 'COMPLETED') return 'completed'
+    return 'ongoing'
+  }
 
-  const allReservations = [
-    {
-      id: 1,
-      carName: '현대 아반떼',
-      carType: '세단',
-      renterName: '김철수',
-      renterCountry: '010',
-      startDate: '2026.03.05 10:00',
-      endDate: '2026.03.08 18:00',
-      location: '서울 강남구',
-      amount: '150,000원',
-      status: '이용중',
-      category: 'ongoing',
-    },
-    {
-      id: 2,
-      carName: '기아 K5',
-      carType: '세단',
-      renterName: '이영희',
-      renterCountry: '미국',
-      startDate: '2026.03.07 14:00',
-      endDate: '2026.03.10 14:00',
-      location: '서울 송파구',
-      amount: '180,000원',
-      status: '예약완료',
-      category: 'ongoing',
-    },
-    {
-      id: 3,
-      carName: 'BMW 320i',
-      carType: 'SUV',
-      renterName: '박민수',
-      renterCountry: '일본',
-      startDate: '2026.03.01 09:00',
-      endDate: '2026.03.04 18:00',
-      location: '서울 강남구',
-      amount: '360,000원',
-      status: '반납완료',
-      category: 'completed',
-    },
-    {
-      id: 4,
-      carName: '현대 싼타페',
-      carType: 'SUV',
-      renterName: '최지은',
-      renterCountry: '중국',
-      startDate: '2026.02.25 10:00',
-      endDate: '2026.02.28 15:00',
-      location: '서울 서초구',
-      amount: '240,000원',
-      status: '분쟁중',
-      category: 'dispute',
-    },
-  ]
+  const fetchReservations = async () => {
+    setLoading(true)
+    setError('')
 
-  const filteredReservations = allReservations.filter(
+    const result = await ReservationService.getReservations()
+    if (!result.success) {
+      setError(result.message)
+      setLoading(false)
+      return
+    }
+
+    const formatted = (result.data || []).map((reservation) => ({
+      id: reservation.reservationId,
+      carName: `${reservation.brand || '-'} ${reservation.modelName || ''}`.trim(),
+      carType: reservation.plateNumber || '-',
+      renterName: '-',
+      renterCountry: reservation.insuranceName || '-',
+      startDate: formatDate(reservation.pickupDate),
+      endDate: formatDate(reservation.returnDate),
+      location: '-',
+      amount: '-',
+      status: getStatusLabel(reservation.status),
+      category: getCategoryFromStatus(reservation.status)
+    }))
+
+    setReservations(formatted)
+    setLoading(false)
+  }
+
+  const filteredReservations = reservations.filter(
     (reservation) => reservation.category === activeTab
   )
+
+  const tabs = [
+    { id: 'ongoing', label: '진행중', count: reservations.filter((r) => r.category === 'ongoing').length },
+    { id: 'completed', label: '완료', count: reservations.filter((r) => r.category === 'completed').length },
+    { id: 'dispute', label: '분쟁', count: reservations.filter((r) => r.category === 'dispute').length },
+  ]
 
   return (
     <div className="reservation-page">
@@ -90,7 +92,27 @@ export default function ReservationPage() {
 
       <TabFilter tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <ReservationTable reservations={filteredReservations} />
+      {loading && (
+        <div className="empty-container">
+          <p>예약 목록을 불러오는 중...</p>
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className="empty-container">
+          <p>{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && filteredReservations.length === 0 && (
+        <div className="empty-container">
+          <p>예약 내역이 없습니다.</p>
+        </div>
+      )}
+
+      {!loading && !error && filteredReservations.length > 0 && (
+        <ReservationTable reservations={filteredReservations} />
+      )}
     </div>
   )
 }

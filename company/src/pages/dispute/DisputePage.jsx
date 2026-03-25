@@ -10,20 +10,14 @@ export default function DisputePage() {
   const [isResolveModalOpen, setIsResolveModalOpen] = useState(false)
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
   const [dispute, setDispute] = useState(null)
-  const [scratchLogs, setScratchLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
-  const [loadingScratchLogs, setLoadingScratchLogs] = useState(false)
   const [isDefenseModalOpen, setIsDefenseModalOpen] = useState(false)
 
   useEffect(() => {
     fetchDisputeDetail()
   }, [id])
-
-  useEffect(() => {
-    fetchScratchLogs()
-  }, [dispute?.reservationId])
 
   const fetchDisputeDetail = async () => {
     setLoading(true)
@@ -40,21 +34,6 @@ export default function DisputePage() {
     setLoading(false)
   }
 
-  const fetchScratchLogs = async () => {
-    if (!dispute?.reservationId) return
-
-    setLoadingScratchLogs(true)
-    const result = await DisputeService.getScratchLogs(dispute.reservationId)
-
-    if (result.success) {
-      setScratchLogs(result.data || [])
-    } else {
-      console.error('스크래치 로그 조회 실패:', result.message)
-      setScratchLogs([])
-    }
-    setLoadingScratchLogs(false)
-  }
-
   const formatDateTime = (isoDate) => {
     if (!isoDate) return '-'
     return new Date(isoDate).toLocaleString('ko-KR')
@@ -66,14 +45,9 @@ export default function DisputePage() {
   }
   const uiStatus = toUiStatus(dispute?.status)
 
-  const evidenceImages = scratchLogs
-    .filter((log) => log.logId === dispute?.targetLogId || log.logId === dispute?.defenseLogId)
-    .flatMap((log) => [log.originalS3Url, log.cropS3Url].filter(Boolean))
-
-  const defenseLog = scratchLogs.find((log) => log.logId === dispute?.defenseLogId)
   const defenseImages = [
-    dispute?.defenseOriginalS3Url || defenseLog?.originalS3Url,
-    dispute?.defenseCropS3Url || defenseLog?.cropS3Url,
+    dispute?.defenseOriginalS3Url,
+    dispute?.defenseCropS3Url,
   ].filter(Boolean)
 
   const timeline = dispute
@@ -234,7 +208,15 @@ export default function DisputePage() {
 
             {/* Description */}
             <div className="card">
-              <h2 className="section-title">분쟁 내용</h2>
+              <div className="section-title-row">
+                <h2 className="section-title">분쟁 내용</h2>
+                <button
+                  className="btn btn-outline btn-sm ai-report-btn"
+                  onClick={() => navigate(`/ai-report/${dispute.disputeId}`)}
+                >
+                  AI 스캔 리포트 보기
+                </button>
+              </div>
               <p className="description">{dispute.reason || '-'}</p>
             </div>
 
@@ -251,52 +233,26 @@ export default function DisputePage() {
                 <button className="btn btn-outline" onClick={() => setIsDefenseModalOpen(true)}>
                   사용자 제출 증거 이미지 보기
                 </button>
+                {uiStatus !== 'completed' && (
+                  <div className="defense-action-buttons">
+                    <button
+                      className="btn btn-danger"
+                      disabled={actionLoading}
+                      onClick={() => setIsRejectModalOpen(true)}
+                    >
+                      인정
+                    </button>
+                    <button
+                      className="btn btn-primary"
+                      disabled={actionLoading}
+                      onClick={() => setIsResolveModalOpen(true)}
+                    >
+                      불인정
+                    </button>
+                  </div>
+                )}
               </div>
             )}
-
-            {/* Evidence Images */}
-            <div className="card">
-              <h2 className="section-title">증거 자료</h2>
-              <div className="images-grid">
-                {evidenceImages.map((img, idx) => (
-                  <div key={idx} className="image-item">
-                    <img src={img} alt={`증거 ${idx + 1}`} />
-                  </div>
-                ))}
-                {evidenceImages.length === 0 && <p className="no-data-text">증거 이미지가 없습니다.</p>}
-              </div>
-              <button
-                className="btn btn-outline"
-                onClick={() => navigate(`/ai-report/${dispute.disputeId}`)}
-              >
-                AI 스캔 리포트 보기
-              </button>
-            </div>
-
-            <div className="card">
-              <h2 className="section-title">스크래치 로그 ({scratchLogs.length}건)</h2>
-              {loadingScratchLogs ? (
-                <p className="loading-text">스크래치 로그를 불러오는 중...</p>
-              ) : scratchLogs.length === 0 ? (
-                <p className="no-data-text">스크래치 로그가 없습니다.</p>
-              ) : (
-                <div className="scratch-logs-list">
-                  {scratchLogs.map((log) => (
-                    <div key={log.logId} className="scratch-log-item">
-                      <div className="log-header">
-                        <div className="log-info">
-                          <span className="log-type">{log.logType}</span>
-                          <span className="log-part">{log.carPart}</span>
-                          {log.isDisputed && <span className="log-badge disputed">분쟁</span>}
-                          {log.isManual && <span className="log-badge manual">수동</span>}
-                        </div>
-                        <span className="log-date">{formatDateTime(log.createdAt)}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Right Column */}
@@ -320,28 +276,6 @@ export default function DisputePage() {
               </div>
             </div>
 
-            {/* Actions */}
-            {uiStatus !== 'completed' && (
-              <div className="card actions-card">
-                <h2 className="section-title">처리 작업</h2>
-                <div className="actions-buttons">
-                  <button
-                    className="btn btn-danger"
-                    disabled={actionLoading}
-                    onClick={() => setIsRejectModalOpen(true)}
-                  >
-                    렌터 증거 인정
-                  </button>
-                  <button
-                    className="btn btn-primary"
-                    disabled={actionLoading}
-                    onClick={() => setIsResolveModalOpen(true)}
-                  >
-                    청구 유지 정산
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -373,9 +307,9 @@ export default function DisputePage() {
         isOpen={isResolveModalOpen}
         onClose={() => setIsResolveModalOpen(false)}
         onConfirm={handleResolve}
-        title="청구를 유지해 정산하시겠습니까?"
+        title="렌터 제출 증거를 불인정하시겠습니까?"
         message="업체 동의로 정산 프로세스를 진행합니다. 상대방 동의까지 완료되면 스마트 컨트랙트가 실행됩니다."
-        confirmText="정산 진행"
+        confirmText="불인정"
         cancelText="취소하기"
         confirmButtonStyle="primary"
       />
@@ -387,7 +321,7 @@ export default function DisputePage() {
         onConfirm={handleReject}
         title="렌터 제출 증거를 인정하시겠습니까?"
         message="증거 인정으로 정산 동의가 진행되며, 상대방 동의까지 완료되면 스마트 컨트랙트가 실행됩니다."
-        confirmText="인정하기"
+        confirmText="인정"
         cancelText="취소하기"
         confirmButtonStyle="danger"
       />

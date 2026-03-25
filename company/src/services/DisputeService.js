@@ -74,10 +74,9 @@ class DisputeService {
   async createDispute(reservationId, data) {
     try {
       const response = await api.post(`/api/reservations/${reservationId}/disputes`, {
+        targetLogId: data.targetLogId,
         reason: data.reason,
-        description: data.description,
-        claimAmount: data.claimAmount,
-        evidenceImages: data.evidenceImages || []
+        claimAmount: data.claimAmount
       })
 
       return {
@@ -99,9 +98,8 @@ class DisputeService {
   async resolveDispute(disputeId, data) {
     try {
       const response = await api.post(`/api/disputes/${disputeId}/settle`, {
-        companyRefundAmount: data.companyRefundAmount,
-        renterRefundAmount: data.renterRefundAmount,
-        resolution: data.resolution
+        finalAmount: data.finalAmount,
+        status: data.status
       })
 
       return {
@@ -122,8 +120,9 @@ class DisputeService {
    */
   async rejectDispute(disputeId, reason) {
     try {
-      const response = await api.post(`/api/disputes/${disputeId}/reject`, {
-        reason
+      const response = await api.post(`/api/disputes/${disputeId}/settle`, {
+        finalAmount: 0,
+        status: 'REFUNDED'
       })
 
       return {

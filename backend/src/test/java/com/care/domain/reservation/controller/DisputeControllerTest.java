@@ -106,8 +106,16 @@ class DisputeControllerTest {
                 "OPEN",
                 "문콕 흔적 확인",
                 120000,
-                LocalDateTime.now(),
-                LocalDateTime.now()
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        false,
+                        null,
+                        LocalDateTime.now(),
+                        LocalDateTime.now()
         );
 
         given(disputeService.getDisputeDetail(nullable(String.class), anyString(), anyString()))

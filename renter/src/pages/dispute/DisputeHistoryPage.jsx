@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import careLogo from '../../assets/care_logo.png'
 import { getCarScratches, submitDefense } from '../../api/reservation'
 import './DisputeHistoryPage.css'
@@ -33,6 +34,7 @@ function formatDate(val) {
 }
 
 export default function DisputeHistoryPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { state } = useLocation()
   const reservation = state?.reservation
@@ -95,7 +97,7 @@ export default function DisputeHistoryPage() {
             strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </div>
-      <h2 className="dh-submit-title">증거를 제출했어요!</h2>
+      <h2 className="dh-submit-title">{t('dispute.submittedTitle')}</h2>
       <p className="dh-submit-desc">
         선택한 흠집 기록을<br/>
         임대인에게 전송했어요.<br/>
@@ -132,7 +134,7 @@ export default function DisputeHistoryPage() {
           </svg>
           <input
             className="dh-search-input"
-            placeholder="차량 부위로 검색"
+            placeholder={t('dispute.searchPlaceholder')}
             value={query}
             onChange={e => setQuery(e.target.value)}
           />
@@ -240,7 +242,7 @@ export default function DisputeHistoryPage() {
                     className={`dh-select-btn${selectedLogId === item.logId ? ' selected' : ''}`}
                     onClick={() => setSelectedLogId(prev => prev === item.logId ? null : item.logId)}
                   >
-                    {selectedLogId === item.logId ? '✓ 증거로 선택됨' : '증거로 선택하기'}
+                    {selectedLogId === item.logId ? t('dispute.selected') : t('dispute.select')}
                   </button>
                 </div>
               )}
@@ -262,7 +264,7 @@ export default function DisputeHistoryPage() {
               <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="white"
                 strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            {submitting ? '제출 중...' : '증거로 제출하기'}
+            {submitting ? t('dispute.submitting') : t('dispute.submitBtn')}
           </button>
         ) : (
           <button className="dh-main-btn" onClick={() => {
@@ -272,7 +274,7 @@ export default function DisputeHistoryPage() {
             }
             navigate('/my-car')
           }}>
-            메인으로
+            {t('dispute.goMain')}
           </button>
         )}
       </div>

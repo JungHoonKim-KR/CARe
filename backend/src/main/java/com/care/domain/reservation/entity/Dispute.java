@@ -55,6 +55,30 @@ public class Dispute extends BaseEntity {
     @Column(name = "settlement_agreed_at")
     private LocalDateTime settlementAgreedAt;
 
+    @Column(name = "snapshot_before_log_id", length = 100)
+    private String snapshotBeforeLogId;
+
+    @Column(name = "snapshot_before_crop_s3_url", length = 255)
+    private String snapshotBeforeCropS3Url;
+
+    @Column(name = "snapshot_after_crop_s3_url", length = 255)
+    private String snapshotAfterCropS3Url;
+
+    @Column(name = "snapshot_similarity")
+    private Double snapshotSimilarity;
+
+    @Column(name = "snapshot_diff_score")
+    private Double snapshotDiffScore;
+
+    @Column(name = "snapshot_threshold")
+    private Double snapshotThreshold;
+
+    @Column(name = "snapshot_warning", nullable = false)
+    private boolean snapshotWarning;
+
+    @Column(name = "snapshot_captured_at")
+    private LocalDateTime snapshotCapturedAt;
+
     public static Dispute create(Reservation reservation,
                                  Scratch targetScratch,
                                  String reason,
@@ -80,8 +104,28 @@ public class Dispute extends BaseEntity {
         dispute.claimAmount = claimAmount;
         dispute.companySettlementAgreed = false;
         dispute.renterSettlementAgreed = false;
+        dispute.snapshotWarning = false;
         dispute.setStatus(DisputeStatus.OPEN);
         return dispute;
+    }
+
+    public void captureReturnReportSnapshot(
+            String beforeLogId,
+            String beforeCropS3Url,
+            String afterCropS3Url,
+            double similarity,
+            double diffScore,
+            double threshold,
+            boolean warning
+    ) {
+        this.snapshotBeforeLogId = beforeLogId;
+        this.snapshotBeforeCropS3Url = beforeCropS3Url;
+        this.snapshotAfterCropS3Url = afterCropS3Url;
+        this.snapshotSimilarity = similarity;
+        this.snapshotDiffScore = diffScore;
+        this.snapshotThreshold = threshold;
+        this.snapshotWarning = warning;
+        this.snapshotCapturedAt = LocalDateTime.now();
     }
 
     public DisputeStatus getStatusEnum() {

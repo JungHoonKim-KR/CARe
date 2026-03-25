@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import careLogo from '../../assets/care_logo.png'
-import { getDisputeDetail } from '../../api/reservation'
+import { getDisputeDetail, settleDispute } from '../../api/reservation'
 import './DisputePage.css'
 
 const STATUS_LABELS = {
@@ -29,6 +29,7 @@ export default function DisputePage() {
   const [dispute, setDispute] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [settling, setSettling] = useState(false)
 
   useEffect(() => {
     const reservationId = reservation?.reservationId
@@ -47,12 +48,34 @@ export default function DisputePage() {
       .finally(() => setLoading(false))
   }, [reservation?.reservationId, disputeId])
 
-  const handleSettle = () => {
-    if (reservation?.reservationId) {
-      localStorage.removeItem(`disputePending_${reservation.reservationId}`)
-      localStorage.removeItem(`disputeDate_${reservation.reservationId}`)
+  const handleSettle = async () => {
+    if (!dispute?.disputeId) {
+      alert('분쟁 정보가 없어서 정산 동의를 진행할 수 없어요.')
+      return
     }
-    navigate('/my-car')
+
+    setSettling(true)
+    try {
+      const result = await settleDispute(dispute.disputeId, dispute.claimAmount || 0, 'COMPLETED')
+
+      if (result?.status === 'PENDING') {
+        alert('정산 동의가 접수되었어요. 상대방 동의를 기다리는 중입니다.')
+      } else {
+        alert('정산이 완료되었습니다.')
+      }
+
+      if (reservation?.reservationId) {
+        localStorage.removeItem(`disputePending_${reservation.reservationId}`)
+        localStorage.removeItem(`disputeDate_${reservation.reservationId}`)
+      }
+
+      navigate('/my-car')
+    } catch (settleError) {
+      console.error('분쟁 정산 동의 실패:', settleError)
+      alert(settleError?.response?.data?.message || '정산 동의 처리에 실패했어요.')
+    } finally {
+      setSettling(false)
+    }
   }
 
   const handleDispute = () => {
@@ -194,7 +217,7 @@ export default function DisputePage() {
         <button className="dp-dispute-btn" onClick={handleDispute}>
           이의 신청하기
         </button>
-        <button className="dp-settle-btn" onClick={handleSettle}>
+        <button className="dp-settle-btn" onClick={handleSettle} disabled={settling}>
           이의 없음 (정산 동의)
         </button>
       </div>

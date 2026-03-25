@@ -10,10 +10,12 @@ import com.care.domain.renter.repository.RenterRepository;
 import com.care.domain.reservation.controller.dto.request.ReservationCreateRequest;
 import com.care.domain.reservation.controller.dto.response.ReservationCreateResponse;
 import com.care.domain.reservation.controller.dto.response.ReservationDetailResponse;
+import com.care.domain.reservation.controller.dto.response.ReservationReturnResponse;
 import com.care.domain.reservation.controller.dto.response.ReservationSummaryResponse;
 import com.care.domain.reservation.entity.Reservation;
 import com.care.domain.reservation.exception.ReservationErrorCode;
 import com.care.domain.reservation.repository.ReservationRepository;
+import com.care.domain.scan.repository.ScratchRepository;
 import com.care.global.blockchain.CareTokenService;
 import com.care.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ public class ReservationService {
     private final OwnedCarRepository ownedCarRepository;
     private final InsuranceRepository insuranceRepository;
     private final RenterRepository renterRepository;
+    private final ScratchRepository scratchRepository;
     private final CareTokenService careTokenService;
 
     @Transactional
@@ -103,5 +106,39 @@ public class ReservationService {
         return reservationRepository.findByReservationId(reservationId)
                 .map(ReservationDetailResponse::from)
                 .orElseThrow(() -> new BusinessException(ReservationErrorCode.RESERVATION_NOT_FOUND));
+    }
+
+    @Transactional
+    public ReservationReturnResponse completeReservation(String userId, String reservationId) {
+        Reservation reservation = reservationRepository.findByReservationId(reservationId)
+                .orElseThrow(() -> new BusinessException(ReservationErrorCode.RESERVATION_NOT_FOUND));
+
+        if (!reservation.getRenter().getUserId().equals(userId)) {
+            throw new BusinessException(ReservationErrorCode.RESERVATION_ACCESS_DENIED);
+        }
+
+        String status = reservation.getStatus();
+        if (!"COMPLETED".equals(status) && !"IN_USE".equals(status) && !"AFTER_SCAN".equals(status)) {
+            throw new BusinessException(ReservationErrorCode.INVALID_RETURN_STATUS);
+        }
+
+        int beforeScratchCount = scratchRepository
+                .findByReservation_ReservationIdAndLogType(reservationId, "BEFORE")
+                .size();
+        int afterScratchCount = scratchRepository
+                .findByReservation_ReservationIdAndLogType(reservationId, "AFTER")
+                .size();
+
+        if (!"COMPLETED".equals(status)) {
+            reservation.updateStatusToCompleted();
+        }
+
+        return ReservationReturnResponse.of(
+                reservationId,
+                reservation.getStatus(),
+                beforeScratchCount,
+                afterScratchCount,
+                java.time.LocalDateTime.now()
+        );
     }
 }

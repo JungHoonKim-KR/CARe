@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import ConfirmModal from '../../components/ConfirmModal'
+import DisputeService from '../../services/DisputeService'
 import './DisputePage.css'
 
 export default function DisputePage() {
@@ -8,46 +9,100 @@ export default function DisputePage() {
   const navigate = useNavigate()
   const [isResolveModalOpen, setIsResolveModalOpen] = useState(false)
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
+  const [dispute, setDispute] = useState(null)
+  const [scratchLogs, setScratchLogs] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [loadingScratchLogs, setLoadingScratchLogs] = useState(false)
 
-  // 임시 분쟁 상세 데이터 (실제로는 API에서 id로 조회)
-  const dispute = {
-    id: id,
-    disputeId: 'DIS-2024-001',
-    reservationId: 'RES-2024-001',
-    carName: '소나타 DN8',
-    carNumber: '12가 3456',
-    carModel: '2023년식',
-    renterName: '김철수',
-    renterEmail: 'kimcs@example.com',
-    issueType: '차량 파손',
-    status: 'pending',
-    createdDate: '2024-03-15 14:30',
-    description: '차량 앞 범퍼에 스크래치가 발견되었습니다. 렌터가 주차 중 발생했다고 주장하나, AI 스캔 결과 충돌 흔적이 확인되었습니다.',
-    amount: 500000,
-    images: [
-      'https://images.unsplash.com/photo-1621939514649-280e2ee25f60?w=400',
-      'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=400',
-    ],
-    aiReportUrl: '/ai-report/001',
-    timeline: [
-      { date: '2024-03-15 14:30', action: '분쟁 요청', user: '업체' },
-      { date: '2024-03-15 14:35', action: '렌터 확인', user: '김철수' },
-      { date: '2024-03-15 15:00', action: 'AI 스캔 완료', user: '시스템' },
-    ]
+  useEffect(() => {
+    fetchDisputeDetail()
+  }, [id])
+
+  useEffect(() => {
+    fetchScratchLogs()
+  }, [dispute?.reservationId])
+
+  const fetchDisputeDetail = async () => {
+    setLoading(true)
+    setError('')
+
+    const result = await DisputeService.getDisputeDetail(id)
+    if (!result.success) {
+      setError(result.message)
+      setLoading(false)
+      return
+    }
+
+    setDispute(result.data)
+    setLoading(false)
   }
 
+  const fetchScratchLogs = async () => {
+    if (!dispute?.reservationId) return
+
+    setLoadingScratchLogs(true)
+    const result = await DisputeService.getScratchLogs(dispute.reservationId)
+
+    if (result.success) {
+      setScratchLogs(result.data || [])
+    } else {
+      console.error('스크래치 로그 조회 실패:', result.message)
+      setScratchLogs([])
+    }
+    setLoadingScratchLogs(false)
+  }
+
+  const formatDateTime = (isoDate) => {
+    if (!isoDate) return '-'
+    return new Date(isoDate).toLocaleString('ko-KR')
+  }
+
+  const uiStatus = dispute?.status === 'RESOLVED' ? 'resolved' : 'pending'
+
+  const evidenceImages = scratchLogs
+    .filter((log) => log.logId === dispute?.targetLogId || log.logId === dispute?.defenseLogId)
+    .flatMap((log) => [log.originalS3Url, log.cropS3Url].filter(Boolean))
+
+  const timeline = dispute
+    ? [
+      { date: formatDateTime(dispute.createdAt), action: '분쟁 요청', user: '업체' },
+      { date: formatDateTime(dispute.updatedAt), action: '상태 업데이트', user: '시스템' }
+    ]
+    : []
+
   const handleResolve = () => {
-    console.log('분쟁 해결:', dispute.id)
+    console.log('분쟁 해결:', dispute?.disputeId)
     // TODO: API 호출
     alert('분쟁이 해결 처리되었습니다.')
     navigate('/disputes')
   }
 
   const handleReject = () => {
-    console.log('분쟁 반려:', dispute.id)
+    console.log('분쟁 반려:', dispute?.disputeId)
     // TODO: API 호출
     alert('분쟁이 반려되었습니다.')
     navigate('/disputes')
+  }
+
+  if (loading) {
+    return (
+      <div className="dispute-page">
+        <div className="empty-state">
+          <p>분쟁 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !dispute) {
+    return (
+      <div className="dispute-page">
+        <div className="empty-state">
+          <p>{error || '분쟁 정보를 불러오지 못했습니다.'}</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -67,30 +122,30 @@ export default function DisputePage() {
         <div className="status-section card">
           <div className="status-header">
             <h2 className="section-title">분쟁 상태</h2>
-            <span className={`status-badge ${dispute.status}`}>
-              {dispute.status === 'pending' ? '처리 중' : '해결 완료'}
+            <span className={`status-badge ${uiStatus}`}>
+              {uiStatus === 'pending' ? '처리 중' : '해결 완료'}
             </span>
           </div>
           <div className="status-info">
             <div className="info-item">
               <span className="label">요청일시</span>
-              <span className="value">{dispute.createdDate}</span>
+              <span className="value">{formatDateTime(dispute.createdAt)}</span>
             </div>
             <div className="info-item">
               <span className="label">분쟁 금액</span>
-              <span className="value amount">{dispute.amount.toLocaleString()}원</span>
+              <span className="value amount">{(dispute.claimAmount || 0).toLocaleString()}원</span>
             </div>
             <div className="info-item">
               <span className="label">분쟁 유형</span>
-              <span className="value">{dispute.issueType}</span>
+              <span className="value">차량 파손</span>
             </div>
             <div className="info-item">
               <span className="label">렌터 이름</span>
-              <span className="value">{dispute.renterName}</span>
+              <span className="value">-</span>
             </div>
             <div className="info-item">
               <span className="label">렌터 이메일</span>
-              <span className="value">{dispute.renterEmail}</span>
+              <span className="value">-</span>
             </div>
           </div>
         </div>
@@ -109,15 +164,15 @@ export default function DisputePage() {
                 </div>
                 <div className="info-item">
                   <span className="label">차량명</span>
-                  <span className="value">{dispute.carName}</span>
+                  <span className="value">-</span>
                 </div>
                 <div className="info-item">
                   <span className="label">차량 번호</span>
-                  <span className="value">{dispute.carNumber}</span>
+                  <span className="value">-</span>
                 </div>
                 <div className="info-item">
                   <span className="label">연식</span>
-                  <span className="value">{dispute.carModel}</span>
+                  <span className="value">-</span>
                 </div>
               </div>
             </div>
@@ -125,25 +180,51 @@ export default function DisputePage() {
             {/* Description */}
             <div className="card">
               <h2 className="section-title">분쟁 내용</h2>
-              <p className="description">{dispute.description}</p>
+              <p className="description">{dispute.reason || '-'}</p>
             </div>
 
             {/* Evidence Images */}
             <div className="card">
               <h2 className="section-title">증거 자료</h2>
               <div className="images-grid">
-                {dispute.images.map((img, idx) => (
+                {evidenceImages.map((img, idx) => (
                   <div key={idx} className="image-item">
                     <img src={img} alt={`증거 ${idx + 1}`} />
                   </div>
                 ))}
+                {evidenceImages.length === 0 && <p className="no-data-text">증거 이미지가 없습니다.</p>}
               </div>
               <button
                 className="btn btn-outline"
-                onClick={() => navigate(dispute.aiReportUrl)}
+                onClick={() => navigate(`/ai-report/${dispute.disputeId}`)}
               >
                 AI 스캔 리포트 보기
               </button>
+            </div>
+
+            <div className="card">
+              <h2 className="section-title">스크래치 로그 ({scratchLogs.length}건)</h2>
+              {loadingScratchLogs ? (
+                <p className="loading-text">스크래치 로그를 불러오는 중...</p>
+              ) : scratchLogs.length === 0 ? (
+                <p className="no-data-text">스크래치 로그가 없습니다.</p>
+              ) : (
+                <div className="scratch-logs-list">
+                  {scratchLogs.map((log) => (
+                    <div key={log.logId} className="scratch-log-item">
+                      <div className="log-header">
+                        <div className="log-info">
+                          <span className="log-type">{log.logType}</span>
+                          <span className="log-part">{log.carPart}</span>
+                          {log.isDisputed && <span className="log-badge disputed">분쟁</span>}
+                          {log.isManual && <span className="log-badge manual">수동</span>}
+                        </div>
+                        <span className="log-date">{formatDateTime(log.createdAt)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -153,7 +234,7 @@ export default function DisputePage() {
             <div className="card">
               <h2 className="section-title">처리 내역</h2>
               <div className="timeline">
-                {dispute.timeline.map((item, idx) => (
+                {timeline.map((item, idx) => (
                   <div key={idx} className="timeline-item">
                     <div className="timeline-dot"></div>
                     <div className="timeline-content">
@@ -169,7 +250,7 @@ export default function DisputePage() {
             </div>
 
             {/* Actions */}
-            {dispute.status === 'pending' && (
+            {uiStatus === 'pending' && (
               <div className="card actions-card">
                 <h2 className="section-title">처리 작업</h2>
                 <div className="actions-buttons">

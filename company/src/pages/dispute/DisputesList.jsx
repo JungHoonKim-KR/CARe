@@ -1,64 +1,61 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import DisputeService from '../../services/DisputeService'
 import './DisputesList.css'
 
 export default function DisputesList() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('all') // all, pending, resolved
+  const [disputes, setDisputes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  // 임시 분쟁 데이터
-  const disputes = [
-    {
-      id: 1,
-      disputeId: 'DIS-2024-001',
-      reservationId: 'RES-2024-001',
-      carName: '소나타 DN8',
-      carNumber: '12가 3456',
-      renterName: '김철수',
-      issueType: '차량 파손',
-      status: 'pending',
-      createdDate: '2024-03-15',
-      amount: 500000
-    },
-    {
-      id: 2,
-      disputeId: 'DIS-2024-002',
-      reservationId: 'RES-2024-002',
-      carName: '그랜저 GN7',
-      carNumber: '34나 5678',
-      renterName: '이영희',
-      issueType: '반납 지연',
-      status: 'pending',
-      createdDate: '2024-03-18',
-      amount: 200000
-    },
-    {
-      id: 3,
-      disputeId: 'DIS-2024-003',
-      reservationId: 'RES-2024-003',
-      carName: 'K5 DL3',
-      carNumber: '56다 7890',
-      renterName: '박민수',
-      issueType: '차량 파손',
-      status: 'resolved',
-      createdDate: '2024-03-10',
-      resolvedDate: '2024-03-14',
-      amount: 800000
-    },
-    {
-      id: 4,
-      disputeId: 'DIS-2024-004',
-      reservationId: 'RES-2024-004',
-      carName: '아반떼 CN7',
-      carNumber: '78라 1234',
-      renterName: '정수진',
-      issueType: '분실물',
-      status: 'resolved',
-      createdDate: '2024-03-12',
-      resolvedDate: '2024-03-13',
-      amount: 150000
+  useEffect(() => {
+    fetchDisputes()
+  }, [])
+
+  const formatDate = (isoDate) => {
+    if (!isoDate) return '-'
+    const date = new Date(isoDate)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  const toUiStatus = (status) => {
+    if (status === 'RESOLVED') return 'resolved'
+    return 'pending'
+  }
+
+  const fetchDisputes = async () => {
+    setLoading(true)
+    setError('')
+
+    const result = await DisputeService.getDisputes()
+
+    if (!result.success) {
+      setError(result.message)
+      setLoading(false)
+      return
     }
-  ]
+
+    const formatted = (result.data || []).map((item) => ({
+      id: item.disputeId,
+      disputeId: item.disputeId,
+      reservationId: item.reservationId,
+      carName: `${item.brand || '-'} ${item.modelName || ''}`.trim(),
+      carNumber: item.plateNumber || '-',
+      renterName: item.renterName || '-',
+      issueType: '차량 파손',
+      status: toUiStatus(item.status),
+      createdDate: formatDate(item.createdAt),
+      amount: item.claimAmount || 0
+    }))
+
+    setDisputes(formatted)
+    setLoading(false)
+  }
 
   const filteredDisputes = disputes.filter(dispute => {
     if (activeTab === 'all') return true
@@ -126,6 +123,19 @@ export default function DisputesList() {
 
       {/* Disputes Table */}
       <div className="disputes-table-wrapper">
+        {loading && (
+          <div className="empty-state">
+            <p>분쟁 목록을 불러오는 중...</p>
+          </div>
+        )}
+
+        {error && !loading && (
+          <div className="empty-state">
+            <p>{error}</p>
+          </div>
+        )}
+
+        {!loading && !error && (
         <table className="disputes-table">
           <thead>
             <tr>
@@ -174,8 +184,9 @@ export default function DisputesList() {
             ))}
           </tbody>
         </table>
+        )}
 
-        {filteredDisputes.length === 0 && (
+        {!loading && !error && filteredDisputes.length === 0 && (
           <div className="empty-state">
             <p>해당하는 분쟁이 없습니다.</p>
           </div>

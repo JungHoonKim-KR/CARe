@@ -10,6 +10,7 @@ public record CarListResponse(
         String brand,
         String modelName,
         String fuelType,
+        String thumbnailUrl,
         String frontImageUrl
 ) {
     public static CarListResponse of(OwnedCar car, String frontImageUrl) {
@@ -20,6 +21,7 @@ public record CarListResponse(
                 car.getCarModel().getBrand(),
                 car.getCarModel().getModelName(),
                 car.getCarModel().getFuelType(),
+                car.getCarModel().getThumbnailUrl(),
                 frontImageUrl
         );
     }

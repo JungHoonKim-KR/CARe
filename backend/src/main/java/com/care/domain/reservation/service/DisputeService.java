@@ -7,7 +7,6 @@ import com.care.domain.reservation.controller.dto.response.DisputeAiAnalysisResp
 import com.care.domain.reservation.controller.dto.response.DisputeCreateResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDefenseResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDetailResponse;
-import com.care.domain.reservation.controller.dto.response.DisputeAiAnalysisResponse;
 import com.care.domain.reservation.controller.dto.response.DisputePreviousScratchResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeSettleResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeSummaryResponse;
@@ -45,9 +44,6 @@ public class DisputeService {
 	private final CareTokenService careTokenService;
 	private final AiScratchSimilarityClient aiScratchSimilarityClient;
 	private final RenterNotificationService renterNotificationService;
-
-	@Value("${ai.scratch.similarity-threshold:60.0}")
-	private double similarityThreshold;
 
 	@Value("${ai.scratch.similarity-threshold:60.0}")
 	private double similarityThreshold;
@@ -165,57 +161,6 @@ public class DisputeService {
 			return similarity * 100.0;
 		}
 		return similarity;
-	}
-
-	@Transactional(readOnly = true)
-	public List<DisputeSummaryResponse> getCompanyDisputes(String companyId) {
-		return disputeRepository.findByReservation_OwnedCar_Company_CompanyIdOrderByCreatedAtDesc(companyId)
-				.stream()
-				.map(DisputeSummaryResponse::from)
-				.toList();
-	}
-
-	@Transactional(readOnly = true)
-	public DisputeDetailResponse getDisputeDetail(String requesterId, String disputeId) {
-		Dispute dispute = disputeRepository.findByDisputeId(disputeId)
-				.orElseThrow(() -> new IllegalArgumentException("분쟁을 찾을 수 없습니다: " + disputeId));
-
-		validateParticipantAccess(requesterId, dispute.getReservation());
-		return DisputeDetailResponse.from(dispute);
-	}
-
-	@Transactional(readOnly = true)
-	public List<DisputeSummaryResponse> getCompanyDisputes(String companyId) {
-		return disputeRepository.findByReservation_OwnedCar_Company_CompanyIdOrderByCreatedAtDesc(companyId)
-				.stream()
-				.map(DisputeSummaryResponse::from)
-				.toList();
-	}
-
-	@Transactional(readOnly = true)
-	public DisputeDetailResponse getDisputeDetail(String requesterId, String disputeId) {
-		Dispute dispute = disputeRepository.findByDisputeId(disputeId)
-				.orElseThrow(() -> new IllegalArgumentException("분쟁을 찾을 수 없습니다: " + disputeId));
-
-		validateParticipantAccess(requesterId, dispute.getReservation());
-		return DisputeDetailResponse.from(dispute);
-	}
-
-	@Transactional(readOnly = true)
-	public List<DisputeSummaryResponse> getCompanyDisputes(String companyId) {
-		return disputeRepository.findByReservation_OwnedCar_Company_CompanyIdOrderByCreatedAtDesc(companyId)
-				.stream()
-				.map(DisputeSummaryResponse::from)
-				.toList();
-	}
-
-	@Transactional(readOnly = true)
-	public DisputeDetailResponse getDisputeDetail(String requesterId, String disputeId) {
-		Dispute dispute = disputeRepository.findByDisputeId(disputeId)
-				.orElseThrow(() -> new IllegalArgumentException("분쟁을 찾을 수 없습니다: " + disputeId));
-
-		validateParticipantAccess(requesterId, dispute.getReservation());
-		return DisputeDetailResponse.from(dispute);
 	}
 
 	@Transactional(readOnly = true)

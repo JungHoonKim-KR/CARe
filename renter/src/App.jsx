@@ -23,6 +23,7 @@ import DIDPassportGuidePage from './pages/did-auth/DIDPassportGuidePage'
 import DIDCameraPage from './pages/did-auth/DIDCameraPage'
 import DIDConfirmPage from './pages/did-auth/DIDConfirmPage'
 import DIDCardPage from './pages/did-auth/DIDCardPage'
+import DIDSelfiePage from './pages/did-auth/DIDSelfiePage'
 import ScanPage from './pages/scan/ScanPage'
 import CarFaceAuthPage from './pages/car-faceauth/CarFaceAuthPage'
 import CarSmartKeyPage from './pages/car-smartkey/CarSmartKeyPage'
@@ -64,6 +65,7 @@ function App() {
           <Route path="/did-camera" element={<DIDCameraPage />} />
           <Route path="/did-confirm" element={<DIDConfirmPage />} />
           <Route path="/did-card" element={<DIDCardPage />} />
+          <Route path="/did-selfie" element={<DIDSelfiePage />} />
           <Route path="/car-faceauth" element={<CarFaceAuthPage />} />
           <Route path="/car-smartkey" element={<CarSmartKeyPage />} />
           <Route path="/damage-history" element={<DamageHistoryPage />} />

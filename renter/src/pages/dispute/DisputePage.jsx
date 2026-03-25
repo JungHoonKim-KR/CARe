@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import careLogo from '../../assets/care_logo.png'
-import { getDisputeDetail, settleDispute } from '../../api/reservation'
+import { getDisputeDetail, settleDispute, getDisputeAiAnalysis } from '../../api/reservation'
 import './DisputePage.css'
 
 const STATUS_LABELS = {
@@ -29,6 +29,7 @@ export default function DisputePage() {
   const disputeId = state?.disputeId
 
   const [dispute, setDispute] = useState(null)
+  const [aiAnalysis, setAiAnalysis] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [settling, setSettling] = useState(false)
@@ -48,6 +49,11 @@ export default function DisputePage() {
         setError('분쟁 정보를 불러오지 못했어요.')
       })
       .finally(() => setLoading(false))
+
+    // AI 분석 결과 조회
+    getDisputeAiAnalysis(disputeId)
+      .then((data) => setAiAnalysis(data))
+      .catch((err) => console.error('AI 분석 조회 실패:', err))
   }, [reservation?.reservationId, disputeId])
 
   const handleSettle = async () => {
@@ -171,43 +177,58 @@ export default function DisputePage() {
             {/* Before */}
             <div className="dp-compare-card">
               <div className="dp-compare-img before">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="5" width="18" height="14" rx="2" stroke="#ccc" strokeWidth="1.5"/>
-                  <circle cx="12" cy="12" r="3" stroke="#ccc" strokeWidth="1.5"/>
-                  <circle cx="17.5" cy="7.5" r="1" fill="#ccc"/>
-                </svg>
+                {aiAnalysis?.beforeImageUrl ? (
+                  <img src={aiAnalysis.beforeImageUrl} alt="Before" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                ) : (
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="5" width="18" height="14" rx="2" stroke="#ccc" strokeWidth="1.5"/>
+                    <circle cx="12" cy="12" r="3" stroke="#ccc" strokeWidth="1.5"/>
+                    <circle cx="17.5" cy="7.5" r="1" fill="#ccc"/>
+                  </svg>
+                )}
               </div>
               <p className="dp-compare-label">Before</p>
-              <p className="dp-compare-date">2025년 3월 12일 2:24 pm</p>
+              <p className="dp-compare-date">{aiAnalysis?.beforeDate ? formatDateTime(aiAnalysis.beforeDate) : '-'}</p>
               <span className="dp-compare-tag normal">Normal</span>
             </div>
 
             {/* After */}
             <div className="dp-compare-card">
               <div className="dp-compare-img after">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="5" width="18" height="14" rx="2" stroke="#ccc" strokeWidth="1.5"/>
-                  <circle cx="12" cy="12" r="3" stroke="#ccc" strokeWidth="1.5"/>
-                  <circle cx="17.5" cy="7.5" r="1" fill="#ccc"/>
-                  <path d="M5 9l3 3M7 7l4 4" stroke="#FF4D4F" strokeWidth="1.5"
-                    strokeLinecap="round"/>
-                </svg>
+                {aiAnalysis?.afterImageUrl ? (
+                  <img src={aiAnalysis.afterImageUrl} alt="After" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                ) : (
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="5" width="18" height="14" rx="2" stroke="#ccc" strokeWidth="1.5"/>
+                    <circle cx="12" cy="12" r="3" stroke="#ccc" strokeWidth="1.5"/>
+                    <circle cx="17.5" cy="7.5" r="1" fill="#ccc"/>
+                  </svg>
+                )}
               </div>
               <p className="dp-compare-label">After</p>
-              <p className="dp-compare-date">2025년 3월 13일 11:57 am</p>
+              <p className="dp-compare-date">{aiAnalysis?.afterDate ? formatDateTime(aiAnalysis.afterDate) : '-'}</p>
               <span className="dp-compare-tag attention">Requires Attention</span>
             </div>
           </div>
         </div>
 
-        {/* 설명 텍스트 */}
+        {/* AI 분석 설명 */}
         <div className="dp-desc-box">
           <p className="dp-desc-text">
-            이전에 발생했던 흠집과 달리<br/>
-            유사도가 <strong>5%</strong>로 확인되는<br/>
-            다른 흠집들이 발견됐어요.<br/>
-            관련 사항에 대해 소명을 하고 싶으신 경우<br/>
-            이의 신청 버튼을 해주세요.
+            {aiAnalysis?.description ? (
+              aiAnalysis.description.split('\n').map((line, i) => <span key={i}>{line}<br/></span>)
+            ) : (
+              <>
+                이전에 발생했던 흠집과 달리<br/>
+                {aiAnalysis?.similarity != null
+                  ? <>유사도가 <strong>{aiAnalysis.similarity}%</strong>로 확인되는<br/></>
+                  : <>유사도 분석 결과를 확인 중입니다.<br/></>
+                }
+                다른 흠집들이 발견됐어요.<br/>
+                관련 사항에 대해 소명을 하고 싶으신 경우<br/>
+                이의 신청 버튼을 해주세요.
+              </>
+            )}
           </p>
         </div>
 

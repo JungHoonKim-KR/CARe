@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import careLogo from '../../assets/care_logo.png'
 import BottomNav from '../../components/BottomNav'
-import api from '../../api/auth'
+import { getInsuranceList } from '../../api/reservation'
 import './CarDetailPage.css'
 
 const TERMS = [
@@ -71,9 +71,8 @@ export default function CarDetailPage() {
   useEffect(() => {
     const companyId = car.companyId
     if (!companyId) return
-    api.get(`/api/insurances?companyId=${companyId}`)
-      .then(res => {
-        const plans = res.data
+    getInsuranceList(companyId)
+      .then(plans => {
         setInsurancePlans(plans)
         if (plans.length > 0) setInsurance(plans[0].insuranceId)
       })

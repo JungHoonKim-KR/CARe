@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { issueSmartKey, unlockSmartKey, lockSmartKey } from '../../api/reservation'
+import { issueSmartKey, unlockSmartKey, lockSmartKey, getSmartKeyStatus } from '../../api/reservation'
 import './CarSmartKeyPage.css'
 
 export default function CarSmartKeyPage() {
@@ -13,6 +13,17 @@ export default function CarSmartKeyPage() {
   const pickupReady  = faceAuthDone
 
   const [locked, setLocked] = useState(!pickupReady)
+
+  // 페이지 진입 시 스마트키 상태 조회
+  useEffect(() => {
+    if (!rid) return
+    getSmartKeyStatus(rid)
+      .then(data => {
+        if (data?.status === 'UNLOCKED') setLocked(false)
+        else if (data?.status === 'LOCKED') setLocked(true)
+      })
+      .catch(() => {}) // 실패 시 기본 상태 유지
+  }, [rid])
 
   const handleLockToggle = async () => {
     if (!pickupReady) return

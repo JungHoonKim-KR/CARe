@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import carIconCute from '../../assets/car_icon_cute.png'
 import carIconFront from '../../assets/car_icon_front.png'
-import { scanAfter, completeReservation, lockSmartKey } from '../../api/reservation'
+import { scanAfter, completeReservation, lockSmartKey, revokeSmartKey } from '../../api/reservation'
 import './CarReturnPage.css'
 
 const PANELS = [
@@ -97,8 +97,10 @@ export default function CarReturnPage() {
     }
     setStep('done')
     if (rid) {
-      // 스마트키 반납 + 반납 완료 상태 변경 + 사진 업로드 백그라운드 처리
-      lockSmartKey(rid).catch(e => console.error('[Return] 스마트키 반납 실패:', e))
+      // 스마트키 잠금 + 회수 + 반납 완료 상태 변경 + 사진 업로드 백그라운드 처리
+      lockSmartKey(rid)
+        .then(() => revokeSmartKey(rid))
+        .catch(e => console.error('[Return] 스마트키 반납 실패:', e))
       completeReservation(rid).catch(e => console.error('[Return] 반납 완료 API 실패:', e))
       if (!fromScan) {
         Promise.all(PANELS.map(p => scanAfter(rid, p.id, photos[p.id])))

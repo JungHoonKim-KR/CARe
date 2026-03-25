@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import careLogo from '../../assets/care_logo.png'
-import { getCarScratches, submitDefense } from '../../api/reservation'
+import { getDisputeScratchLogs, submitDefense } from '../../api/reservation'
 import './DisputeHistoryPage.css'
 
 const PARTS = [
@@ -53,7 +53,7 @@ export default function DisputeHistoryPage() {
   useEffect(() => {
     const reservationId = reservation?.reservationId
     if (!reservationId) { setLoading(false); return }
-    getCarScratches(reservationId)
+    getDisputeScratchLogs(reservationId)
       .then((data) => setScratches(Array.isArray(data) ? data : []))
       .catch(() => setScratches([]))
       .finally(() => setLoading(false))

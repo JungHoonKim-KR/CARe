@@ -371,6 +371,8 @@ class DisputeServiceTest {
         assertThat(second.status()).isEqualTo("COMPLETED");
         assertThat(second.finalAmount()).isEqualTo(70000L);
         assertThat(second.txHash()).isEqualTo("0xusdc-legacy");
+        verify(disputeSettlementService, times(1)).initializeSettlementAgreement(anyString(), anyString(), anyString(), anyLong());
+        verify(disputeSettlementService, times(2)).agreeSettlementByOperator(anyString(), anyString());
         verify(careTokenService).transfer("0xrenter", "0xcompany", 70000d);
     }
 

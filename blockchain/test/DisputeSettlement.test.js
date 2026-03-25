@@ -122,4 +122,22 @@ describe("DisputeSettlement", function () {
     await expect(contract.connect(outsider).agreeSettlement(settlementKey))
       .to.be.revertedWithCustomError(contract, "NotSettlementParticipant");
   });
+
+  it("allows operator to relay participant agreements", async function () {
+    const { contract, owner, operator, company, renter } = await deployFixture();
+
+    const settlementKey = ethers.keccak256(ethers.toUtf8Bytes("settlement-8"));
+    const finalAmount = 55555;
+
+    await contract.connect(owner).setSettlementOperator(operator.address, true);
+    await contract
+      .connect(operator)
+      .initializeSettlementAgreement(settlementKey, company.address, renter.address, finalAmount);
+
+    await contract.connect(operator).agreeSettlementByOperator(settlementKey, company.address);
+    await contract.connect(operator).agreeSettlementByOperator(settlementKey, renter.address);
+
+    await expect(contract.connect(operator).recordSettlement(settlementKey, finalAmount))
+      .to.emit(contract, "SettlementRecorded");
+  });
 });

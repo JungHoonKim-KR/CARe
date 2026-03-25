@@ -7,7 +7,6 @@ import com.care.domain.reservation.controller.dto.response.DisputeAiAnalysisResp
 import com.care.domain.reservation.controller.dto.response.DisputeCreateResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDefenseResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDetailResponse;
-import com.care.domain.reservation.controller.dto.response.DisputeAiAnalysisResponse;
 import com.care.domain.reservation.controller.dto.response.DisputePreviousScratchResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeSettleResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeSummaryResponse;
@@ -49,33 +48,29 @@ public class DisputeService {
 	@Value("${ai.scratch.similarity-threshold:60.0}")
 	private double similarityThreshold;
 
-	@Transactional
-	public DisputeCreateResponse createDispute(String requesterId,
-											   String reservationId,
-											   DisputeCreateRequest request) {
-		Reservation reservation = reservationRepository.findByReservationId(reservationId)
-				.orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
+    @Value("${ai.scratch.similarity-threshold:60.0}")
+    private double similarityThreshold;
 
-		validateCompanyAccess(requesterId, reservation);
+    @Transactional
+    public DisputeCreateResponse createDispute(String requesterId,
+                                               String reservationId,
+                                               DisputeCreateRequest request) {
+        Reservation reservation = reservationRepository.findByReservationId(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
 
-		Scratch targetScratch = scratchRepository.findById(request.getTargetLogId())
-				.orElseThrow(() -> new IllegalArgumentException("대상 흠집 로그를 찾을 수 없습니다: " + request.getTargetLogId()));
+        validateCompanyAccess(requesterId, reservation);
 
-		validateScratchBelongsToReservation(targetScratch, reservationId);
-		validateLogType(targetScratch, "AFTER", "targetLogId는 AFTER 로그여야 합니다.");
+        Scratch targetScratch = scratchRepository.findById(request.getTargetLogId())
+                .orElseThrow(() -> new IllegalArgumentException("대상 흠집 로그를 찾을 수 없습니다: " + request.getTargetLogId()));
 
-		boolean hasActiveDispute = disputeRepository.existsByTargetScratch_LogIdAndStatusNot(
-				targetScratch.getLogId(), DisputeStatus.RESOLVED.name());
-		if (hasActiveDispute || targetScratch.isDisputed()) {
-			throw new IllegalArgumentException("이미 분쟁이 진행 중인 흠집입니다.");
-		}
+        validateScratchBelongsToReservation(targetScratch, reservationId);
+        validateLogType(targetScratch, "AFTER", "targetLogId는 AFTER 로그여야 합니다.");
 
-		Dispute dispute = Dispute.create(
-				reservation,
-				targetScratch,
-				request.getReason(),
-				request.getClaimAmount()
-		);
+        boolean hasActiveDispute = disputeRepository.existsByTargetScratch_LogIdAndStatusNot(
+                targetScratch.getLogId(), DisputeStatus.RESOLVED.name());
+        if (hasActiveDispute || targetScratch.isDisputed()) {
+            throw new IllegalArgumentException("이미 분쟁이 진행 중인 흠집입니다.");
+        }
 
 		captureReturnReportSnapshot(dispute, reservationId, targetScratch);
 
@@ -188,218 +183,362 @@ public class DisputeService {
 		Dispute dispute = disputeRepository.findByDisputeIdAndReservation_ReservationId(disputeId, reservationId)
 				.orElseThrow(() -> new IllegalArgumentException("분쟁을 찾을 수 없습니다: " + disputeId));
 
-		validateParticipantAccess(requesterId, dispute.getReservation());
-		return DisputeDetailResponse.from(dispute);
-	}
-
-	@Transactional(readOnly = true)
-	public List<DisputePreviousScratchResponse> getReservationScratchLogs(String requesterId,
-																			  String reservationId) {
-		Reservation reservation = reservationRepository.findByReservationId(reservationId)
-				.orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
-
-		validateParticipantAccess(requesterId, reservation);
-
-		List<Scratch> beforeScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "BEFORE");
-		List<Scratch> afterScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "AFTER");
-
-		return Stream.concat(beforeScratches.stream(), afterScratches.stream())
-				.filter(scratch -> !scratch.isManual())
-				.map(DisputePreviousScratchResponse::from)
-				.toList();
-	}
-
-	@Transactional(readOnly = true)
-	public DisputeAiAnalysisResponse getDisputeAiAnalysis(String requesterId, String disputeId) {
-		Dispute dispute = disputeRepository.findByDisputeId(disputeId)
-				.orElseThrow(() -> new IllegalArgumentException("분쟁을 찾을 수 없습니다: " + disputeId));
-
-		Reservation reservation = dispute.getReservation();
-		validateParticipantAccess(requesterId, reservation);
-
-		String reservationId = reservation.getReservationId();
-		List<Scratch> beforeScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "BEFORE")
-				.stream()
-				.filter(scratch -> !scratch.isManual())
-				.filter(scratch -> scratch.getCropS3Url() != null && !scratch.getCropS3Url().isBlank())
-				.toList();
-		List<Scratch> afterScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "AFTER")
-				.stream()
-				.filter(scratch -> !scratch.isManual())
-				.filter(scratch -> scratch.getCropS3Url() != null && !scratch.getCropS3Url().isBlank())
-				.toList();
-
-		List<DisputeAiAnalysisResponse.ComparisonItem> comparisons = new ArrayList<>();
-		for (Scratch before : beforeScratches) {
-			for (Scratch after : afterScratches) {
-				AiScratchSimilarityResult result = aiScratchSimilarityClient
-						.compareByUrls(before.getCropS3Url(), after.getCropS3Url());
-				comparisons.add(new DisputeAiAnalysisResponse.ComparisonItem(
-						before.getLogId(),
-						after.getLogId(),
-						before.getCropS3Url(),
-						after.getCropS3Url(),
-						result.similarity(),
-						result.diffScore()
-				));
-			}
-		}
-
-		return new DisputeAiAnalysisResponse(
-				dispute.getDisputeId(),
-				reservationId,
-				beforeScratches.size(),
-				afterScratches.size(),
-				comparisons
-		);
-	}
-	@Transactional
-	public DisputeDefenseResponse defendDispute(String requesterId,
-												String reservationId,
-												String disputeId,
-												DisputeDefenseRequest request) {
-		Dispute dispute = disputeRepository.findByDisputeIdAndReservation_ReservationId(disputeId, reservationId)
-				.orElseThrow(() -> new IllegalArgumentException("분쟁을 찾을 수 없습니다: " + disputeId));
-
-		validateRenterAccess(requesterId, dispute.getReservation());
-
-		Scratch defenseScratch = scratchRepository.findById(request.getDefenseLogId())
-				.orElseThrow(() -> new IllegalArgumentException("방어 흠집 로그를 찾을 수 없습니다: " + request.getDefenseLogId()));
-
-		validateScratchBelongsToReservation(defenseScratch, reservationId);
-		validateLogType(defenseScratch, "BEFORE", "defenseLogId는 BEFORE 로그여야 합니다.");
-
-		dispute.defend(defenseScratch);
-		return DisputeDefenseResponse.from(dispute);
-	}
-
-	private void validateCompanyAccess(String requesterId, Reservation reservation) {
-		String companyId = reservation.getOwnedCar().getCompany().getCompanyId();
-		if (!companyId.equals(requesterId)) {
-			throw new IllegalArgumentException("분쟁 생성 권한이 없습니다.");
-		}
-	}
-
-	private void validateRenterAccess(String requesterId, Reservation reservation) {
-		String renterId = reservation.getRenter().getUserId();
-		if (!renterId.equals(requesterId)) {
-			throw new IllegalArgumentException("분쟁 방어 권한이 없습니다.");
-		}
-	}
-
-	private void validateParticipantAccess(String requesterId, Reservation reservation) {
-		String renterId = reservation.getRenter().getUserId();
-		String companyId = reservation.getOwnedCar().getCompany().getCompanyId();
-		if (!renterId.equals(requesterId) && !companyId.equals(requesterId)) {
-			throw new IllegalArgumentException("분쟁 조회 권한이 없습니다.");
-		}
-	}
-
-	private void validateScratchBelongsToReservation(Scratch scratch, String reservationId) {
-		String scratchReservationId = scratch.getReservation().getReservationId();
-		if (!reservationId.equals(scratchReservationId)) {
-			throw new IllegalArgumentException("해당 예약의 흠집 로그가 아닙니다.");
-		}
-	}
-
-	private void validateLogType(Scratch scratch, String expectedLogType, String errorMessage) {
-		if (!expectedLogType.equalsIgnoreCase(scratch.getLogType())) {
-			throw new IllegalArgumentException(errorMessage);
-		}
-	}
-	@Transactional
-    public DisputeSettleResponse settleDispute(String requesterId, String disputeId, DisputeSettleRequest request) {
-        Dispute dispute = disputeRepository.findByDisputeId(disputeId)
-				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 분쟁입니다: " + disputeId));
-		Reservation reservation = dispute.getReservation();
-		validateParticipantAccess(requesterId, reservation);
-
-		if (dispute.getStatusEnum() == DisputeStatus.RESOLVED) {
-			throw new IllegalStateException("이미 정산이 완료된 분쟁입니다.");
-		}
-
-		SettlementStatus targetStatus = SettlementStatus.from(request.getStatus());
-		if (targetStatus == SettlementStatus.PENDING) {
-			throw new IllegalArgumentException("정산 API에서는 PENDING 상태를 사용할 수 없습니다.");
-		}
-
-		long finalAmount = request.getFinalAmount();
-		long maxBurden = reservation.getTotalPrice();
-		if (finalAmount > maxBurden) {
-			throw new IllegalArgumentException("최종 정산 금액은 예약 시 최대부담금을 초과할 수 없습니다.");
-		}
-
-		dispute.validateSettlementProposal(finalAmount, targetStatus);
-		dispute.proposeSettlement(finalAmount, targetStatus);
-
-		String companyId = reservation.getOwnedCar().getCompany().getCompanyId();
-		if (companyId.equals(requesterId)) {
-			dispute.agreeSettlementByCompany();
-		} else {
-			dispute.agreeSettlementByRenter();
-		}
-
-		if (!dispute.isSettlementFullyAgreed()) {
-			return DisputeSettleResponse.of(
-					disputeId,
-					reservation.getReservationId(),
-					finalAmount,
-					SettlementStatus.PENDING.name(),
-					null,
-					null
-			);
-		}
-
-		String settlementRecordTxHash;
-		try {
-			settlementRecordTxHash = disputeSettlementService.recordSettlement(
-					disputeId,
-					finalAmount
-			);
-		} catch (Exception e) {
-			throw new RuntimeException("온체인 정산 처리에 실패했습니다.", e);
-		}
-
-		String usdcTxHash = settlementRecordTxHash;
-		if (finalAmount > 0) {
-			try {
-				usdcTxHash = transferUsdcByStatus(reservation, finalAmount, targetStatus);
-			} catch (Exception e) {
-				throw new RuntimeException("자동 이체에 실패했습니다.", e);
-			}
-		}
-		dispute.resolve();
-		dispute.getTargetScratch().clearDisputed();
-
-		return DisputeSettleResponse.of(
-				disputeId,
-				reservation.getReservationId(),
-				finalAmount,
-				targetStatus.name(),
-				LocalDateTime.now(),
-				usdcTxHash
-		);
+        targetScratch.markDisputed();
+        Dispute saved = disputeRepository.save(dispute);
+        renterNotificationService.createDisputeCreatedNotification(reservation.getRenter(), saved);
+        return DisputeCreateResponse.from(saved);
     }
 
-	private String transferUsdcByStatus(Reservation reservation, long finalAmount, SettlementStatus targetStatus) throws Exception {
-		String renterWallet = reservation.getRenter().getWalletAddress();
-		String companyWallet = reservation.getOwnedCar().getCompany().getWalletAddress();
+    private void captureReturnReportSnapshot(Dispute dispute, String reservationId, Scratch targetScratch) {
+        List<Scratch> beforeScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "BEFORE")
+                .stream()
+                .filter(scratch -> !scratch.isManual())
+                .filter(scratch -> scratch.getCropS3Url() != null && !scratch.getCropS3Url().isBlank())
+                .toList();
 
-		if (renterWallet == null || renterWallet.isBlank()) {
-			throw new IllegalArgumentException("임차인 지갑 주소가 없습니다.");
-		}
-		if (companyWallet == null || companyWallet.isBlank()) {
-			throw new IllegalArgumentException("임대인 지갑 주소가 없습니다.");
-		}
+        List<Scratch> candidates = beforeScratches.stream()
+                .filter(before -> before.getCarPart().equalsIgnoreCase(targetScratch.getCarPart()))
+                .toList();
 
-		double amount = (double) finalAmount;
-		if (targetStatus == SettlementStatus.COMPLETED) {
-			return careTokenService.transfer(renterWallet, companyWallet, amount);
-		}
-		if (targetStatus == SettlementStatus.REFUNDED) {
-			return careTokenService.transfer(companyWallet, renterWallet, amount);
-		}
+        if (candidates.isEmpty()) {
+            candidates = beforeScratches;
+        }
 
-		throw new IllegalArgumentException("지원하지 않는 정산 상태입니다: " + targetStatus.name());
-	}
+        if (candidates.isEmpty()) {
+            dispute.captureReturnReportSnapshot(
+                    null,
+                    null,
+                    targetScratch.getCropS3Url(),
+                    0.0,
+                    100.0,
+                    similarityThreshold,
+                    true
+            );
+            return;
+        }
+
+        Scratch bestBefore = null;
+        double bestSimilarity = -1.0;
+        double bestDiffScore = 100.0;
+
+        for (Scratch before : candidates) {
+            try {
+                AiScratchSimilarityResult result = aiScratchSimilarityClient
+                        .compareByUrls(before.getCropS3Url(), targetScratch.getCropS3Url());
+                double similarityPercent = normalizeToPercent(result.similarity());
+                if (similarityPercent > bestSimilarity) {
+                    bestSimilarity = similarityPercent;
+                    bestDiffScore = result.diffScore();
+                    bestBefore = before;
+                }
+            } catch (Exception ignored) {
+                // 개별 비교 실패는 skip하고 나머지 후보로 계속 진행
+            }
+        }
+
+        if (bestBefore == null) {
+            dispute.captureReturnReportSnapshot(
+                    null,
+                    null,
+                    targetScratch.getCropS3Url(),
+                    0.0,
+                    100.0,
+                    similarityThreshold,
+                    true
+            );
+            return;
+        }
+
+        boolean warning = bestSimilarity < similarityThreshold;
+        dispute.captureReturnReportSnapshot(
+                bestBefore.getLogId(),
+                bestBefore.getCropS3Url(),
+                targetScratch.getCropS3Url(),
+                bestSimilarity,
+                bestDiffScore,
+                similarityThreshold,
+                warning
+        );
+    }
+
+    private double normalizeToPercent(double similarity) {
+        if (similarity <= 1.0) {
+            return similarity * 100.0;
+        }
+        return similarity;
+    }
+
+    @Transactional(readOnly = true)
+    public List<DisputeSummaryResponse> getCompanyDisputes(String companyId) {
+        return disputeRepository.findByReservation_OwnedCar_Company_CompanyIdOrderByCreatedAtDesc(companyId)
+                .stream()
+                .map(DisputeSummaryResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public DisputeDetailResponse getDisputeDetail(String requesterId, String disputeId) {
+        Dispute dispute = disputeRepository.findByDisputeId(disputeId)
+                .orElseThrow(() -> new IllegalArgumentException("분쟁을 찾을 수 없습니다: " + disputeId));
+
+        validateParticipantAccess(requesterId, dispute.getReservation());
+        return DisputeDetailResponse.from(dispute);
+    }
+
+    @Transactional(readOnly = true)
+    public DisputeDetailResponse getDisputeDetail(String requesterId,
+                                                  String reservationId,
+                                                  String disputeId) {
+        Dispute dispute = disputeRepository.findByDisputeIdAndReservation_ReservationId(disputeId, reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("분쟁을 찾을 수 없습니다: " + disputeId));
+
+        validateParticipantAccess(requesterId, dispute.getReservation());
+        return DisputeDetailResponse.from(dispute);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DisputePreviousScratchResponse> getReservationScratchLogs(String requesterId,
+                                                                          String reservationId) {
+        Reservation reservation = reservationRepository.findByReservationId(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
+
+        validateParticipantAccess(requesterId, reservation);
+
+        List<Scratch> beforeScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "BEFORE");
+        List<Scratch> afterScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "AFTER");
+
+        return Stream.concat(beforeScratches.stream(), afterScratches.stream())
+                .filter(scratch -> !scratch.isManual())
+                .map(DisputePreviousScratchResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public DisputeAiAnalysisResponse getDisputeAiAnalysis(String requesterId, String disputeId) {
+        Dispute dispute = disputeRepository.findByDisputeId(disputeId)
+                .orElseThrow(() -> new IllegalArgumentException("분쟁을 찾을 수 없습니다: " + disputeId));
+
+        Reservation reservation = dispute.getReservation();
+        validateParticipantAccess(requesterId, reservation);
+
+        String reservationId = reservation.getReservationId();
+        List<Scratch> beforeScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "BEFORE")
+                .stream()
+                .filter(scratch -> !scratch.isManual())
+                .filter(scratch -> scratch.getCropS3Url() != null && !scratch.getCropS3Url().isBlank())
+                .toList();
+        List<Scratch> afterScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "AFTER")
+                .stream()
+                .filter(scratch -> !scratch.isManual())
+                .filter(scratch -> scratch.getCropS3Url() != null && !scratch.getCropS3Url().isBlank())
+                .toList();
+
+        List<DisputeAiAnalysisResponse.ComparisonItem> comparisons = new ArrayList<>();
+        for (Scratch before : beforeScratches) {
+            for (Scratch after : afterScratches) {
+                AiScratchSimilarityResult result = aiScratchSimilarityClient
+                        .compareByUrls(before.getCropS3Url(), after.getCropS3Url());
+                comparisons.add(new DisputeAiAnalysisResponse.ComparisonItem(
+                        before.getLogId(),
+                        after.getLogId(),
+                        before.getCropS3Url(),
+                        after.getCropS3Url(),
+                        result.similarity(),
+                        result.diffScore()
+                ));
+            }
+        }
+
+        return new DisputeAiAnalysisResponse(
+                dispute.getDisputeId(),
+                reservationId,
+                beforeScratches.size(),
+                afterScratches.size(),
+                comparisons
+        );
+    }
+
+    @Transactional
+    public DisputeDefenseResponse defendDispute(String requesterId,
+                                                String reservationId,
+                                                String disputeId,
+                                                DisputeDefenseRequest request) {
+        Dispute dispute = disputeRepository.findByDisputeIdAndReservation_ReservationId(disputeId, reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("분쟁을 찾을 수 없습니다: " + disputeId));
+
+        validateRenterAccess(requesterId, dispute.getReservation());
+
+        Scratch defenseScratch = scratchRepository.findById(request.getDefenseLogId())
+                .orElseThrow(() -> new IllegalArgumentException("방어 흠집 로그를 찾을 수 없습니다: " + request.getDefenseLogId()));
+
+        validateScratchBelongsToReservation(defenseScratch, reservationId);
+        validateLogType(defenseScratch, "BEFORE", "defenseLogId는 BEFORE 로그여야 합니다.");
+
+        dispute.defend(defenseScratch);
+        return DisputeDefenseResponse.from(dispute);
+    }
+
+    private void validateCompanyAccess(String requesterId, Reservation reservation) {
+        String companyId = reservation.getOwnedCar().getCompany().getCompanyId();
+        if (!companyId.equals(requesterId)) {
+            throw new IllegalArgumentException("분쟁 생성 권한이 없습니다.");
+        }
+    }
+
+    private void validateRenterAccess(String requesterId, Reservation reservation) {
+        String renterId = reservation.getRenter().getUserId();
+        if (!renterId.equals(requesterId)) {
+            throw new IllegalArgumentException("분쟁 방어 권한이 없습니다.");
+        }
+    }
+
+    private void validateParticipantAccess(String requesterId, Reservation reservation) {
+        String renterId = reservation.getRenter().getUserId();
+        String companyId = reservation.getOwnedCar().getCompany().getCompanyId();
+        if (!renterId.equals(requesterId) && !companyId.equals(requesterId)) {
+            throw new IllegalArgumentException("분쟁 조회 권한이 없습니다.");
+        }
+    }
+
+    private void validateScratchBelongsToReservation(Scratch scratch, String reservationId) {
+        String scratchReservationId = scratch.getReservation().getReservationId();
+        if (!reservationId.equals(scratchReservationId)) {
+            throw new IllegalArgumentException("해당 예약의 흠집 로그가 아닙니다.");
+        }
+    }
+
+    private void validateLogType(Scratch scratch, String expectedLogType, String errorMessage) {
+        if (!expectedLogType.equalsIgnoreCase(scratch.getLogType())) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+    }
+
+    @Transactional
+    public DisputeSettleResponse settleDispute(String requesterId, String disputeId, DisputeSettleRequest request) {
+        Dispute dispute = disputeRepository.findByDisputeId(disputeId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 분쟁입니다: " + disputeId));
+        Reservation reservation = dispute.getReservation();
+        validateParticipantAccess(requesterId, reservation);
+
+        if (dispute.getStatusEnum() == DisputeStatus.RESOLVED) {
+            throw new IllegalStateException("이미 정산이 완료된 분쟁입니다.");
+        }
+
+        SettlementStatus targetStatus = SettlementStatus.from(request.getStatus());
+        if (targetStatus == SettlementStatus.PENDING) {
+            throw new IllegalArgumentException("정산 API에서는 PENDING 상태를 사용할 수 없습니다.");
+        }
+
+        long finalAmount = request.getFinalAmount();
+        long maxBurden = reservation.getTotalPrice();
+        if (finalAmount > maxBurden) {
+            throw new IllegalArgumentException("최종 정산 금액은 예약 시 최대부담금을 초과할 수 없습니다.");
+        }
+
+        String companyWallet = reservation.getOwnedCar().getCompany().getWalletAddress();
+        String renterWallet = reservation.getRenter().getWalletAddress();
+        validateSettlementWallets(companyWallet, renterWallet);
+
+        dispute.validateSettlementProposal(finalAmount, targetStatus);
+        dispute.proposeSettlement(finalAmount, targetStatus);
+
+        String companyId = reservation.getOwnedCar().getCompany().getCompanyId();
+        boolean requesterIsCompany = companyId.equals(requesterId);
+        boolean hadAnyAgreementBefore = dispute.isCompanySettlementAgreed() || dispute.isRenterSettlementAgreed();
+        boolean alreadyAgreedByRequester = requesterIsCompany
+                ? dispute.isCompanySettlementAgreed()
+                : dispute.isRenterSettlementAgreed();
+
+        if (!alreadyAgreedByRequester) {
+            if (requesterIsCompany) {
+                dispute.agreeSettlementByCompany();
+            } else {
+                dispute.agreeSettlementByRenter();
+            }
+
+            try {
+                if (!hadAnyAgreementBefore) {
+                    disputeSettlementService.initializeSettlementAgreement(
+                            disputeId,
+                            companyWallet,
+                            renterWallet,
+                            finalAmount
+                    );
+                }
+
+                disputeSettlementService.agreeSettlementByOperator(
+                        disputeId,
+                        requesterIsCompany ? companyWallet : renterWallet
+                );
+            } catch (Exception e) {
+                throw new RuntimeException("온체인 합의 반영에 실패했습니다.", e);
+            }
+        }
+
+        if (!dispute.isSettlementFullyAgreed()) {
+            return DisputeSettleResponse.of(
+                    disputeId,
+                    reservation.getReservationId(),
+                    finalAmount,
+                    SettlementStatus.PENDING.name(),
+                    null,
+                    null
+            );
+        }
+
+        String settlementRecordTxHash;
+        try {
+            settlementRecordTxHash = disputeSettlementService.recordSettlement(
+                    disputeId,
+                    finalAmount
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("온체인 정산 처리에 실패했습니다.", e);
+        }
+
+        String usdcTxHash = settlementRecordTxHash;
+        if (finalAmount > 0) {
+            try {
+                usdcTxHash = transferUsdcByStatus(reservation, finalAmount, targetStatus);
+            } catch (Exception e) {
+                throw new RuntimeException("자동 이체에 실패했습니다.", e);
+            }
+        }
+        dispute.resolve();
+        dispute.getTargetScratch().clearDisputed();
+
+        return DisputeSettleResponse.of(
+                disputeId,
+                reservation.getReservationId(),
+                finalAmount,
+                targetStatus.name(),
+                LocalDateTime.now(),
+                usdcTxHash
+        );
+    }
+
+    private String transferUsdcByStatus(Reservation reservation, long finalAmount, SettlementStatus targetStatus) throws Exception {
+        String renterWallet = reservation.getRenter().getWalletAddress();
+        String companyWallet = reservation.getOwnedCar().getCompany().getWalletAddress();
+        validateSettlementWallets(companyWallet, renterWallet);
+
+        double amount = (double) finalAmount;
+        if (targetStatus == SettlementStatus.COMPLETED) {
+            return careTokenService.transfer(renterWallet, companyWallet, amount);
+        }
+        if (targetStatus == SettlementStatus.REFUNDED) {
+            return careTokenService.transfer(companyWallet, renterWallet, amount);
+        }
+
+        throw new IllegalArgumentException("지원하지 않는 정산 상태입니다: " + targetStatus.name());
+    }
+
+    private void validateSettlementWallets(String companyWallet, String renterWallet) {
+        if (renterWallet == null || renterWallet.isBlank()) {
+            throw new IllegalArgumentException("임차인 지갑 주소가 없습니다.");
+        }
+        if (companyWallet == null || companyWallet.isBlank()) {
+            throw new IllegalArgumentException("임대인 지갑 주소가 없습니다.");
+        }
+    }
 }

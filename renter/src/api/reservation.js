@@ -60,7 +60,6 @@ export const getCarScratchHistory = async (carId) => {
   return response.data
 }
 
-
 // 스마트키 발급
 export const issueSmartKey = async (reservationId) => {
   const response = await api.post(`/api/reservations/${reservationId}/smart-key`)

@@ -24,7 +24,7 @@ export default function Sidebar() {
     if (!confirmed) return
 
     await AuthService.logout()
-    navigate('/login', { replace: true })
+    navigate('/company/login', { replace: true })
   }
 
   return (

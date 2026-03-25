@@ -25,7 +25,7 @@ public class ScanService {
     private final ReservationRepository reservationRepository;
     private final RestTemplate restTemplate;
 
-    @Value("${ai.server.url:http://localhost:8000}")
+    @Value("${AI_YOLO_URL:http://localhost:8000}")
     private String aiServerUrl;
 
     // ── 픽업 전 스캔

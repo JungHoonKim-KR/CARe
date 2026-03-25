@@ -55,19 +55,19 @@ public class DisputeService {
 		Reservation reservation = reservationRepository.findByReservationId(reservationId)
 				.orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
 
-        validateCompanyAccess(requesterId, reservation);
+		validateCompanyAccess(requesterId, reservation);
 
-        Scratch targetScratch = scratchRepository.findById(request.getTargetLogId())
-                .orElseThrow(() -> new IllegalArgumentException("대상 흠집 로그를 찾을 수 없습니다: " + request.getTargetLogId()));
+		Scratch targetScratch = scratchRepository.findById(request.getTargetLogId())
+				.orElseThrow(() -> new IllegalArgumentException("대상 흠집 로그를 찾을 수 없습니다: " + request.getTargetLogId()));
 
-        validateScratchBelongsToReservation(targetScratch, reservationId);
-        validateLogType(targetScratch, "AFTER", "targetLogId는 AFTER 로그여야 합니다.");
+		validateScratchBelongsToReservation(targetScratch, reservationId);
+		validateLogType(targetScratch, "AFTER", "targetLogId는 AFTER 로그여야 합니다.");
 
-        boolean hasActiveDispute = disputeRepository.existsByTargetScratch_LogIdAndStatusNot(
-                targetScratch.getLogId(), DisputeStatus.RESOLVED.name());
-        if (hasActiveDispute || targetScratch.isDisputed()) {
-            throw new IllegalArgumentException("이미 분쟁이 진행 중인 흠집입니다.");
-        }
+		boolean hasActiveDispute = disputeRepository.existsByTargetScratch_LogIdAndStatusNot(
+				targetScratch.getLogId(), DisputeStatus.RESOLVED.name());
+		if (hasActiveDispute || targetScratch.isDisputed()) {
+			throw new IllegalArgumentException("이미 분쟁이 진행 중인 흠집입니다.");
+		}
 
 		Dispute dispute = Dispute.create(
 				reservation,

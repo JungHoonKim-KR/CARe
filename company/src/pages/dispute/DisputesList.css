@@ -226,6 +226,16 @@
   color: var(--amber);
 }
 
+.status-badge.open {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-badge.completed {
+  background: #dcfce7;
+  color: var(--green);
+}
+
 .status-badge.resolved {
   background: #dcfce7;
   color: var(--green);

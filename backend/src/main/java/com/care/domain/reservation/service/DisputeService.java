@@ -65,8 +65,8 @@ public class DisputeService {
 		validateScratchBelongsToReservation(targetScratch, reservationId);
 		validateLogType(targetScratch, "AFTER", "targetLogId는 AFTER 로그여야 합니다.");
 
-		boolean hasActiveDispute = disputeRepository.existsByTargetScratch_LogIdAndStatusNot(
-				targetScratch.getLogId(), DisputeStatus.RESOLVED.name());
+		boolean hasActiveDispute = disputeRepository.existsByTargetScratch_LogIdAndStatusNotIn(
+				targetScratch.getLogId(), List.of(DisputeStatus.COMPLETED.name(), "RESOLVED"));
 		if (hasActiveDispute || targetScratch.isDisputed()) {
 			throw new IllegalArgumentException("이미 분쟁이 진행 중인 흠집입니다.");
 		}
@@ -319,7 +319,7 @@ public class DisputeService {
 		Reservation reservation = dispute.getReservation();
 		validateParticipantAccess(requesterId, reservation);
 
-		if (dispute.getStatusEnum() == DisputeStatus.RESOLVED) {
+		if (dispute.getStatusEnum() == DisputeStatus.COMPLETED) {
 			throw new IllegalStateException("이미 정산이 완료된 분쟁입니다.");
 		}
 
@@ -394,7 +394,7 @@ public class DisputeService {
 					disputeId,
 					reservation.getReservationId(),
 					finalAmount,
-					SettlementStatus.PENDING.name(),
+					DisputeStatus.OPEN.name(),
 					null,
 					null
 			);

@@ -60,7 +60,11 @@ export default function DisputePage() {
     return new Date(isoDate).toLocaleString('ko-KR')
   }
 
-  const uiStatus = dispute?.status === 'RESOLVED' ? 'resolved' : 'pending'
+  const toUiStatus = (status) => {
+    if (status === 'COMPLETED' || status === 'RESOLVED') return 'completed'
+    return 'open'
+  }
+  const uiStatus = toUiStatus(dispute?.status)
 
   const evidenceImages = scratchLogs
     .filter((log) => log.logId === dispute?.targetLogId || log.logId === dispute?.defenseLogId)
@@ -95,7 +99,7 @@ export default function DisputePage() {
         return
       }
 
-      if (result.data?.status === 'PENDING') {
+      if (result.data?.status !== 'COMPLETED') {
         alert('업체 동의가 등록되었습니다. 상대방 동의를 기다립니다.')
         await fetchDisputeDetail()
       } else {
@@ -123,7 +127,7 @@ export default function DisputePage() {
         return
       }
 
-      if (result.data?.status === 'PENDING') {
+      if (result.data?.status !== 'COMPLETED') {
         alert('렌터 증거 인정으로 동의가 등록되었습니다. 상대방 동의를 기다립니다.')
         await fetchDisputeDetail()
       } else {
@@ -174,7 +178,7 @@ export default function DisputePage() {
           <div className="status-header">
             <h2 className="section-title">분쟁 상태</h2>
             <span className={`status-badge ${uiStatus}`}>
-              {uiStatus === 'pending' ? '처리 중' : '해결 완료'}
+              {uiStatus === 'open' ? '접수됨' : '완료'}
             </span>
           </div>
           <div className="status-info">
@@ -317,7 +321,7 @@ export default function DisputePage() {
             </div>
 
             {/* Actions */}
-            {uiStatus === 'pending' && (
+            {uiStatus !== 'completed' && (
               <div className="card actions-card">
                 <h2 className="section-title">처리 작업</h2>
                 <div className="actions-buttons">

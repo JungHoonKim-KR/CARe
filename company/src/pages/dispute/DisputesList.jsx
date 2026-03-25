@@ -5,7 +5,7 @@ import './DisputesList.css'
 
 export default function DisputesList() {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('all') // all, pending, resolved
+  const [activeTab, setActiveTab] = useState('all') // all, open, completed
   const [disputes, setDisputes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -24,8 +24,8 @@ export default function DisputesList() {
   }
 
   const toUiStatus = (status) => {
-    if (status === 'RESOLVED') return 'resolved'
-    return 'pending'
+    if (status === 'COMPLETED' || status === 'RESOLVED') return 'completed'
+    return 'open'
   }
 
   const fetchDisputes = async () => {
@@ -59,15 +59,15 @@ export default function DisputesList() {
 
   const filteredDisputes = disputes.filter(dispute => {
     if (activeTab === 'all') return true
-    if (activeTab === 'pending') return dispute.status === 'pending'
-    if (activeTab === 'resolved') return dispute.status === 'resolved'
+    if (activeTab === 'open') return dispute.status === 'open'
+    if (activeTab === 'completed') return dispute.status === 'completed'
     return true
   })
 
   const stats = {
     total: disputes.length,
-    pending: disputes.filter(d => d.status === 'pending').length,
-    resolved: disputes.filter(d => d.status === 'resolved').length
+    open: disputes.filter(d => d.status === 'open').length,
+    completed: disputes.filter(d => d.status === 'completed').length
   }
 
   const handleViewDetail = (disputeId) => {
@@ -108,16 +108,16 @@ export default function DisputesList() {
           전체 ({stats.total})
         </button>
         <button
-          className={`tab-button ${activeTab === 'pending' ? 'active' : ''}`}
-          onClick={() => setActiveTab('pending')}
+          className={`tab-button ${activeTab === 'open' ? 'active' : ''}`}
+          onClick={() => setActiveTab('open')}
         >
-          처리 중 ({stats.pending})
+          접수됨 ({stats.open})
         </button>
         <button
-          className={`tab-button ${activeTab === 'resolved' ? 'active' : ''}`}
-          onClick={() => setActiveTab('resolved')}
+          className={`tab-button ${activeTab === 'completed' ? 'active' : ''}`}
+          onClick={() => setActiveTab('completed')}
         >
-          해결 완료 ({stats.resolved})
+          완료 ({stats.completed})
         </button>
       </div>
 
@@ -168,7 +168,9 @@ export default function DisputesList() {
                 <td className="amount">{dispute.amount.toLocaleString()}원</td>
                 <td>
                   <span className={`status-badge ${dispute.status}`}>
-                    {dispute.status === 'pending' ? '처리 중' : '해결 완료'}
+                    {dispute.status === 'open'
+                      ? '접수됨'
+                      : '완료'}
                   </span>
                 </td>
                 <td>{dispute.createdDate}</td>

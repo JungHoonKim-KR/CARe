@@ -182,6 +182,23 @@ public class DisputeService {
 	}
 
 	@Transactional(readOnly = true)
+	public List<DisputeSummaryResponse> getCompanyDisputes(String companyId) {
+		return disputeRepository.findByReservation_OwnedCar_Company_CompanyIdOrderByCreatedAtDesc(companyId)
+				.stream()
+				.map(DisputeSummaryResponse::from)
+				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public DisputeDetailResponse getDisputeDetail(String requesterId, String disputeId) {
+		Dispute dispute = disputeRepository.findByDisputeId(disputeId)
+				.orElseThrow(() -> new IllegalArgumentException("분쟁을 찾을 수 없습니다: " + disputeId));
+
+		validateParticipantAccess(requesterId, dispute.getReservation());
+		return DisputeDetailResponse.from(dispute);
+	}
+
+	@Transactional(readOnly = true)
 	public DisputeDetailResponse getDisputeDetail(String requesterId,
 												  String reservationId,
 												  String disputeId) {

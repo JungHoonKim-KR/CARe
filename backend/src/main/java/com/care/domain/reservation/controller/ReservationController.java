@@ -3,6 +3,7 @@ package com.care.domain.reservation.controller;
 import com.care.domain.reservation.controller.dto.request.ReservationCreateRequest;
 import com.care.domain.reservation.controller.dto.response.ReservationCreateResponse;
 import com.care.domain.reservation.controller.dto.response.ReservationDetailResponse;
+import com.care.domain.reservation.controller.dto.response.ReservationReturnResponse;
 import com.care.domain.reservation.service.ReservationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,5 +45,17 @@ public class ReservationController {
     @GetMapping("/{reservationId}")
     public ResponseEntity<ReservationDetailResponse> getReservationDetail(@PathVariable String reservationId) {
         return ResponseEntity.ok(reservationService.getReservationDetail(reservationId));
+    }
+
+    /**
+     * POST /reservations/{reservationId}/return
+     * 반납 완료 처리 + 반납 리포트 생성 트리거
+     */
+    @PostMapping("/{reservationId}/return")
+    public ResponseEntity<ReservationReturnResponse> completeReservation(
+            @AuthenticationPrincipal String userId,
+            @PathVariable String reservationId
+    ) {
+        return ResponseEntity.ok(reservationService.completeReservation(userId, reservationId));
     }
 }

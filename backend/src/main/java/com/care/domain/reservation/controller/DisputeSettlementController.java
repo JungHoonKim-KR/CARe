@@ -2,6 +2,7 @@ package com.care.domain.reservation.controller;
 
 import com.care.domain.reservation.controller.dto.request.DisputeSettleRequest;
 import com.care.domain.reservation.controller.dto.response.DisputeAiAnalysisResponse;
+import com.care.domain.reservation.controller.dto.response.DisputeDetailResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeSettleResponse;
 import com.care.domain.reservation.service.DisputeService;
 import jakarta.validation.Valid;
@@ -21,6 +22,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class DisputeSettlementController {
 
     private final DisputeService disputeService;
+
+    @GetMapping("/{disputeId}")
+    public ResponseEntity<DisputeDetailResponse> getDisputeDetail(
+            @AuthenticationPrincipal String userId,
+            @PathVariable String disputeId
+    ) {
+        return ResponseEntity.ok(disputeService.getDisputeDetail(userId, disputeId));
+    }
 
     @GetMapping("/{disputeId}/ai-analysis")
     public ResponseEntity<DisputeAiAnalysisResponse> getAiAnalysis(

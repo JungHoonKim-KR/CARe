@@ -1,6 +1,13 @@
 import api from './auth'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 
+// 보험 상품 목록 조회
+export const getInsuranceList = async (companyId) => {
+  const params = companyId ? `?companyId=${companyId}` : ''
+  const response = await api.get(`/api/insurances${params}`)
+  return response.data
+}
+
 // 차량 목록 조회
 export const getCarList = async ({ brand, airportCode, carSize } = {}) => {
   const params = new URLSearchParams()
@@ -119,6 +126,18 @@ export const submitDefense = async (reservationId, disputeId, defenseLogId) => {
     `/api/reservations/${reservationId}/disputes/${disputeId}/defense`,
     { defenseLogId }
   )
+  return response.data
+}
+
+// 분쟁 이전 흠집 로그 조회 (해당 예약의 BEFORE 스캔 기록)
+export const getDisputeScratchLogs = async (reservationId) => {
+  const response = await api.get(`/api/reservations/${reservationId}/disputes/scratch-logs`)
+  return response.data
+}
+
+// 분쟁 AI 분석 결과 조회
+export const getDisputeAiAnalysis = async (disputeId) => {
+  const response = await api.get(`/api/disputes/${disputeId}/ai-analysis`)
   return response.data
 }
 

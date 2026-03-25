@@ -28,6 +28,35 @@
   color: #111;
 }
 
+/* 필터 탭 */
+.rl-filter-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fff;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.rl-filter-tab {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rl-filter-tab.active {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+
 .rl-body {
   padding: 16px;
   display: flex;
@@ -91,4 +120,23 @@
 .rl-insurance {
   font-size: 12px;
   color: #999;
+}
+
+/* 분쟁 카드 */
+.rl-card-disputed {
+  border: 1px solid #FFE0B2;
+  background: #FFFBF5;
+}
+
+.rl-dispute-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 8px 10px;
+  background: #FFF3E0;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #FF8800;
+  font-weight: 500;
 }

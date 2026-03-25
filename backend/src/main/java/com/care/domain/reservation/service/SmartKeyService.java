@@ -68,16 +68,23 @@ public class SmartKeyService {
     @Transactional
     public SmartKeyResponse unlock(String userId, String reservationId) {
         SmartKey key = getValidKey(reservationId);
-        key.unlock();
-        return new SmartKeyResponse(key);
+        if (key != null) {
+            key.unlock();
+            return new SmartKeyResponse(key);
+        }
+        throw new IllegalStateException("스마트키가 아직 발급되지 않았습니다.");
     }
 
     /** 잠금 설정 */
     @Transactional
     public SmartKeyResponse lock(String userId, String reservationId) {
         SmartKey key = getValidKey(reservationId);
-        key.lock();
-        return new SmartKeyResponse(key);
+        if (key != null) {
+            key.lock();
+            return new SmartKeyResponse(key);
+        }
+        // 사용자가 발급받지 않고 반납/잠금을 시도하는 경우 예외 대신 응답만
+        return null;
     }
 
     /** 상태 조회 */
@@ -114,8 +121,10 @@ public class SmartKeyService {
     // ── 내부 메서드 ──────────────────────────────────────────────────────────
 
     private SmartKey getValidKey(String reservationId) {
-        SmartKey key = smartKeyRepository.findByReservation_ReservationId(reservationId)
-                .orElseThrow(() -> new IllegalArgumentException("발급된 스마트키가 없습니다."));
+        Optional<SmartKey> keyOpt = smartKeyRepository.findByReservation_ReservationId(reservationId);
+        if (keyOpt.isEmpty()) return null; // 발급 안된 경우 null 반환
+
+        SmartKey key = keyOpt.get();
         if (!key.isActive()) throw new IllegalStateException("회수된 스마트키입니다.");
         if (key.isExpired()) throw new IllegalStateException("만료된 스마트키입니다.");
 

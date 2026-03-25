@@ -439,7 +439,7 @@ export default function ScanPage() {
               crops: captures[z.id].boxes.map(b => b.cropS3Url).filter(Boolean),
             }))
           navigate('/car-crack', {
-            state: { reservation: location.state?.reservation, scanResult: { cracks, totalDefects } }
+            state: { reservation: location.state?.reservation, scanResult: { cracks, totalDefects }, logType }
           })
         }}>
           리포트 확인

@@ -360,7 +360,7 @@ export default function MyCarPage() {
               </button>
               <button
                 className="mc-action-btn mc-return-btn"
-                onClick={() => navigate('/return-guide', { state: { reservation } })}
+                onClick={() => navigate('/return-guide', { state: { reservation, logType: 'AFTER' } })}
               >
                 <div className="mc-action-btn-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

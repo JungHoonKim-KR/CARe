@@ -60,7 +60,6 @@ export const getCarScratchHistory = async (carId) => {
   return response.data
 }
 
-
 // 스마트키 발급
 export const issueSmartKey = async (reservationId) => {
   const response = await api.post(`/api/reservations/${reservationId}/smart-key`)
@@ -119,6 +118,15 @@ export const submitDefense = async (reservationId, disputeId, defenseLogId) => {
     `/api/reservations/${reservationId}/disputes/${disputeId}/defense`,
     { defenseLogId }
   )
+  return response.data
+}
+
+// 분쟁 정산 동의/요청
+export const settleDispute = async (disputeId, finalAmount, status) => {
+  const response = await api.post(`/api/disputes/${disputeId}/settle`, {
+    finalAmount,
+    status,
+  })
   return response.data
 }
 

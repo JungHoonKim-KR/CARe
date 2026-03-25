@@ -119,18 +119,27 @@ contract DisputeSettlement is Ownable {
 
     /// @notice 업체/렌터가 settlementKey 정산안에 동의합니다.
     function agreeSettlement(bytes32 settlementKey) external {
+        _agreeSettlement(settlementKey, msg.sender);
+    }
+
+    /// @notice operator가 업체/렌터 동의를 릴레이하여 반영합니다.
+    function agreeSettlementByOperator(bytes32 settlementKey, address participant) external onlySettlementOperator {
+        _agreeSettlement(settlementKey, participant);
+    }
+
+    function _agreeSettlement(bytes32 settlementKey, address participant) internal {
         SettlementAgreement storage agreement = agreements[settlementKey];
 
         if (!agreement.initialized) {
             revert AgreementNotInitialized(settlementKey);
         }
 
-        if (msg.sender == agreement.company) {
+        if (participant == agreement.company) {
             if (agreement.companyAgreed) {
                 revert AlreadyAgreed();
             }
             agreement.companyAgreed = true;
-        } else if (msg.sender == agreement.renter) {
+        } else if (participant == agreement.renter) {
             if (agreement.renterAgreed) {
                 revert AlreadyAgreed();
             }
@@ -141,7 +150,7 @@ contract DisputeSettlement is Ownable {
 
         emit SettlementAgreed(
             settlementKey,
-            msg.sender,
+            participant,
             agreement.companyAgreed,
             agreement.renterAgreed
         );

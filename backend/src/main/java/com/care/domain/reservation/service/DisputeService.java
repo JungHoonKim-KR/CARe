@@ -48,12 +48,6 @@ public class DisputeService {
 	@Value("${ai.scratch.similarity-threshold:60.0}")
 	private double similarityThreshold;
 
-	@Value("${ai.scratch.similarity-threshold:60.0}")
-	private double similarityThreshold;
-
-    @Value("${ai.scratch.similarity-threshold:60.0}")
-    private double similarityThreshold;
-
     @Transactional
     public DisputeCreateResponse createDispute(String requesterId,
                                                String reservationId,
@@ -75,7 +69,12 @@ public class DisputeService {
             throw new IllegalArgumentException("이미 분쟁이 진행 중인 흠집입니다.");
         }
 
-		captureReturnReportSnapshot(dispute, reservationId, targetScratch);
+		Dispute dispute = Dispute.create(
+				reservation,
+				targetScratch,
+				request.getReason(),
+				request.getClaimAmount()
+		);
 
 		captureReturnReportSnapshot(dispute, reservationId, targetScratch);
 
@@ -416,9 +415,13 @@ public class DisputeService {
 		String companyWallet = reservation.getOwnedCar().getCompany().getWalletAddress();
 		validateSettlementWallets(companyWallet, renterWallet);
 
-        if (candidates.isEmpty()) {
-            candidates = beforeScratches;
-        }
+		if (targetStatus == SettlementStatus.COMPLETED) {
+			return careTokenService.transfer(renterWallet, companyWallet, (double) finalAmount);
+		}
+
+		if (targetStatus == SettlementStatus.REFUNDED) {
+			return careTokenService.transfer(companyWallet, renterWallet, (double) finalAmount);
+		}
 
 		throw new IllegalArgumentException("지원하지 않는 정산 상태입니다: " + targetStatus.name());
 	}

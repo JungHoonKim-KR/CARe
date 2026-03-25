@@ -268,7 +268,6 @@ public class DisputeService {
 				.orElseThrow(() -> new IllegalArgumentException("방어 흠집 로그를 찾을 수 없습니다: " + request.getDefenseLogId()));
 
 		validateScratchBelongsToReservation(defenseScratch, reservationId);
-		validateLogType(defenseScratch, "BEFORE", "defenseLogId는 BEFORE 로그여야 합니다.");
 
 		dispute.defend(defenseScratch);
 		companyNotificationService.createDefenseSubmittedNotification(

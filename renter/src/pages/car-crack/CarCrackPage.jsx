@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import carIconCute from '../../assets/car_icon_cute.png'
 import carIconTop from '../../assets/car_icon_top.png'
 import carIconFront from '../../assets/car_icon_front.png'
+import { completeReservation } from '../../api/reservation'
 import './CarCrackPage.css'
 
 // 4방향 패널 정의
@@ -76,6 +77,7 @@ export default function CarCrackPage() {
   const { state } = useLocation()
   const reservation = state?.reservation
   const scanResult = state?.scanResult // ScanPage에서 넘어온 결과
+  const logType = state?.logType || 'BEFORE'
 
   // 플로우 단계: intro → select → camera → analyzing → result
   const [step, setStep] = useState(scanResult ? 'report' : 'intro')
@@ -472,17 +474,32 @@ export default function CarCrackPage() {
         <div className="cp-footer">
           <button
             className="cp-primary-btn cp-smartkey-btn"
-            onClick={() => {
-              if (reservation?.reservationId) {
-                localStorage.setItem(`crackDone_${reservation.reservationId}`, 'true')
+            onClick={async () => {
+              if (logType === 'AFTER') {
+                try {
+                  await completeReservation(reservation?.reservationId)
+                  navigate('/my-car')
+                } catch (e) {
+                  alert('반납 처리 중 오류가 발생했습니다.')
+                }
+              } else {
+                if (reservation?.reservationId) {
+                  localStorage.setItem(`crackDone_${reservation.reservationId}`, 'true')
+                }
+                navigate('/car-smartkey', { state: { reservation } })
               }
-              navigate('/car-smartkey', { state: { reservation } })
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="white" style={{ flexShrink: 0 }}>
-              <path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
-            </svg>
-            스마트키 열기
+            {logType === 'AFTER' ? (
+              '반납하기'
+            ) : (
+              <>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white" style={{ flexShrink: 0 }}>
+                  <path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+                </svg>
+                스마트키 열기
+              </>
+            )}
           </button>
           <div className="cp-result-sub-row">
             <button

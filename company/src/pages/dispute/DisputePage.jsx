@@ -149,6 +149,26 @@ export default function DisputePage() {
     )
   }
 
+  if (loading) {
+    return (
+      <div className="dispute-page">
+        <div className="empty-state">
+          <p>분쟁 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !dispute) {
+    return (
+      <div className="dispute-page">
+        <div className="empty-state">
+          <p>{error || '분쟁 정보를 불러오지 못했습니다.'}</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="dispute-page">
       <div className="page-header">

@@ -10,31 +10,16 @@ import BottomSheet from '../../components/BottomSheet'
 import DatePickerModal from '../../components/DatePickerModal'
 import './HomePage.css'
 
+// 이 파일 내에서는 키만 정의해두고 렌더링 시 t()로 다국어 처리
 const COUNTRIES = [
-  { name: '대한민국, KR', sub: 'Republic of Korea' },
-  { name: '일본, JP', sub: 'Japan' },
-  { name: '미국, US', sub: 'United States of America' },
-  { name: '프랑스, FR', sub: 'France' },
-  { name: '독일, DE', sub: 'Germany' },
-  { name: '이탈리아, IT', sub: 'Italy' },
-  { name: '스페인, ES', sub: 'Spain' },
-  { name: '태국, TH', sub: 'Thailand' },
+  { key: 'KR' }, { key: 'JP' }, { key: 'US' }, { key: 'FR' },
+  { key: 'DE' }, { key: 'IT' }, { key: 'ES' }, { key: 'TH' }
 ]
 
 const AIRPORTS = {
-  KR: [
-    { name: '인천국제공항, ICN', sub: 'Incheon Int. Airport' },
-    { name: '김포국제공항, GMP', sub: 'Gimpo Int. Airport' },
-  ],
-  JP: [
-    { name: '나리타, 도쿄 NRT', sub: 'Narita Int. Airport' },
-    { name: '하네다 도쿄, HND', sub: 'Haneda Int. Airport' },
-    { name: '간사이, 오사카 KIX', sub: 'Kansai Int. Airport' },
-  ],
-  DEFAULT: [
-    { name: '국제공항 1', sub: 'International Airport' },
-    { name: '국제공항 2', sub: 'International Airport' },
-  ],
+  KR: [{ key: 'ICN' }, { key: 'GMP' }],
+  JP: [{ key: 'NRT' }, { key: 'HND' }, { key: 'KIX' }],
+  DEFAULT: [{ key: 'DEFAULT1' }, { key: 'DEFAULT2' }]
 }
 
 const HOUR_OPTIONS = Array.from({ length: 24 }, (_, h) => {
@@ -117,28 +102,32 @@ export default function HomePage() {
     }
   }, [])
 
-  const filteredCountries = COUNTRIES.filter(
-    (c) =>
-      c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
-      c.sub.toLowerCase().includes(countrySearch.toLowerCase())
-  )
+  const filteredCountries = COUNTRIES.filter((c) => {
+    const name = t(`home.countries.${c.key}`)
+    const sub = t(`home.countries.${c.key}_sub`)
+    return name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+           sub.toLowerCase().includes(countrySearch.toLowerCase())
+  })
 
   const airportList = AIRPORTS[form.countryCode] || AIRPORTS.DEFAULT
-  const filteredAirports = airportList.filter(
-    (a) =>
-      a.name.toLowerCase().includes(airportSearch.toLowerCase()) ||
-      a.sub.toLowerCase().includes(airportSearch.toLowerCase())
-  )
+  const filteredAirports = airportList.filter((a) => {
+    const name = t(`home.airports.${a.key}`)
+    const sub = t(`home.airports.${a.key}_sub`)
+    return name.toLowerCase().includes(airportSearch.toLowerCase()) ||
+           sub.toLowerCase().includes(airportSearch.toLowerCase())
+  })
 
   const selectCountry = (c) => {
-    const code = c.name.split(', ')[1]
-    setForm((p) => ({ ...p, country: c.name, countryCode: code, location: '' }))
+    const name = t(`home.countries.${c.key}`)
+    const code = c.key
+    setForm((p) => ({ ...p, country: name, countryCode: code, location: '' }))
     setCountrySheet(false)
     setCountrySearch('')
   }
 
   const selectAirport = (a) => {
-    setForm((p) => ({ ...p, location: a.name }))
+    const name = t(`home.airports.${a.key}`)
+    setForm((p) => ({ ...p, location: name }))
     setAirportSheet(false)
     setAirportSearch('')
   }
@@ -237,7 +226,7 @@ export default function HomePage() {
             onClick={() => navigate(didVerified ? '/did-card' : '/did-auth', didVerified ? { state: { name: localStorage.getItem('did_name') || '', docId: localStorage.getItem('did_docId') || 'did:care:renter:verified', expiryDate: localStorage.getItem('did_expiry') || '' } } : undefined)}
             style={{ cursor: 'pointer' }}
           >
-            {didVerified ? '인증완료' : t('home.unverified')}
+            {didVerified ? t('home.didAlert.confirm').replace('하러가기', '인증완료').replace('Go Verify', 'Verified').replace('確認する', '認証完了') : t('home.unverified')}
           </span>
         </div>
       </header>
@@ -371,11 +360,11 @@ export default function HomePage() {
         <hr className="sheet-divider" />
         <ul className="sheet-list">
           {filteredCountries.map((c) => (
-            <li key={c.name} className="sheet-list-item" onClick={() => selectCountry(c)}>
+            <li key={c.key} className="sheet-list-item" onClick={() => selectCountry(c)}>
               <span className="list-icon">📍</span>
               <div>
-                <p className="list-main">{c.name}</p>
-                <p className="list-sub">{c.sub}</p>
+                <p className="list-main">{t(`home.countries.${c.key}`)}</p>
+                <p className="list-sub">{t(`home.countries.${c.key}_sub`)}</p>
               </div>
             </li>
           ))}
@@ -402,11 +391,11 @@ export default function HomePage() {
         <hr className="sheet-divider" />
         <ul className="sheet-list">
           {filteredAirports.map((a) => (
-            <li key={a.name} className="sheet-list-item" onClick={() => selectAirport(a)}>
+            <li key={a.key} className="sheet-list-item" onClick={() => selectAirport(a)}>
               <span className="list-icon">✈️</span>
               <div>
-                <p className="list-main">{a.name}</p>
-                <p className="list-sub">{a.sub}</p>
+                <p className="list-main">{t(`home.airports.${a.key}`)}</p>
+                <p className="list-sub">{t(`home.airports.${a.key}_sub`)}</p>
               </div>
             </li>
           ))}

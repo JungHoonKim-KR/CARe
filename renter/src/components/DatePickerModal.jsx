@@ -1,7 +1,6 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import './DatePickerModal.css'
-
-const DAYS = ['일', '월', '화', '수', '목', '금', '토']
 
 function getDaysInMonth(year, month) {
   return new Date(year, month + 1, 0).getDate()
@@ -12,9 +11,12 @@ function getFirstDayOfMonth(year, month) {
 }
 
 export default function DatePickerModal({ open, label, onClose, onSelect }) {
+  const { t } = useTranslation()
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
+
+  const daysLabels = t('home.datePicker.days', { returnObjects: true }) || ['일', '월', '화', '수', '목', '금', '토']
 
   if (!open) return null
 
@@ -54,11 +56,11 @@ export default function DatePickerModal({ open, label, onClose, onSelect }) {
         <h3 className="datepicker-label">{label}</h3>
         <div className="datepicker-nav">
           <button onClick={prevMonth}>&#8592;</button>
-          <span>{year}년 {month + 1}월</span>
+          <span>{year}{t('home.datePicker.year')} {month + 1}{t('home.datePicker.month')}</span>
           <button onClick={nextMonth}>&#8594;</button>
         </div>
         <div className="datepicker-days-header">
-          {DAYS.map((d) => <span key={d} className={d === '일' ? 'sun' : d === '토' ? 'sat' : ''}>{d}</span>)}
+          {daysLabels.map((d, i) => <span key={d} className={i === 0 ? 'sun' : i === 6 ? 'sat' : ''}>{d}</span>)}
         </div>
         <div className="datepicker-grid">
           {cells.map((day, i) => (

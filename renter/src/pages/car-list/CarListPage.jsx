@@ -1,21 +1,23 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import careLogo from '../../assets/care_logo.png'
 import BottomNav from '../../components/BottomNav'
 import { getCarList } from '../../api/reservation'
 import './CarListPage.css'
 
 
-const FILTERS = ['전체', '소형', '중형', '대형', 'SUV', '밴', '럭셔리']
-const SORTS   = ['추천순', '가격 낮은순', '가격 높은순', '평점순']
+const FILTER_KEYS = ['filterAll', 'filterSmall', 'filterMedium', 'filterLarge', 'filterSuv', 'filterVan', 'filterLuxury']
+const SORT_KEYS   = ['sortRecommend', 'sortPriceLow', 'sortPriceHigh', 'sortRating']
 const PAGE_SIZE = 5
 
 export default function CarListPage() {
+  const { t } = useTranslation()
   const navigate   = useNavigate()
   const { state }  = useLocation()
   const searchInfo = state?.searchInfo || state || {}
 
-  const carTypeMap = { '소형': 1, '중형': 2, '대형': 3, 'SUV': 4, '밴': 5, '럭셔리': 6 }
+  const carTypeMap = { 'filterSmall': 1, 'filterMedium': 2, 'filterLarge': 3, 'filterSuv': 4, 'filterVan': 5, 'filterLuxury': 6 }
   const [fi, setFi]     = useState(carTypeMap[searchInfo.carType] || 0)
   const [si, setSi]     = useState(0)
   const [page, setPage] = useState(1)
@@ -54,10 +56,10 @@ export default function CarListPage() {
   const handleFilter = (i) => { setFi(i); setPage(1) }
   const handleSort   = (i) => { setSi(i); setPage(1) }
 
-  const locationLabel = searchInfo.location || '픽업 위치를 선택하세요'
+  const locationLabel = searchInfo.location || t('carList.selectPickup')
   const dateLabel     = searchInfo.pickupDate && searchInfo.returnDate
     ? `${searchInfo.pickupDate} ~ ${searchInfo.returnDate}`
-    : '날짜를 선택하세요'
+    : t('carList.selectDate')
 
   return (
     <div className="cl-wrap">
@@ -84,24 +86,24 @@ export default function CarListPage() {
 
       {/* 필터 칩 */}
       <div className="cl-filter-row">
-        {FILTERS.map((f, i) => (
-          <button key={f}
+        {FILTER_KEYS.map((key, i) => (
+          <button key={key}
             className={"cl-chip" + (fi === i ? ' on' : '')}
             onClick={() => handleFilter(i)}>
-            {f}
+            {t(`carList.${key}`)}
           </button>
         ))}
       </div>
 
       {/* 정렬 + 결과 수 */}
       <div className="cl-sort-bar">
-        <span className="cl-count">검색 결과 <strong>{cars.length}개</strong></span>
+        <span className="cl-count">{t('carList.resultCount', { n: cars.length })}</span>
         <div className="cl-sorts">
-          {SORTS.map((s, i) => (
-            <button key={s}
+          {SORT_KEYS.map((key, i) => (
+            <button key={key}
               className={"cl-sort" + (si === i ? ' on' : '')}
               onClick={() => handleSort(i)}>
-              {s}
+              {t(`carList.${key}`)}
             </button>
           ))}
         </div>
@@ -109,8 +111,8 @@ export default function CarListPage() {
 
       {/* 차량 목록 */}
       <div className="cl-list">
-        {loading && <p style={{ textAlign: 'center', padding: '2rem', color: '#aaa' }}>불러오는 중...</p>}
-        {!loading && paged.length === 0 && <p style={{ textAlign: 'center', padding: '2rem', color: '#aaa' }}>차량이 없습니다.</p>}
+        {loading && <p style={{ textAlign: 'center', padding: '2rem', color: '#aaa' }}>{t('carList.loading')}</p>}
+        {!loading && paged.length === 0 && <p style={{ textAlign: 'center', padding: '2rem', color: '#aaa' }}>{t('carList.noCars')}</p>}
         {paged.map(car => (
           <div key={car.carId} className="cl-card"
             onClick={() => navigate('/car-detail', { state: { car, searchInfo } })}>

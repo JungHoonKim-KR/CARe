@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.generated.Bytes32;
 import org.web3j.abi.datatypes.generated.Uint256;
@@ -38,6 +39,44 @@ public class DisputeSettlementService {
 	public DisputeSettlementService(Web3j web3j, Credentials credentials) {
 		this.web3j = web3j;
 		this.credentials = credentials;
+	}
+
+	/**
+	 * 정산 합의 메타를 온체인에 초기화
+	 */
+	public String initializeSettlementAgreement(String settlementId,
+											 String companyWallet,
+											 String renterWallet,
+											 long finalAmount) throws Exception {
+		Function function = new Function(
+				"initializeSettlementAgreement",
+				Arrays.asList(
+						toBytes32Key(settlementId),
+						new Address(companyWallet),
+						new Address(renterWallet),
+						new Uint256(BigInteger.valueOf(finalAmount))
+				),
+				Collections.emptyList()
+		);
+		String txHash = sendFunction(function);
+		log.info("[DisputeSettlement] 합의 초기화 완료 | settlementId: {}, finalAmount: {}, txHash: {}",
+				settlementId, finalAmount, txHash);
+		return txHash;
+	}
+
+	/**
+	 * 정산 참여자(업체/렌터) 동의를 operator가 릴레이 처리
+	 */
+	public String agreeSettlementByOperator(String settlementId, String participantWallet) throws Exception {
+		Function function = new Function(
+				"agreeSettlementByOperator",
+				Arrays.asList(toBytes32Key(settlementId), new Address(participantWallet)),
+				Collections.emptyList()
+		);
+		String txHash = sendFunction(function);
+		log.info("[DisputeSettlement] 합의 동의 반영 완료 | settlementId: {}, participant: {}, txHash: {}",
+				settlementId, participantWallet, txHash);
+		return txHash;
 	}
 
 	/**

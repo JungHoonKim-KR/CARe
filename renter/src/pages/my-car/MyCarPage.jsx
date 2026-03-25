@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import carIcon from '../../assets/car_icon.png'
 import BottomNav from '../../components/BottomNav'
-import { getMyReservations } from '../../api/reservation'
+import {
+  getMyReservations,
+  getMyNotifications,
+  markNotificationAsRead,
+  subscribeNotifications,
+} from '../../api/reservation'
 import './MyCarPage.css'
 
 const MOCK_RESERVATION = {
@@ -77,39 +83,94 @@ function getPickupStatus(reservation) {
 }
 
 export default function MyCarPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { state } = useLocation()
   const [reservation, setReservation] = useState(state?.reservation || null)
   const [loading, setLoading] = useState(!state?.reservation)
   const [showDisputeModal, setShowDisputeModal] = useState(false)
+  const [pendingDisputeNotification, setPendingDisputeNotification] = useState(null)
   const [hasMultiple, setHasMultiple] = useState(false)
+
+  const applyDisputeNotification = (notification) => {
+    if (!notification) return
+    if (notification.notificationType !== 'DISPUTE_CREATED') return
+    if (notification.read) return
+    setPendingDisputeNotification(notification)
+    setShowDisputeModal(true)
+  }
 
   useEffect(() => {
     if (state?.reservation) return
     const fetchData = async () => {
       try {
-        const data = await getMyReservations()
+        const [reservationData, notificationData] = await Promise.all([
+          getMyReservations(),
+          getMyNotifications(),
+        ])
+
+        const data = reservationData
         const list = Array.isArray(data) ? data : (data?.data ?? [])
         const sorted = [...list].sort((a, b) =>
           new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
         )
-        const activeList = sorted.filter((r) => r.status === 'IN_USE' || r.status === 'RESERVED' || r.status === 'COMPLETED')
+        const activeList = sorted.filter((r) => r.status !== 'CANCELLED')
         const active = activeList[0]
         if (activeList.length > 1) setHasMultiple(true)
         if (active) {
           setReservation(active)
-          const pending = localStorage.getItem(`disputePending_${active.reservationId}`) === 'true'
-          if (pending) setShowDisputeModal(true)
         } else {
           setReservation(null)
         }
+
+        const notificationList = Array.isArray(notificationData) ? notificationData : (notificationData?.data ?? [])
+        const unreadDispute = notificationList.find(
+          (item) => item.notificationType === 'DISPUTE_CREATED' && item.read === false,
+        )
+        applyDisputeNotification(unreadDispute || null)
       } catch {
         setReservation(null)
       } finally {
         setLoading(false)
       }
+
+      // 알림 조회 (실패해도 예약 표시에 영향 없음)
+      try {
+        const notificationData = await getMyNotifications()
+        const notificationList = Array.isArray(notificationData) ? notificationData : (notificationData?.data ?? [])
+        const unreadDispute = notificationList.find(
+          (item) => item.notificationType === 'DISPUTE_CREATED' && item.read === false,
+        )
+        applyDisputeNotification(unreadDispute || null)
+      } catch {
+        // 알림 조회 실패 무시
+      }
     }
     fetchData()
+  }, [])
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken')
+    if (!token) return
+
+    const abortController = new AbortController()
+    subscribeNotifications({
+      token,
+      signal: abortController.signal,
+      onNotification: (notification) => {
+        applyDisputeNotification(notification)
+      },
+      onError: (error) => {
+        console.error('알림 SSE 연결 오류:', error)
+      },
+    }).catch((error) => {
+      if (abortController.signal.aborted) return
+      console.error('알림 SSE 구독 실패:', error)
+    })
+
+    return () => {
+      abortController.abort()
+    }
   }, [])
 
   if (loading) {
@@ -117,7 +178,7 @@ export default function MyCarPage() {
       <div className="mc-page">
         <div className="mc-loading">
           <div className="mc-spinner" />
-          <p>불러오는 중...</p>
+          <p>{t('myCar.loading')}</p>
         </div>
         <BottomNav />
       </div>
@@ -129,10 +190,10 @@ export default function MyCarPage() {
       <div className="mc-page">
         <div className="mc-empty">
           <img src={carIcon} alt="차량 없음" className="mc-empty-icon" />
-          <p className="mc-empty-title">예약한 차량이 없어요</p>
-          <p className="mc-empty-desc">차량을 검색해서 첫 렌터카를 예약해보세요!</p>
+          <p className="mc-empty-title">{t('myCar.noReservation')}</p>
+          <p className="mc-empty-desc">{t('myCar.noReservationDesc')}</p>
           <button className="mc-empty-btn" onClick={() => navigate('/home')}>
-            차량 검색하기
+            {t('myCar.searchCar')}
           </button>
         </div>
         <BottomNav />
@@ -206,12 +267,12 @@ export default function MyCarPage() {
         {(reservation.batteryLevel != null || reservation.drivingRange != null) && (
           <div className="mc-stats-card">
             <div className="mc-stat">
-              <p className="mc-stat-label">배터리</p>
+              <p className="mc-stat-label">{t('myCar.battery')}</p>
               <p className="mc-stat-value">{reservation.batteryLevel ?? '-'}%</p>
             </div>
             <div className="mc-stat-divider" />
             <div className="mc-stat">
-              <p className="mc-stat-label">주행 가능 거리</p>
+              <p className="mc-stat-label">{t('myCar.drivingRange')}</p>
               <p className="mc-stat-value">{reservation.drivingRange ?? '-'}km</p>
             </div>
           </div>
@@ -219,10 +280,10 @@ export default function MyCarPage() {
 
         {/* 대여 일정 카드 */}
         <div className="mc-schedule-card">
-          <p className="mc-schedule-title">대여 일정</p>
+          <p className="mc-schedule-title">{t('myCar.schedule')}</p>
           <div className="mc-schedule-row">
             <div className="mc-schedule-col">
-              <span className="mc-schedule-tag pickup">픽업</span>
+              <span className="mc-schedule-tag pickup">{t('myCar.pickup')}</span>
               <p className="mc-schedule-date">
                 {startLabel ? `${startLabel.month}월 ${startLabel.day}일` : '--'}
                 {startLabel && <span className="mc-schedule-weekday"> ({startLabel.weekday})</span>}
@@ -238,7 +299,7 @@ export default function MyCarPage() {
             </div>
 
             <div className="mc-schedule-col">
-              <span className="mc-schedule-tag return">반납</span>
+              <span className="mc-schedule-tag return">{t('myCar.return')}</span>
               <p className="mc-schedule-date">
                 {endLabel ? `${endLabel.month}월 ${endLabel.day}일` : '--'}
                 {endLabel && <span className="mc-schedule-weekday"> ({endLabel.weekday})</span>}
@@ -276,18 +337,18 @@ export default function MyCarPage() {
         {/* 다중 예약 안내 */}
         {hasMultiple && (
           <div style={{ margin: '0 16px 12px', padding: '12px 16px', background: '#FFF8EC', borderRadius: 12, fontSize: 13, color: '#B8860B', textAlign: 'center' }}>
-            다른 예약은 내 예약 목록에서 확인할 수 있습니다.
+            {t('myCar.multipleReservations')}
           </div>
         )}
 
         {/* 차량 외관 촬영 카드 */}
         {isCompleted ? (
           <div className="mc-action-card mc-completed-card">
-            <p className="mc-action-card-title">반납이 완료되었습니다</p>
+            <p className="mc-action-card-title">{t('myCar.returnCompleted')}</p>
           </div>
         ) : (
           <div className="mc-action-card">
-            <p className="mc-action-card-title">차량 외관 촬영</p>
+            <p className="mc-action-card-title">{t('myCar.exterior')}</p>
             <div className="mc-action-row">
               <button
                 className={`mc-action-btn mc-shoot-btn${crackDone ? ' mc-shoot-btn--done' : ''}`}
@@ -308,12 +369,12 @@ export default function MyCarPage() {
                     </svg>
                   )}
                 </div>
-                <span className="mc-action-btn-label">{crackDone ? '완료됨.' : '픽업 전 촬영'}</span>
-                <span className="mc-action-btn-sub">{crackDone ? '외관 촬영이 완료되었습니다' : '탑승 전 외관 기록'}</span>
+                <span className="mc-action-btn-label">{crackDone ? t('myCar.shootDone') : t('myCar.beforeShoot')}</span>
+                <span className="mc-action-btn-sub">{crackDone ? t('myCar.shootDoneSub') : t('myCar.beforeShootSub')}</span>
               </button>
               <button
                 className="mc-action-btn mc-return-btn"
-                onClick={() => navigate('/return-guide', { state: { reservation } })}
+                onClick={() => navigate('/return-guide', { state: { reservation, logType: 'AFTER' } })}
               >
                 <div className="mc-action-btn-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -323,8 +384,8 @@ export default function MyCarPage() {
                       strokeLinecap="round"/>
                   </svg>
                 </div>
-                <span className="mc-action-btn-label">반납하기</span>
-                <span className="mc-action-btn-sub">반납 전 외관 촬영</span>
+                <span className="mc-action-btn-label">{t('myCar.returnBtn')}</span>
+                <span className="mc-action-btn-sub">{t('myCar.returnBtnSub')}</span>
               </button>
             </div>
           </div>
@@ -338,10 +399,15 @@ export default function MyCarPage() {
       <div className="mc-action-bar">
 <button
           className={`mc-smartkey-inner${pickupReady ? '' : ' locked'}`}
-          onClick={() => navigate(
-            pickupReady ? '/car-smartkey' : '/car-faceauth',
-            { state: { reservation } }
-          )}
+          onClick={() => {
+            if (pickupReady) {
+              navigate('/car-smartkey', { state: { reservation } })
+            } else if (!faceAuthDone) {
+              navigate('/car-faceauth', { state: { reservation } })
+            } else {
+              navigate('/return-guide', { state: { reservation, logType: 'BEFORE' } })
+            }
+          }}
         >
           <div className="mc-smartkey-icon-wrap">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
@@ -356,7 +422,7 @@ export default function MyCarPage() {
               </svg>
             ) : (
               <span className="mc-smartkey-lock-badge">
-                {faceAuthDone ? '외관 촬영 필요' : '얼굴 인증 필요'}
+                {faceAuthDone ? t('myCar.smartKeyNeedShoot') : t('myCar.smartKeyNeedFace')}
               </span>
             )
           }
@@ -372,25 +438,39 @@ export default function MyCarPage() {
               <span>!</span>
             </div>
             <p className="mc-dispute-modal-text">
-              {(endDate || '').replace(/-/g, '-')} 반납하신<br/>
-              차량에 대해서 업체에서<br/>
-              금액을 청구했어요.
+              {pendingDisputeNotification?.message || t('myCar.disputeDefault')}
             </p>
             <div className="mc-dispute-modal-btns">
               <button
                 className="mc-dispute-modal-confirm"
-                onClick={() => {
+                onClick={async () => {
+                  if (pendingDisputeNotification?.notificationId) {
+                    try {
+                      await markNotificationAsRead(pendingDisputeNotification.notificationId)
+                    } catch (error) {
+                      console.error('알림 읽음 처리 실패:', error)
+                    }
+                  }
+
+                  const targetReservationId = pendingDisputeNotification?.reservationId
+                  const targetDisputeId = pendingDisputeNotification?.disputeId
+                  const targetReservation =
+                    reservation?.reservationId === targetReservationId
+                      ? reservation
+                      : { reservationId: targetReservationId }
+
                   setShowDisputeModal(false)
-                  navigate('/dispute', { state: { reservation } })
+                  setPendingDisputeNotification(null)
+                  navigate('/dispute', { state: { reservation: targetReservation, disputeId: targetDisputeId } })
                 }}
               >
-                확인하기
+                {t('myCar.disputeConfirm')}
               </button>
               <button
                 className="mc-dispute-modal-close"
                 onClick={() => setShowDisputeModal(false)}
               >
-                닫기
+                {t('myCar.disputeClose')}
               </button>
             </div>
           </div>

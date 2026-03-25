@@ -18,6 +18,7 @@ import com.care.domain.reservation.entity.Scratch;
 import com.care.domain.reservation.repository.DisputeRepository;
 import com.care.domain.reservation.repository.ReservationRepository;
 import com.care.domain.renter.entity.Renter;
+import com.care.domain.renter.service.RenterNotificationService;
 import com.care.domain.scan.repository.ScratchRepository;
 import com.care.global.ai.AiScratchSimilarityClient;
 import com.care.global.ai.AiScratchSimilarityResult;
@@ -30,6 +31,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -39,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
@@ -65,6 +68,9 @@ class DisputeServiceTest {
     @Mock
     private AiScratchSimilarityClient aiScratchSimilarityClient;
 
+    @Mock
+    private RenterNotificationService renterNotificationService;
+
     @InjectMocks
     private DisputeService disputeService;
 
@@ -77,6 +83,43 @@ class DisputeServiceTest {
         reservation = mockReservation("reservation-1", "company-1", "renter-1");
         targetScratch = mockScratch("after-log-1", "AFTER", reservation, false);
         defenseScratch = mockScratch("before-log-1", "BEFORE", reservation, false);
+        ReflectionTestUtils.setField(disputeService, "similarityThreshold", 60.0);
+    }
+
+    @Test
+    void 업체_분쟁_목록_조회_성공() {
+        // given
+        Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
+        given(disputeRepository.findByReservation_OwnedCar_Company_CompanyIdOrderByCreatedAtDesc("company-1"))
+                .willReturn(List.of(dispute));
+
+        // when
+        List<DisputeSummaryResponse> result = disputeService.getCompanyDisputes("company-1");
+
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).reservationId()).isEqualTo("reservation-1");
+        assertThat(result.get(0).carId()).isEqualTo("car-1");
+        assertThat(result.get(0).plateNumber()).isEqualTo("12가3456");
+        assertThat(result.get(0).renterName()).isEqualTo("renter-name");
+        assertThat(result.get(0).claimAmount()).isEqualTo(50000);
+        assertThat(result.get(0).status()).isEqualTo("OPEN");
+    }
+
+    @Test
+    void 분쟁_상세_단건조회_성공() {
+        // given
+        Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
+        given(disputeRepository.findByDisputeId("dispute-1"))
+                .willReturn(Optional.of(dispute));
+
+        // when
+        DisputeDetailResponse result = disputeService.getDisputeDetail("company-1", "dispute-1");
+
+        // then
+        assertThat(result.reservationId()).isEqualTo("reservation-1");
+        assertThat(result.targetLogId()).isEqualTo("after-log-1");
+        assertThat(result.status()).isEqualTo("OPEN");
     }
 
     @Test
@@ -127,6 +170,10 @@ class DisputeServiceTest {
                 .willReturn(Optional.of(reservation));
         given(scratchRepository.findById("after-log-1"))
                 .willReturn(Optional.of(targetScratch));
+        given(scratchRepository.findByReservation_ReservationIdAndLogType("reservation-1", "BEFORE"))
+            .willReturn(List.of(defenseScratch));
+        given(aiScratchSimilarityClient.compareByUrls(any(), any()))
+            .willReturn(new AiScratchSimilarityResult(0.55, 0.12));
         given(disputeRepository.existsByTargetScratch_LogIdAndStatusNot("after-log-1", "RESOLVED"))
                 .willReturn(false);
         given(disputeRepository.save(any(Dispute.class)))
@@ -146,6 +193,10 @@ class DisputeServiceTest {
         ArgumentCaptor<Dispute> captor = ArgumentCaptor.forClass(Dispute.class);
         verify(disputeRepository).save(captor.capture());
         assertThat(captor.getValue().getStatus()).isEqualTo("OPEN");
+        assertThat(captor.getValue().getSnapshotBeforeLogId()).isEqualTo("before-log-1");
+        assertThat(captor.getValue().getSnapshotAfterCropS3Url()).isEqualTo("https://example.com/after-log-1.jpg");
+        assertThat(captor.getValue().isSnapshotWarning()).isTrue();
+        verify(renterNotificationService).createDisputeCreatedNotification(any(), any());
     }
 
     @Test
@@ -203,50 +254,50 @@ class DisputeServiceTest {
                 .hasMessageContaining("조회 권한");
     }
 
-            @Test
-            void 분쟁_AI_분석_성공_BEFORE_AFTER_쌍비교() {
-            // given
-            Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
-            Scratch beforeScratch2 = mockScratch("before-log-2", "BEFORE", reservation, false);
-            Scratch afterScratch = mockScratch("after-log-2", "AFTER", reservation, false);
+    @Test
+    void 분쟁_AI_분석_성공_BEFORE_AFTER_쌍비교() {
+        // given
+        Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
+        Scratch beforeScratch2 = mockScratch("before-log-2", "BEFORE", reservation, false);
+        Scratch afterScratch = mockScratch("after-log-2", "AFTER", reservation, false);
 
-            given(disputeRepository.findByDisputeId("dispute-1"))
-                .willReturn(Optional.of(dispute));
-            given(scratchRepository.findByReservation_ReservationIdAndLogType("reservation-1", "BEFORE"))
-                .willReturn(List.of(defenseScratch, beforeScratch2));
-            given(scratchRepository.findByReservation_ReservationIdAndLogType("reservation-1", "AFTER"))
-                .willReturn(List.of(afterScratch));
-            given(aiScratchSimilarityClient.compareByUrls(any(), any()))
-                .willReturn(new AiScratchSimilarityResult(0.91, 0.03));
+        given(disputeRepository.findByDisputeId("dispute-1"))
+            .willReturn(Optional.of(dispute));
+        given(scratchRepository.findByReservation_ReservationIdAndLogType("reservation-1", "BEFORE"))
+            .willReturn(List.of(defenseScratch, beforeScratch2));
+        given(scratchRepository.findByReservation_ReservationIdAndLogType("reservation-1", "AFTER"))
+            .willReturn(List.of(afterScratch));
+        given(aiScratchSimilarityClient.compareByUrls(any(), any()))
+            .willReturn(new AiScratchSimilarityResult(0.91, 0.03));
 
-            // when
-            DisputeAiAnalysisResponse result = disputeService.getDisputeAiAnalysis("company-1", "dispute-1");
+        // when
+        DisputeAiAnalysisResponse result = disputeService.getDisputeAiAnalysis("company-1", "dispute-1");
 
-            // then
-            assertThat(result.disputeId()).isNotBlank();
-            assertThat(result.reservationId()).isEqualTo("reservation-1");
-            assertThat(result.beforeCount()).isEqualTo(2);
-            assertThat(result.afterCount()).isEqualTo(1);
-            assertThat(result.comparisons()).hasSize(2);
-            assertThat(result.comparisons().get(0).similarity()).isEqualTo(0.91);
-            verify(aiScratchSimilarityClient, times(2)).compareByUrls(any(), any());
-            }
+        // then
+        assertThat(result.disputeId()).isNotBlank();
+        assertThat(result.reservationId()).isEqualTo("reservation-1");
+        assertThat(result.beforeCount()).isEqualTo(2);
+        assertThat(result.afterCount()).isEqualTo(1);
+        assertThat(result.comparisons()).hasSize(2);
+        assertThat(result.comparisons().get(0).similarity()).isEqualTo(0.91);
+        verify(aiScratchSimilarityClient, times(2)).compareByUrls(any(), any());
+    }
 
-            @Test
-            void 분쟁_AI_분석_실패_참여자가_아니면_예외() {
-            // given
-            Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
-            given(disputeRepository.findByDisputeId("dispute-1"))
-                .willReturn(Optional.of(dispute));
+    @Test
+    void 분쟁_AI_분석_실패_참여자가_아니면_예외() {
+        // given
+        Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
+        given(disputeRepository.findByDisputeId("dispute-1"))
+            .willReturn(Optional.of(dispute));
 
-            // when & then
-            assertThatThrownBy(() -> disputeService.getDisputeAiAnalysis("other-user", "dispute-1"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("조회 권한");
-            }
+        // when & then
+        assertThatThrownBy(() -> disputeService.getDisputeAiAnalysis("other-user", "dispute-1"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("조회 권한");
+    }
 
-        @Test
-        void 예약_탐지_흠집_로그_조회_성공_BEFORE_AFTER() {
+    @Test
+    void 예약_탐지_흠집_로그_조회_성공_BEFORE_AFTER() {
         // given
         Scratch afterScratch = mockScratch("after-log-2", "AFTER", reservation, false);
 
@@ -266,10 +317,10 @@ class DisputeServiceTest {
         assertThat(result.get(1).logId()).isEqualTo("after-log-2");
         assertThat(result.get(0).logType()).isEqualTo("BEFORE");
         assertThat(result.get(1).logType()).isEqualTo("AFTER");
-        }
+    }
 
-        @Test
-        void 예약_탐지_흠집_로그_조회_실패_참여자가_아니면_예외() {
+    @Test
+    void 예약_탐지_흠집_로그_조회_실패_참여자가_아니면_예외() {
         // given
         given(reservationRepository.findByReservationId("reservation-1"))
             .willReturn(Optional.of(reservation));
@@ -278,7 +329,7 @@ class DisputeServiceTest {
         assertThatThrownBy(() -> disputeService.getReservationScratchLogs("other-user", "reservation-1"))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("조회 권한");
-        }
+    }
 
     @Test
     void 분쟁_정산_COMPLETED_성공_양측동의_후_실행() throws Exception {
@@ -303,6 +354,8 @@ class DisputeServiceTest {
         assertThat(second.finalAmount()).isEqualTo(100000L);
         assertThat(second.status()).isEqualTo("COMPLETED");
         assertThat(second.txHash()).isEqualTo("0xusdc");
+        verify(disputeSettlementService, times(1)).initializeSettlementAgreement(anyString(), anyString(), anyString(), anyLong());
+        verify(disputeSettlementService, times(2)).agreeSettlementByOperator(anyString(), anyString());
         verify(disputeSettlementService).recordSettlement(any(), anyLong());
         verify(careTokenService).transfer("0xrenter", "0xcompany", 100000d);
         verify(targetScratch).clearDisputed();
@@ -328,7 +381,35 @@ class DisputeServiceTest {
         assertThat(first.status()).isEqualTo("PENDING");
         assertThat(second.status()).isEqualTo("REFUNDED");
         assertThat(second.txHash()).isEqualTo("0xrefund");
+        verify(disputeSettlementService, times(1)).initializeSettlementAgreement(anyString(), anyString(), anyString(), anyLong());
+        verify(disputeSettlementService, times(2)).agreeSettlementByOperator(anyString(), anyString());
         verify(careTokenService).transfer("0xcompany", "0xrenter", 10000d);
+    }
+
+    @Test
+    void 분쟁_정산_레거시_요청스키마_호환_성공() throws Exception {
+        // given
+        Dispute dispute = Dispute.create(reservation, targetScratch, "사유", 50000);
+        DisputeSettleRequest request = new DisputeSettleRequest();
+        setField(request, "companyRefundAmount", 70000L);
+        setField(request, "resolution", "COMPANY_WIN");
+
+        given(disputeRepository.findByDisputeId("dispute-legacy")).willReturn(Optional.of(dispute));
+        given(disputeSettlementService.recordSettlement(any(), anyLong())).willReturn("0xrecord-legacy");
+        given(careTokenService.transfer("0xrenter", "0xcompany", 70000d)).willReturn("0xusdc-legacy");
+
+        // when
+        DisputeSettleResponse first = disputeService.settleDispute("company-1", "dispute-legacy", request);
+        DisputeSettleResponse second = disputeService.settleDispute("renter-1", "dispute-legacy", request);
+
+        // then
+        assertThat(first.status()).isEqualTo("PENDING");
+        assertThat(second.status()).isEqualTo("COMPLETED");
+        assertThat(second.finalAmount()).isEqualTo(70000L);
+        assertThat(second.txHash()).isEqualTo("0xusdc-legacy");
+        verify(disputeSettlementService, times(1)).initializeSettlementAgreement(anyString(), anyString(), anyString(), anyLong());
+        verify(disputeSettlementService, times(2)).agreeSettlementByOperator(anyString(), anyString());
+        verify(careTokenService).transfer("0xrenter", "0xcompany", 70000d);
     }
 
     @Test
@@ -393,6 +474,7 @@ class DisputeServiceTest {
         Scratch scratchMock = org.mockito.Mockito.mock(Scratch.class);
         lenient().when(scratchMock.getLogId()).thenReturn(logId);
         lenient().when(scratchMock.getLogType()).thenReturn(logType);
+        lenient().when(scratchMock.getCarPart()).thenReturn("FRONT");
         lenient().when(scratchMock.getReservation()).thenReturn(reservation);
         lenient().when(scratchMock.getCropS3Url()).thenReturn("https://example.com/" + logId + ".jpg");
         lenient().when(scratchMock.isManual()).thenReturn(false);

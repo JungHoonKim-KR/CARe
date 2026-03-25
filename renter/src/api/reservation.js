@@ -188,3 +188,8 @@ export const revokeSmartKey = async (reservationId) => {
   const response = await api.post(`/api/reservations/${reservationId}/smart-key/revoke`)
   return response.data
 }
+
+export const settleDispute = async (disputeId, finalAmount, status) => {
+  const response = await api.post(`/api/disputes/${disputeId}/settle`, { finalAmount, status })
+  return response.data
+}

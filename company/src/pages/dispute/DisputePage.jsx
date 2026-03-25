@@ -13,6 +13,7 @@ export default function DisputePage() {
   const [scratchLogs, setScratchLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const actionLoading = false
   const [loadingScratchLogs, setLoadingScratchLogs] = useState(false)
 
   useEffect(() => {

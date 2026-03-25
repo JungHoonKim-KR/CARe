@@ -104,7 +104,12 @@ export default function MyCarPage() {
     if (state?.reservation) return
     const fetchData = async () => {
       try {
-        const data = await getMyReservations()
+        const [reservationData, notificationData] = await Promise.all([
+          getMyReservations(),
+          getMyNotifications(),
+        ])
+
+        const data = reservationData
         const list = Array.isArray(data) ? data : (data?.data ?? [])
         const sorted = [...list].sort((a, b) =>
           new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
@@ -117,6 +122,12 @@ export default function MyCarPage() {
         } else {
           setReservation(null)
         }
+
+        const notificationList = Array.isArray(notificationData) ? notificationData : (notificationData?.data ?? [])
+        const unreadDispute = notificationList.find(
+          (item) => item.notificationType === 'DISPUTE_CREATED' && item.read === false,
+        )
+        applyDisputeNotification(unreadDispute || null)
       } catch {
         setReservation(null)
       } finally {

@@ -438,7 +438,7 @@ export default function MyCarPage() {
               <span>!</span>
             </div>
             <p className="mc-dispute-modal-text">
-              {pendingDisputeNotification?.message || t('myCar.disputeDefault')}
+              {pendingDisputeNotification?.message || '분쟁이 접수되었습니다.'}
             </p>
             <div className="mc-dispute-modal-btns">
               <button

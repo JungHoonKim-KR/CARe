@@ -121,15 +121,6 @@ export const submitDefense = async (reservationId, disputeId, defenseLogId) => {
   return response.data
 }
 
-// 분쟁 정산 동의/요청
-export const settleDispute = async (disputeId, finalAmount, status) => {
-  const response = await api.post(`/api/disputes/${disputeId}/settle`, {
-    finalAmount,
-    status,
-  })
-  return response.data
-}
-
 // 내 알림 목록 조회
 export const getMyNotifications = async () => {
   const response = await api.get('/api/renters/me/notifications')

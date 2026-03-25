@@ -55,10 +55,22 @@ public class ScanService {
         Reservation reservation = reservationRepository.findByReservationId(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
 
-        // FastAPI 호출
-        Map<String, Object> response = callFastApi(image, zone, logType);
+        // FastAPI 호출 (AI 서버 미기동 시 빈 결과로 처리)
+        Map<String, Object> response;
+        try {
+            response = callFastApi(image, zone, logType);
+        } catch (Exception e) {
+            log.warn("[Scan] AI 서버 호출 실패, 흠집 없음으로 처리 - zone: {}, reason: {}", zone, e.getMessage());
+            response = Collections.emptyMap();
+        }
         List<Map<String, Object>> defects =
                 (List<Map<String, Object>>) response.get("defects");
+
+        if (logType.equals("BEFORE")) {
+            reservation.updateStatusToInUse();
+        } else {
+            reservation.updateStatusToAfterScan();
+        }
 
         if (defects == null || defects.isEmpty()) {
             log.info("[Scan] 흠집 없음 - reservationId: {}, zone: {}", reservationId, zone);
@@ -86,12 +98,6 @@ public class ScanService {
                     .build();
 
             scratches.add(scratchRepository.save(scratch));
-        }
-
-        if (logType.equals("BEFORE")) {
-            reservation.updateStatusToInUse();
-        } else {
-            reservation.updateStatusToAfterScan();
         }
 
         log.info("[Scan] 흠집 {}개 저장 - reservationId: {}, zone: {}",

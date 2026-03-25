@@ -94,7 +94,7 @@ blockchain:
 
 ai:
   server:
-    url: ${AI_SERVER_URL:http://localhost:8000}
+    url: ${AI_YOLO_URL:http://localhost:8000}
     face-url: ${AI_FACE_URL:http://localhost:8001}
   scratch:
     similarity-threshold: ${AI_SCRATCH_SIMILARITY_THRESHOLD:60.0}

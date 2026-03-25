@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import cuteIcon2 from '../../assets/cute_icon2.png'
 import BottomNav from '../../components/BottomNav'
 import { getTokenBalance } from '../../api/auth'
@@ -7,6 +8,7 @@ import './WalletPage.css'
 
 export default function WalletPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   const walletAddress = localStorage.getItem('embedded_wallet_address')
   const didVerified =
@@ -23,7 +25,7 @@ export default function WalletPage() {
       .then((data) => setCareBalance(data.balance))
       .catch((e) => {
         console.error('[Wallet] 잔액 조회 실패:', e)
-        setCareBalance('오류')
+        setCareBalance(t('wallet.error'))
       })
       .finally(() => setCareLoading(false))
   }, [])
@@ -38,7 +40,7 @@ export default function WalletPage() {
             <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="#111" />
           </svg>
         </button>
-        <h1 className="wallet-title">내 지갑</h1>
+        <h1 className="wallet-title">{t('wallet.title')}</h1>
       </div>
 
       <div className="wallet-stack-area">
@@ -52,13 +54,13 @@ export default function WalletPage() {
                   <path d="M11.5 4L5.5 10L2.5 7" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <span className="wallet-card-name">신원 인증</span>
+              <span className="wallet-card-name">{t('wallet.didAuth')}</span>
             </div>
             <button
               className={`wallet-pill-btn ${didVerified ? 'did-verified-pill' : ''}`}
               onClick={(e) => { e.stopPropagation(); if (!didVerified) navigate('/did-auth') }}
             >
-              {didVerified ? '인증완료 ✓' : '인증하기'}
+              {didVerified ? t('wallet.didVerified') : t('wallet.didAction')}
             </button>
           </div>
           <div className="did-face-illust">
@@ -81,14 +83,14 @@ export default function WalletPage() {
                   <path d="M7 1.5L8.6 5.4H12.7L9.5 7.7L10.9 11.6L7 9.3L3.1 11.6L4.5 7.7L1.3 5.4H5.4L7 1.5Z" fill="white" />
                 </svg>
               </div>
-              <span className="wallet-card-name token-name">잔여 토큰</span>
+              <span className="wallet-card-name token-name">{t('wallet.tokenBalance')}</span>
             </div>
           </div>
 
           <div className="token-balance-wrap">
-            <p className="token-balance-label">보유 CARE</p>
+            <p className="token-balance-label">{t('wallet.myCare')}</p>
             {careLoading ? (
-              <p className="token-balance-value token-balance-loading">조회 중...</p>
+              <p className="token-balance-value token-balance-loading">{t('wallet.loading')}</p>
             ) : (
               <p className="token-balance-value">
                 {careBalance ?? '--'} <span className="token-balance-unit">CARE</span>
@@ -96,7 +98,7 @@ export default function WalletPage() {
             )}
           </div>
 
-          <div className="token-card-hint">사용 내역 보기 ›</div>
+          <div className="token-card-hint">{t('wallet.historyLink')}</div>
         </div>
 
       </div>

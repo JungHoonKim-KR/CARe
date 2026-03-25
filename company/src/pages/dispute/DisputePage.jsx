@@ -256,12 +256,14 @@ export default function DisputePage() {
                 <div className="actions-buttons">
                   <button
                     className="btn btn-danger"
+                    disabled={actionLoading}
                     onClick={() => setIsRejectModalOpen(true)}
                   >
                     분쟁 반려
                   </button>
                   <button
                     className="btn btn-primary"
+                    disabled={actionLoading}
                     onClick={() => setIsResolveModalOpen(true)}
                   >
                     분쟁 해결

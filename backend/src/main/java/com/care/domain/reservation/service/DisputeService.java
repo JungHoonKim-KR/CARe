@@ -7,7 +7,6 @@ import com.care.domain.reservation.controller.dto.response.DisputeAiAnalysisResp
 import com.care.domain.reservation.controller.dto.response.DisputeCreateResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDefenseResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeDetailResponse;
-import com.care.domain.reservation.controller.dto.response.DisputeAiAnalysisResponse;
 import com.care.domain.reservation.controller.dto.response.DisputePreviousScratchResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeSettleResponse;
 import com.care.domain.reservation.controller.dto.response.DisputeSummaryResponse;
@@ -49,33 +48,34 @@ public class DisputeService {
 	@Value("${ai.scratch.similarity-threshold:60.0}")
 	private double similarityThreshold;
 
-	@Transactional
-	public DisputeCreateResponse createDispute(String requesterId,
-											   String reservationId,
-											   DisputeCreateRequest request) {
-		Reservation reservation = reservationRepository.findByReservationId(reservationId)
-				.orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
+	@Value("${ai.scratch.similarity-threshold:60.0}")
+	private double similarityThreshold;
 
-		validateCompanyAccess(requesterId, reservation);
+    @Value("${ai.scratch.similarity-threshold:60.0}")
+    private double similarityThreshold;
 
-		Scratch targetScratch = scratchRepository.findById(request.getTargetLogId())
-				.orElseThrow(() -> new IllegalArgumentException("대상 흠집 로그를 찾을 수 없습니다: " + request.getTargetLogId()));
+    @Transactional
+    public DisputeCreateResponse createDispute(String requesterId,
+                                               String reservationId,
+                                               DisputeCreateRequest request) {
+        Reservation reservation = reservationRepository.findByReservationId(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
 
-		validateScratchBelongsToReservation(targetScratch, reservationId);
-		validateLogType(targetScratch, "AFTER", "targetLogId는 AFTER 로그여야 합니다.");
+        validateCompanyAccess(requesterId, reservation);
 
-		boolean hasActiveDispute = disputeRepository.existsByTargetScratch_LogIdAndStatusNot(
-				targetScratch.getLogId(), DisputeStatus.RESOLVED.name());
-		if (hasActiveDispute || targetScratch.isDisputed()) {
-			throw new IllegalArgumentException("이미 분쟁이 진행 중인 흠집입니다.");
-		}
+        Scratch targetScratch = scratchRepository.findById(request.getTargetLogId())
+                .orElseThrow(() -> new IllegalArgumentException("대상 흠집 로그를 찾을 수 없습니다: " + request.getTargetLogId()));
 
-		Dispute dispute = Dispute.create(
-				reservation,
-				targetScratch,
-				request.getReason(),
-				request.getClaimAmount()
-		);
+        validateScratchBelongsToReservation(targetScratch, reservationId);
+        validateLogType(targetScratch, "AFTER", "targetLogId는 AFTER 로그여야 합니다.");
+
+        boolean hasActiveDispute = disputeRepository.existsByTargetScratch_LogIdAndStatusNot(
+                targetScratch.getLogId(), DisputeStatus.RESOLVED.name());
+        if (hasActiveDispute || targetScratch.isDisputed()) {
+            throw new IllegalArgumentException("이미 분쟁이 진행 중인 흠집입니다.");
+        }
+
+		captureReturnReportSnapshot(dispute, reservationId, targetScratch);
 
 		captureReturnReportSnapshot(dispute, reservationId, targetScratch);
 
@@ -416,13 +416,9 @@ public class DisputeService {
 		String companyWallet = reservation.getOwnedCar().getCompany().getWalletAddress();
 		validateSettlementWallets(companyWallet, renterWallet);
 
-		double amount = (double) finalAmount;
-		if (targetStatus == SettlementStatus.COMPLETED) {
-			return careTokenService.transfer(renterWallet, companyWallet, amount);
-		}
-		if (targetStatus == SettlementStatus.REFUNDED) {
-			return careTokenService.transfer(companyWallet, renterWallet, amount);
-		}
+        if (candidates.isEmpty()) {
+            candidates = beforeScratches;
+        }
 
 		throw new IllegalArgumentException("지원하지 않는 정산 상태입니다: " + targetStatus.name());
 	}

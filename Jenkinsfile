@@ -180,6 +180,7 @@ pipeline {
                                     --restart unless-stopped \
                                     --env-file ${SECRET_ENV_PATH} \
                                     -e TZ=Asia/Seoul \
+                                    -e AI_YOLO_URL=${AI_YOLO_URL} \
                                     ${BACKEND_IMAGE}
 
                                 echo "Waiting for backend-$TARGET_COLOR to be healthy..."

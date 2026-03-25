@@ -14,7 +14,7 @@ def get_model():
     if _model is None:
         try:
             from ultralytics import YOLO
-            model_path = Path(__file__).parent.parent / "models" / "best.pt"
+            model_path = Path(__file__).parent.parent / "models" / "scratches" / "best.pt"
             if model_path.exists():
                 _model = YOLO(str(model_path))
                 print("[detect] YOLO 모델 로드 완료")

@@ -48,26 +48,26 @@ public class DisputeService {
 	@Value("${ai.scratch.similarity-threshold:60.0}")
 	private double similarityThreshold;
 
-    @Transactional
-    public DisputeCreateResponse createDispute(String requesterId,
-                                               String reservationId,
-                                               DisputeCreateRequest request) {
-        Reservation reservation = reservationRepository.findByReservationId(reservationId)
-                .orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
+	@Transactional
+	public DisputeCreateResponse createDispute(String requesterId,
+											   String reservationId,
+											   DisputeCreateRequest request) {
+		Reservation reservation = reservationRepository.findByReservationId(reservationId)
+				.orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
 
-        validateCompanyAccess(requesterId, reservation);
+		validateCompanyAccess(requesterId, reservation);
 
-        Scratch targetScratch = scratchRepository.findById(request.getTargetLogId())
-                .orElseThrow(() -> new IllegalArgumentException("대상 흠집 로그를 찾을 수 없습니다: " + request.getTargetLogId()));
+		Scratch targetScratch = scratchRepository.findById(request.getTargetLogId())
+				.orElseThrow(() -> new IllegalArgumentException("대상 흠집 로그를 찾을 수 없습니다: " + request.getTargetLogId()));
 
-        validateScratchBelongsToReservation(targetScratch, reservationId);
-        validateLogType(targetScratch, "AFTER", "targetLogId는 AFTER 로그여야 합니다.");
+		validateScratchBelongsToReservation(targetScratch, reservationId);
+		validateLogType(targetScratch, "AFTER", "targetLogId는 AFTER 로그여야 합니다.");
 
-        boolean hasActiveDispute = disputeRepository.existsByTargetScratch_LogIdAndStatusNot(
-                targetScratch.getLogId(), DisputeStatus.RESOLVED.name());
-        if (hasActiveDispute || targetScratch.isDisputed()) {
-            throw new IllegalArgumentException("이미 분쟁이 진행 중인 흠집입니다.");
-        }
+		boolean hasActiveDispute = disputeRepository.existsByTargetScratch_LogIdAndStatusNot(
+				targetScratch.getLogId(), DisputeStatus.RESOLVED.name());
+		if (hasActiveDispute || targetScratch.isDisputed()) {
+			throw new IllegalArgumentException("이미 분쟁이 진행 중인 흠집입니다.");
+		}
 
 		Dispute dispute = Dispute.create(
 				reservation,
@@ -415,12 +415,12 @@ public class DisputeService {
 		String companyWallet = reservation.getOwnedCar().getCompany().getWalletAddress();
 		validateSettlementWallets(companyWallet, renterWallet);
 
+		double amount = (double) finalAmount;
 		if (targetStatus == SettlementStatus.COMPLETED) {
-			return careTokenService.transfer(renterWallet, companyWallet, (double) finalAmount);
+			return careTokenService.transfer(renterWallet, companyWallet, amount);
 		}
-
 		if (targetStatus == SettlementStatus.REFUNDED) {
-			return careTokenService.transfer(companyWallet, renterWallet, (double) finalAmount);
+			return careTokenService.transfer(companyWallet, renterWallet, amount);
 		}
 
 		throw new IllegalArgumentException("지원하지 않는 정산 상태입니다: " + targetStatus.name());

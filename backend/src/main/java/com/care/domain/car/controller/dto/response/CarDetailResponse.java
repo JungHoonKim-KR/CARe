@@ -18,6 +18,7 @@ public record CarDetailResponse(
         String companyName,
         String countryCode,
         String airportCode,
+        String thumbnailUrl,
         List<CarImageResponse> images
 ) {
     public static CarDetailResponse of(OwnedCar car, List<CarImageResponse> images) {
@@ -33,6 +34,7 @@ public record CarDetailResponse(
                 car.getCompany().getName(),
                 car.getCompany().getCountryCode(),
                 car.getCompany().getAirportCode(),
+                car.getCarModel().getThumbnailUrl(),
                 images
         );
     }

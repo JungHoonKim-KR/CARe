@@ -146,7 +146,27 @@ export default function PaymentPage() {
           </div>
         </div>
 
-        <div style={{ height: 120 }} />
+        {/* 정산 안내 */}
+        <div className="pay-notice-card">
+          {/* <div className="pay-notice-row">
+            <span className="pay-notice-dot pay-notice-dot--out" />
+            <span className="pay-notice-text">
+              <strong>대여료 · 보험료</strong>는 결제 즉시 차감됩니다.
+            </span>
+          </div> */}
+          <div className="pay-notice-row">
+            <span className="pay-notice-dot pay-notice-dot--refund" />
+            <span className="pay-notice-text">
+              <strong>예치 보증금</strong>은 반납 후 차량 상태에 따라 전액 또는 일부 환불될 수 있습니다.
+            </span>
+          </div>
+          <div className="pay-notice-divider" />
+          <p className="pay-notice-summary">
+            💡 반납 후 모든 과정이 완료되면 최종 정산됩니다.
+          </p>
+        </div>
+
+        <div style={{ height: 160 }} />
       </div>
 
       <div className="pay-btn-area">

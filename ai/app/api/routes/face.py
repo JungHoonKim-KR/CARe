@@ -1,6 +1,7 @@
 from pathlib import Path
 import tempfile
 
+import pillow_avif  # noqa: F401  — AVIF 이미지 지원
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.schemas.face import FaceVerifyResponse

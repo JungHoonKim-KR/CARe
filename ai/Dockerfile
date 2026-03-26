@@ -15,6 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# DeepFace FaceNet 모델 미리 다운로드 (런타임 다운로드 실패 방지)
+RUN python -c "from deepface import DeepFace; DeepFace.build_model('Facenet')"
+
 EXPOSE 8001
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]

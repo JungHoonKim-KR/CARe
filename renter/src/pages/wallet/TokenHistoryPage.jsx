@@ -47,7 +47,7 @@ export default function TokenHistoryPage() {
           <p className="token-history-balance-value loading">조회 중...</p>
         ) : (
           <p className="token-history-balance-value">
-            {balance ?? '--'} <span>CARE</span>
+            {balance != null ? Number(balance).toLocaleString() : '--'} <span>CARE</span>
           </p>
         )}
         <div className="token-history-action-row">
@@ -89,7 +89,7 @@ export default function TokenHistoryPage() {
                   </div>
                 </div>
                 <p className={`token-history-item-amount ${item.type}`}>
-                  {item.type === 'charge' ? '+' : '-'}{item.amount} CARE
+                  {item.type === 'charge' ? '+' : '-'}{Number(item.amount).toLocaleString()} CARE
                 </p>
               </li>
             ))}

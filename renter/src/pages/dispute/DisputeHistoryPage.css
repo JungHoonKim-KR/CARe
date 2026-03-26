@@ -252,10 +252,12 @@
   border-radius: 10px;
 }
 
-.dh-location-badge.loc-front { background: #E6F7FF; color: #1890FF; }
-.dh-location-badge.loc-rear  { background: #FFF7E6; color: #FA8C16; }
-.dh-location-badge.loc-left  { background: #F6FFED; color: #52C41A; }
-.dh-location-badge.loc-right { background: #F9F0FF; color: #722ED1; }
+.dh-location-badge.loc-front        { background: #E6F7FF; color: #1890FF; }
+.dh-location-badge.loc-rear         { background: #FFF7E6; color: #FA8C16; }
+.dh-location-badge.loc-front-left   { background: #F6FFED; color: #389E0D; }
+.dh-location-badge.loc-rear-left    { background: #FCFFE6; color: #7CB305; }
+.dh-location-badge.loc-front-right  { background: #F9F0FF; color: #722ED1; }
+.dh-location-badge.loc-rear-right   { background: #FFF0F6; color: #C41D7F; }
 
 .dh-item-bottom {
   display: flex;
@@ -346,9 +348,16 @@
 
 /* ─── 하단 ─────────────────────────────────── */
 .dh-footer {
-  padding: 14px 16px 40px;
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  padding: 14px 16px 34px;
   background: white;
   border-top: 1px solid #f0f0f0;
+  z-index: 20;
 }
 
 .dh-main-btn {

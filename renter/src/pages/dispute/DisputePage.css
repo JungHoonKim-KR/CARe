@@ -279,3 +279,14 @@
 }
 
 .dp-dispute-btn:active { opacity: 0.85; }
+
+.dp-footer-resolved {
+  justify-content: center;
+}
+
+.dp-resolved-text {
+  font-size: 14px;
+  color: #888;
+  text-align: center;
+  padding: 8px 0;
+}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CarService from '../../services/CarService'
 import './CarManagementPage.css'
@@ -18,7 +18,7 @@ const CAT_MAP = {
 }
 const CAR_ICONS = ['🚗','🚙','🚕','🏎️','🚐']
 
-/* ── 목업 데이터 ── */
+/* 여기는 하드코딩 — API 실패 또는 데이터 없을 때 사용하는 폴백 */
 const MOCK_CARS = [
   { carId: 1, brand: '현대', modelName: '아반떼', fuelType: 'GASOLINE', status: 'ACTIVE',      dailyPrice: 65000,  reservationCount: 12 },
   { carId: 2, brand: '기아',  modelName: 'K5',    fuelType: 'HYBRID',   status: 'RENTED',      dailyPrice: 80000,  reservationCount: 8  },

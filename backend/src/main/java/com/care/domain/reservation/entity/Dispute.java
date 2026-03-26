@@ -79,6 +79,12 @@ public class Dispute extends BaseEntity {
     @Column(name = "snapshot_captured_at")
     private LocalDateTime snapshotCapturedAt;
 
+    @Column(name = "ai_analysis_report", columnDefinition = "LONGTEXT")
+    private String aiAnalysisReport;
+
+    @Column(name = "ai_analysis_cached_at")
+    private LocalDateTime aiAnalysisCachedAt;
+
     public static Dispute create(Reservation reservation,
                                  Scratch targetScratch,
                                  String reason,
@@ -126,6 +132,11 @@ public class Dispute extends BaseEntity {
         this.snapshotThreshold = threshold;
         this.snapshotWarning = warning;
         this.snapshotCapturedAt = LocalDateTime.now();
+    }
+
+    public void cacheAiAnalysis(String reportJson) {
+        this.aiAnalysisReport = reportJson;
+        this.aiAnalysisCachedAt = LocalDateTime.now();
     }
 
     public DisputeStatus getStatusEnum() {

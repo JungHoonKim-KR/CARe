@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CarService from '../../services/CarService'
 import AuthService from '../../services/AuthService'
@@ -11,6 +11,7 @@ const IMAGE_SLOTS = [
   { key: 'rightImage', label: '우측', icon: '➡️' },
 ]
 
+// 여기는 하드코딩 — 차량 모델 목록 API 없음 (GET /car-models 엔드포인트 필요)
 const CAR_MODELS = [
   { id: 'model-001', name: '현대 아이오닉5' },
   { id: 'model-002', name: '기아 EV6' },

@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import { useState, useEffect } from 'react'
+import CompanyService from '../../services/CompanyService'
 import './DashboardPage.css'
 
-/* ── 월별 수익 데이터 ── */
+/* 여기는 하드코딩 — 월별 수익 데이터 API 없음 */
 const MONTHLY = [
   { month: '10월', value: 6800000  },
   { month: '11월', value: 4200000  },
@@ -110,8 +111,19 @@ function SplineChart({ data }) {
 
 export default function DashboardPage() {
   const [chartPeriod, setChartPeriod] = useState('월별')
-  const company = localStorage.getItem('companyName') || '테스트 업체'
+  const [companyName, setCompanyName] = useState('')
 
+  useEffect(() => {
+    CompanyService.getCompanyInfo().then(result => {
+      if (result.success && result.data?.name) {
+        setCompanyName(result.data.name)
+      } else {
+        setCompanyName(localStorage.getItem('companyName') || '업체')
+      }
+    })
+  }, [])
+
+  /* 여기는 하드코딩 — 운영 차량 수, 정산 대기, 예약 건수, 분쟁 건수 API 없음 */
   const rightCards = [
     { label: '운영 차량',   value: '8대',         sub: '가동률 80%',      icon: '🚗', accent: '#F5A623' },
     { label: '정산 대기',   value: '850,000원',    sub: '3건 처리 대기',   icon: '⏳', accent: '#fb923c' },
@@ -126,7 +138,7 @@ export default function DashboardPage() {
       <div className="dash-welcome-card">
         <div className="dash-welcome-text">
           <p className="dash-welcome-sub">안녕하세요 👋</p>
-          <h2 className="dash-welcome-name">{company}</h2>
+          <h2 className="dash-welcome-name">{companyName || '...'}</h2>
           <p className="dash-welcome-desc">오늘도 안전하고 편리한 차량 서비스를 제공해 보세요.</p>
         </div>
         <div className="dash-welcome-illo" aria-hidden>
@@ -135,7 +147,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 2. 핵심 지표 4개 (1줄 나열 & 크기 확대) */}
+      {/* 2. 핵심 지표 4개 */}
+      {/* 여기는 하드코딩 — KPI 값 전체 (운영 차량 수, 정산 대기, 예약, 분쟁) API 없음 */}
       <div className="dash-kpi-grid">
         {rightCards.map((c, i) => (
           <div key={i} className="dash-kpi-card" style={{ '--ka': c.accent }}
@@ -150,7 +163,8 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* 3. 수익 추이 그래프 (높이 축소 & 단독 행) */}
+      {/* 3. 수익 추이 그래프 */}
+      {/* 여기는 하드코딩 — 수익 추이 데이터 API 없음 */}
       <div className="dash-chart-card">
         <div className="dash-chart-header">
           <div>
@@ -175,6 +189,7 @@ export default function DashboardPage() {
 
         <SplineChart data={MONTHLY} />
 
+        {/* 여기는 하드코딩 — 이번 달 / 전월 대비 / 6개월 합계 API 없음 */}
         <div className="dash-chart-footer">
           <div className="dash-chart-stat">
             <span className="dash-chart-stat-value">12.5M</span>

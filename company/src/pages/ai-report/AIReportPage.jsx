@@ -300,15 +300,15 @@ export default function AIReportPage() {
                       <span className="comparison-item-title">
                         {index + 1}. {afterScratch?.carPart || '위치 미상'}
                       </span>
-                      <span className={`comparison-item-badge ${item.warning ? 'warn' : 'safe'}`}>
-                        {item.warning ? '주의' : '정상'}
+                      <span className={`comparison-item-badge ${item.isNewScratch ? 'new-scratch' : item.warning ? 'warn' : 'safe'}`}>
+                        {item.isNewScratch ? '신규 흠집' : item.warning ? '주의' : '정상'}
                       </span>
                     </div>
                     <p className="comparison-item-meta">
                       AFTER: {item.afterLogId}
                     </p>
                     <p className="comparison-item-meta">
-                      유사도 {toPercent(item.similarity).toFixed(1)}% / diff {Number(item.diffScore || 0).toFixed(3)}
+                      {item.isNewScratch ? '사전 스캔 없음 — 비교 불가' : `유사도 ${toPercent(item.similarity).toFixed(1)}% / diff ${Number(item.diffScore || 0).toFixed(3)}`}
                     </p>
                   </button>
                 )
@@ -345,11 +345,23 @@ export default function AIReportPage() {
             <div className="comparison-images">
               <div className="image-container">
                 <p className="image-label">대여 전 (BEFORE)</p>
-                <img
-                  src={selectedComparison?.beforeCropS3Url || 'https://via.placeholder.com/400x300?text=No+Before'}
-                  alt="Before"
-                  className="damage-image"
-                />
+                {selectedComparison?.isNewScratch || !selectedComparison?.beforeCropS3Url ? (
+                  <div className="no-before-placeholder">
+                    <span className="no-before-icon">🚫</span>
+                    <p>{selectedComparison?.isNewScratch ? '사전 스캔 없음' : 'BEFORE 이미지 없음'}</p>
+                    <p className="no-before-sub">
+                      {selectedComparison?.isNewScratch
+                        ? '임차인이 픽업 전 스캔을 건너뛰었습니다.'
+                        : '해당 흠집에 대한 사전 이미지가 존재하지 않습니다.'}
+                    </p>
+                  </div>
+                ) : (
+                  <img
+                    src={selectedComparison.beforeCropS3Url}
+                    alt="Before"
+                    className="damage-image"
+                  />
+                )}
               </div>
               <div className="image-container highlighted">
                 <p className="image-label">반납 후 (AFTER)</p>
@@ -362,22 +374,34 @@ export default function AIReportPage() {
             </div>
 
             <div className="similarity-section">
-              <div className="similarity-header">
-                <span className="similarity-label">AI 이미지 유사도 (Similarity)</span>
-                <span className="similarity-value">{toPercent(selectedComparison?.similarity).toFixed(1)}%</span>
-              </div>
-              <div className="similarity-bar">
-                <div
-                  className="similarity-fill"
-                  style={{ width: `${Math.min(100, toPercent(selectedComparison?.similarity))}%` }}
-                ></div>
-              </div>
-              <p className="similarity-description">
-                <span className="info-icon">ℹ️</span>
-                {selectedComparison?.warning
-                  ? `유사도가 기준치(${threshold.toFixed(1)}%) 미만입니다. 추가 확인이 필요합니다.`
-                  : `유사도가 기준치(${threshold.toFixed(1)}%) 이상입니다.`}
-              </p>
+              {selectedComparison?.isNewScratch ? (
+                <div className="new-scratch-notice">
+                  <span className="new-scratch-icon">🆕</span>
+                  <p className="new-scratch-title">새로운 흠집으로 분류됨</p>
+                  <p className="new-scratch-desc">
+                    비교할 사전 스캔 이미지가 없습니다. 반납 후 발견된 신규 손상입니다.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="similarity-header">
+                    <span className="similarity-label">AI 이미지 유사도 (Similarity)</span>
+                    <span className="similarity-value">{toPercent(selectedComparison?.similarity).toFixed(1)}%</span>
+                  </div>
+                  <div className="similarity-bar">
+                    <div
+                      className="similarity-fill"
+                      style={{ width: `${Math.min(100, toPercent(selectedComparison?.similarity))}%` }}
+                    ></div>
+                  </div>
+                  <p className="similarity-description">
+                    <span className="info-icon">ℹ️</span>
+                    {selectedComparison?.warning
+                      ? `유사도가 기준치(${threshold.toFixed(1)}%) 미만입니다. 추가 확인이 필요합니다.`
+                      : `유사도가 기준치(${threshold.toFixed(1)}%) 이상입니다.`}
+                  </p>
+                </>
+              )}
             </div>
 
             <div className="action-buttons">

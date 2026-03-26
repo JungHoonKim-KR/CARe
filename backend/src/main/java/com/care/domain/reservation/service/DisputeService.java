@@ -1,5 +1,6 @@
 package com.care.domain.reservation.service;
 
+import com.care.domain.company.service.CompanyNotificationService;
 import com.care.domain.reservation.controller.dto.request.DisputeCreateRequest;
 import com.care.domain.reservation.controller.dto.request.DisputeDefenseRequest;
 import com.care.domain.reservation.controller.dto.request.DisputeSettleRequest;
@@ -44,6 +45,7 @@ public class DisputeService {
 	private final CareTokenService careTokenService;
 	private final AiScratchSimilarityClient aiScratchSimilarityClient;
 	private final RenterNotificationService renterNotificationService;
+	private final CompanyNotificationService companyNotificationService;
 
 	@Value("${ai.scratch.similarity-threshold:60.0}")
 	private double similarityThreshold;
@@ -269,6 +271,11 @@ public class DisputeService {
 		validateLogType(defenseScratch, "BEFORE", "defenseLogId는 BEFORE 로그여야 합니다.");
 
 		dispute.defend(defenseScratch);
+		companyNotificationService.createDefenseSubmittedNotification(
+				dispute.getReservation().getOwnedCar().getCompany(),
+				dispute,
+				defenseScratch
+		);
 		return DisputeDefenseResponse.from(dispute);
 	}
 
@@ -369,6 +376,21 @@ public class DisputeService {
 		}
 
 		if (!dispute.isSettlementFullyAgreed()) {
+			if (!alreadyAgreedByRequester) {
+				if (requesterIsCompany) {
+					renterNotificationService.createSettlementRequestedNotification(
+							reservation.getRenter(),
+							dispute,
+							finalAmount
+					);
+				} else {
+					companyNotificationService.createSettlementRequestedNotification(
+							reservation.getOwnedCar().getCompany(),
+							dispute,
+							finalAmount
+					);
+				}
+			}
 			return DisputeSettleResponse.of(
 					disputeId,
 					reservation.getReservationId(),
@@ -399,6 +421,18 @@ public class DisputeService {
 		}
 		dispute.resolve();
 		dispute.getTargetScratch().clearDisputed();
+		renterNotificationService.createSettlementCompletedNotification(
+				reservation.getRenter(),
+				dispute,
+				targetStatus.name(),
+				finalAmount
+		);
+		companyNotificationService.createSettlementCompletedNotification(
+				reservation.getOwnedCar().getCompany(),
+				dispute,
+				targetStatus.name(),
+				finalAmount
+		);
 
 		return DisputeSettleResponse.of(
 				disputeId,

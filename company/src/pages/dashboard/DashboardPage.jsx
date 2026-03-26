@@ -1,206 +1,198 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState } from 'react'
 import './DashboardPage.css'
 
-/* ── 상태 뱃지 매핑 ── */
-const STATUS_MAP = {
-  '이용중':  { cls: 'active',   label: '이용중'   },
-  '예약완료': { cls: 'complete', label: '예약완료' },
-  '반납완료': { cls: 'returned', label: '반납완료' },
-  '분쟁중':  { cls: 'dispute',  label: '분쟁중'   },
+/* ── 월별 수익 데이터 ── */
+const MONTHLY = [
+  { month: '10월', value: 6800000  },
+  { month: '11월', value: 4200000  },
+  { month: '12월', value: 9100000  },
+  { month: '1월',  value: 5500000  },
+  { month: '2월',  value: 7800000  },
+  { month: '3월',  value: 12500000 },
+]
+
+const W = 600, H = 220, PAD = 40
+
+function SplineChart({ data }) {
+  const [hovered, setHovered] = useState(null)
+
+  const max = Math.max(...data.map(d => d.value))
+  const min = Math.min(...data.map(d => d.value))
+  const range = max - min || 1
+
+  const pts = data.map((d, i) => ({
+    x: PAD + (i / (data.length - 1)) * (W - PAD * 2),
+    y: PAD + (1 - (d.value - min) / range) * (H - PAD * 2),
+    ...d,
+  }))
+
+  const toPath = (points) => {
+    let d = `M ${points[0].x} ${points[0].y}`
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[Math.max(i - 1, 0)]
+      const p1 = points[i]
+      const p2 = points[i + 1]
+      const p3 = points[Math.min(i + 2, points.length - 1)]
+      const cp1x = p1.x + (p2.x - p0.x) / 6
+      const cp1y = p1.y + (p2.y - p0.y) / 6
+      const cp2x = p2.x - (p3.x - p1.x) / 6
+      const cp2y = p2.y - (p3.y - p1.y) / 6
+      d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`
+    }
+    return d
+  }
+
+  const linePath = toPath(pts)
+  const areaPath = linePath + ` L ${pts[pts.length-1].x} ${H} L ${pts[0].x} ${H} Z`
+  const hiPt     = pts[pts.length - 1]
+  const tip      = hovered ?? null
+
+  const tipX = tip ? Math.min(Math.max(tip.x - 52, 4), W - 108) : 0
+  const tipY = tip ? tip.y - 48 : 0
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="spline-svg" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="#F5A623" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="#F5A623" stopOpacity="0" />
+        </linearGradient>
+        <filter id="glowF">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      {[0.25, 0.5, 0.75, 1].map(t => (
+        <line key={t}
+          x1={PAD} x2={W - PAD}
+          y1={PAD + (1-t)*(H-PAD*2)} y2={PAD + (1-t)*(H-PAD*2)}
+          stroke="#ede8e0" strokeWidth="1" strokeDasharray="4 4"
+        />
+      ))}
+
+      <path d={areaPath} fill="url(#areaGrad)" />
+      <path d={linePath} fill="none" stroke="#F5A623" strokeWidth="2.5"
+        strokeLinecap="round" strokeLinejoin="round" className="chart-line-path" />
+
+      {pts.map((pt, i) => (
+        <g key={i}
+          onMouseEnter={() => setHovered(pt)}
+          onMouseLeave={() => setHovered(null)}
+          style={{ cursor: 'pointer' }}
+        >
+          <circle cx={pt.x} cy={pt.y} r="16" fill="transparent" />
+          <circle cx={pt.x} cy={pt.y} r={hovered?.month === pt.month ? 6 : 4.5}
+            fill="#fff" stroke="#F5A623"
+            strokeWidth={hovered?.month === pt.month ? 3 : 2}
+            style={{ transition: 'r 0.15s' }}
+          />
+          {pt.month === hiPt.month && (
+            <circle cx={pt.x} cy={pt.y} r="9" fill="#F5A623" opacity="0.18"
+              className="chart-pulse-ring" />
+          )}
+        </g>
+      ))}
+
+      {tip && (
+        <g transform={`translate(${tipX}, ${tipY})`} className="chart-tooltip-g">
+          <rect rx="8" ry="8" width="104" height="32" fill="#2d2d2d" opacity="0.9" />
+          <text x="52" y="21" textAnchor="middle"
+            fill="#fff" fontSize="12" fontWeight="700"
+            fontFamily="-apple-system, sans-serif">
+            {(tip.value / 1000000).toFixed(1)}M원
+          </text>
+        </g>
+      )}
+    </svg>
+  )
 }
 
 export default function DashboardPage() {
-  /* ── 통계 ── */
-  const stats = [
-    {
-      title: '총 수익',
-      value: '12,500,000원',
-      subtitle: '전체 누적 수익',
-      icon: '💰',
-      badge: { label: '+12.4%', type: 'up' },
-      barPct: 72,
-      accent: '#F5A623',
-    },
-    {
-      title: '정산 대기',
-      value: '850,000원',
-      subtitle: '처리 대기 중',
-      icon: '⏳',
-      badge: { label: '3건 대기', type: 'wait' },
-      barPct: 28,
-      accent: '#fb923c',
-    },
-    {
-      title: '운영 현황',
-      value: '8대',
-      subtitle: '완료 예약 45건',
-      icon: '🚗',
-      badge: { label: '가동률 80%', type: 'info' },
-      barPct: 80,
-      accent: '#818cf8',
-    },
-  ]
+  const [chartPeriod, setChartPeriod] = useState('월별')
+  const company = localStorage.getItem('companyName') || '테스트 업체'
 
-  /* ── 최근 예약 ── */
-  const recentReservations = [
-    { id: 1, carName: '현대 아반떼', customerName: '김철수', date: '2026.03.05', amount: '150,000원', status: '이용중' },
-    { id: 2, carName: '기아 K5',    customerName: '이영희', date: '2026.03.07', amount: '180,000원', status: '예약완료' },
-    { id: 3, carName: 'BMW 320i',  customerName: '박민수', date: '2026.03.04', amount: '360,000원', status: '반납완료' },
-    { id: 4, carName: '현대 싼타페', customerName: '최지은', date: '2026.02.28', amount: '240,000원', status: '분쟁중' },
+  const rightCards = [
+    { label: '운영 차량',   value: '8대',         sub: '가동률 80%',      icon: '🚗', accent: '#F5A623' },
+    { label: '정산 대기',   value: '850,000원',    sub: '3건 처리 대기',   icon: '⏳', accent: '#fb923c' },
+    { label: '이번 달 예약', value: '45건',         sub: '지난달 대비 +12%', icon: '📅', accent: '#818cf8' },
+    { label: '분쟁 건수',   value: '1건',          sub: '처리 필요',       icon: '⚖️', accent: '#ef4444' },
   ]
-
-  /* ── 차량 상태 바 ── */
-  const carStatus = [
-    { label: '운행중',  count: 5, pct: 62,  color: '#F5A623' },
-    { label: '대기중',  count: 2, pct: 25,  color: '#818cf8' },
-    { label: '정비중',  count: 1, pct: 13,  color: '#fb923c' },
-  ]
-
-  /* ── 월별 수익 미니 차트 ── */
-  const monthlyRevenue = [
-    { month: '10월', value: 65 },
-    { month: '11월', value: 48 },
-    { month: '12월', value: 80 },
-    { month: '1월',  value: 55 },
-    { month: '2월',  value: 70 },
-    { month: '3월',  value: 88, highlight: true },
-  ]
-  const maxVal = Math.max(...monthlyRevenue.map(d => d.value))
-
-  /* ── 오늘 날짜 ── */
-  const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })
 
   return (
     <div className="dashboard-page">
 
-      {/* ── 헤더 ── */}
-      <div className="dashboard-header">
-        <div className="dashboard-header-inner">
-          <div>
-            <h1 className="page-title">대시보드</h1>
-            <p className="page-subtitle">수익 현황과 예약 관리를 한눈에 확인하세요</p>
-          </div>
-          <span className="header-date">📅 {today}</span>
+      {/* 1. 환영 배너 (가로 전체 차지) */}
+      <div className="dash-welcome-card">
+        <div className="dash-welcome-text">
+          <p className="dash-welcome-sub">안녕하세요 👋</p>
+          <h2 className="dash-welcome-name">{company}</h2>
+          <p className="dash-welcome-desc">오늘도 안전하고 편리한 차량 서비스를 제공해 보세요.</p>
+        </div>
+        <div className="dash-welcome-illo" aria-hidden>
+          <span className="illo-car">🚗</span>
+          <span className="illo-road" />
         </div>
       </div>
 
-      {/* ── 통계 카드 ── */}
-      <div className="stats-grid">
-        {stats.map((stat, i) => (
-          <div
-            key={i}
-            className="stat-card"
-            style={{ '--card-accent': stat.accent }}
-          >
-            <div className="stat-card-top">
-              <div className="stat-card-icon">{stat.icon}</div>
-              <span className={`stat-card-badge ${stat.badge.type}`}>{stat.badge.label}</span>
-            </div>
-            <div className="stat-card-title">{stat.title}</div>
-            <div className="stat-card-value">{stat.value}</div>
-            <div className="stat-card-subtitle">{stat.subtitle}</div>
-            <div className="stat-card-bar-wrap">
-              <div className="stat-card-bar" style={{ width: `${stat.barPct}%` }} />
+      {/* 2. 핵심 지표 4개 (1줄 나열 & 크기 확대) */}
+      <div className="dash-kpi-grid">
+        {rightCards.map((c, i) => (
+          <div key={i} className="dash-kpi-card" style={{ '--ka': c.accent }}
+            data-delay={i}>
+            <div className="dash-kpi-icon">{c.icon}</div>
+            <div>
+              <div className="dash-kpi-value">{c.value}</div>
+              <div className="dash-kpi-label">{c.label}</div>
+              <div className="dash-kpi-sub">{c.sub}</div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* ── 하단 2열 그리드 ── */}
-      <div className="dashboard-bottom-grid">
-
-        {/* 최근 예약 테이블 */}
-        <div className="section-container">
-          <div className="section-header">
-            <h2 className="section-title">
-              <span className="section-title-icon">📋</span>
-              최근 예약
-            </h2>
-            <Link to="/reservations" className="section-link">전체보기 →</Link>
+      {/* 3. 수익 추이 그래프 (높이 축소 & 단독 행) */}
+      <div className="dash-chart-card">
+        <div className="dash-chart-header">
+          <div>
+            <div className="dash-chart-title">수익 추이</div>
+            <div className="dash-chart-sub">최근 6개월 누적 수익</div>
           </div>
-          <div className="reservation-table-wrap">
-            <table className="reservation-table">
-              <thead>
-                <tr>
-                  <th>차량</th>
-                  <th>대여자</th>
-                  <th>예약일</th>
-                  <th>금액</th>
-                  <th>상태</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentReservations.map(r => {
-                  const s = STATUS_MAP[r.status] ?? { cls: '', label: r.status }
-                  return (
-                    <tr key={r.id}>
-                      <td className="res-car">{r.carName}</td>
-                      <td>{r.customerName}</td>
-                      <td>{r.date}</td>
-                      <td className="res-amount">{r.amount}</td>
-                      <td>
-                        <span className={`status-badge ${s.cls}`}>{s.label}</span>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+          <div className="dash-period-tabs">
+            {['월별', '분기'].map(p => (
+              <button key={p}
+                className={`dash-period-btn${chartPeriod === p ? ' active' : ''}`}
+                onClick={() => setChartPeriod(p)}
+              >{p}</button>
+            ))}
           </div>
         </div>
 
-        {/* 우측 패널 */}
-        <div className="quick-panel">
+        <div className="dash-chart-labels">
+          {MONTHLY.map(d => (
+            <span key={d.month} className="dash-chart-month">{d.month}</span>
+          ))}
+        </div>
 
-          {/* 월별 수익 미니 차트 */}
-          <div className="quick-card">
-            <div className="quick-card-title">월별 수익 추이</div>
-            <div className="mini-chart">
-              {monthlyRevenue.map((d, i) => (
-                <div key={i} className="mini-bar-col">
-                  <div
-                    className={`mini-bar${d.highlight ? ' highlight' : ''}`}
-                    style={{
-                      height: `${(d.value / maxVal) * 48}px`,
-                      animationDelay: `${0.5 + i * 0.06}s`,
-                    }}
-                  />
-                  <span className="mini-bar-label">{d.month}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mini-chart-total">
-              <span className="mini-chart-total-value">12.5M</span>
-              <span className="mini-chart-total-label">이번 달 누적</span>
-            </div>
+        <SplineChart data={MONTHLY} />
+
+        <div className="dash-chart-footer">
+          <div className="dash-chart-stat">
+            <span className="dash-chart-stat-value">12.5M</span>
+            <span className="dash-chart-stat-label">이번 달</span>
           </div>
-
-          {/* 차량 상태 */}
-          <div className="quick-card">
-            <div className="quick-card-title">차량 운영 현황</div>
-            <div className="status-bars">
-              {carStatus.map((s, i) => (
-                <div key={i} className="status-bar-row">
-                  <span className="status-bar-label">{s.label}</span>
-                  <div className="status-bar-track">
-                    <div
-                      className="status-bar-fill"
-                      style={{
-                        width: `${s.pct}%`,
-                        background: s.color,
-                        animationDelay: `${0.55 + i * 0.1}s`,
-                      }}
-                    />
-                  </div>
-                  <span className="status-bar-count">{s.count}</span>
-                </div>
-              ))}
-            </div>
+          <div className="dash-chart-divider" />
+          <div className="dash-chart-stat">
+            <span className="dash-chart-stat-value">+60%</span>
+            <span className="dash-chart-stat-label">전월 대비</span>
           </div>
-
+          <div className="dash-chart-divider" />
+          <div className="dash-chart-stat">
+            <span className="dash-chart-stat-value">45.9M</span>
+            <span className="dash-chart-stat-label">6개월 합계</span>
+          </div>
         </div>
       </div>
+
     </div>
   )
 }

@@ -16,10 +16,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# DeepFace FaceNet 모델 미리 다운로드 (curl -L로 GitHub redirect 처리)
-RUN mkdir -p /root/.deepface/weights && \
-    curl -fSL -o /root/.deepface/weights/facenet_weights.h5 \
-    "https://github.com/serengil/deepface_models/releases/download/v1.0/facenet_weights.h5"
 
 EXPOSE 8001
 

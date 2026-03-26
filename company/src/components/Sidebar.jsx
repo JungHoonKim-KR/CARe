@@ -9,17 +9,37 @@ export default function Sidebar() {
   const navigate = useNavigate()
   const [notifications, setNotifications] = useState([])
   const [notificationOpen, setNotificationOpen] = useState(false)
+  const [company, setCompany] = useState({
+    name: localStorage.getItem('companyName') || '',
+    email: localStorage.getItem('companyEmail') || ''
+  })
+
+  // localStorage 변경 감지
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setCompany({
+        name: localStorage.getItem('companyName') || '',
+        email: localStorage.getItem('companyEmail') || ''
+      })
+    }
+
+    // storage 이벤트 리스너 (다른 탭에서 변경 시)
+    window.addEventListener('storage', handleStorageChange)
+
+    // 주기적으로 확인 (같은 탭에서 변경 시)
+    const interval = setInterval(handleStorageChange, 1000)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      clearInterval(interval)
+    }
+  }, [])
 
   const menuItems = [
     { id: 'dashboard', label: '대시보드', path: '/dashboard' },
     { id: 'cars', label: '차량 관리', path: '/cars' },
     { id: 'reservations', label: '예약 관리', path: '/reservations' },
     { id: 'disputes', label: '분쟁 관리', path: '/disputes' },
-    { id: 'profile', label: '내 정보', path: '/profile' }
-  ]
-
-  const bottomItems = [
-    { id: 'settings', label: '설정', path: '/settings' }
   ]
 
   useEffect(() => {
@@ -27,8 +47,14 @@ export default function Sidebar() {
 
     const loadNotifications = async () => {
       const result = await CompanyNotificationService.getNotifications()
-      if (!mounted || !result.success) return
-      setNotifications(result.data)
+      if (!mounted) return
+
+      if (result.success) {
+        setNotifications(result.data)
+      } else {
+        console.warn('알림 목록 로드 실패:', result.message)
+        setNotifications([])
+      }
     }
 
     loadNotifications()
@@ -149,31 +175,27 @@ export default function Sidebar() {
         </div>
 
         <div className="sidebar-bottom">
-          {bottomItems.map((item) => (
-            <Link
-              key={item.id}
-              to={item.path}
-              className={`sidebar-item ${location.pathname === item.path ? 'active' : ''}`}
-            >
-              <span className="sidebar-icon">{item.icon}</span>
-              <span className="sidebar-label">{item.label}</span>
-            </Link>
-          ))}
-
-          <button
-            type="button"
-            className="sidebar-item sidebar-logout-button"
-            onClick={handleLogout}
-          >
-            <span className="sidebar-icon"></span>
-            <span className="sidebar-label">로그아웃</span>
-          </button>
-
           <div className="sidebar-company-info">
-            <div className="company-name">강남 렌터카</div>
-            <div className="company-email">business@care.com</div>
+            <div className="sidebar-company-top">
+              <div className="company-name">
+                {company.name || '회사명 없음'}
+              </div>
+
+              <button
+                type="button"
+                className="sidebar-inline-logout-btn"
+                onClick={handleLogout}
+              >
+                로그아웃
+              </button>
+            </div>
+
+            <div className="company-email">
+              {company.email || ''}
+            </div>
           </div>
         </div>
+
       </nav>
     </aside>
   )

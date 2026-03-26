@@ -120,7 +120,7 @@ export default function CarDetailPage() {
                       onClick={() => setIsNFTModalOpen(true)}
                       title="NFT 정보 보기"
                     >
-                      🔗 NFT
+                      NFT
                     </button>
                   </div>
                 </div>
@@ -164,18 +164,6 @@ export default function CarDetailPage() {
             </div>
           </div>
 
-          <div className="card nft-info-card">
-            <h3 className="card-title">NFT 정보</h3>
-            <div className="nft-info-row">
-              <span className="nft-label">Token ID</span>
-              <span className="nft-value">{nftInfo.tokenId}</span>
-            </div>
-            <div className="nft-info-row">
-              <span className="nft-label">발행일</span>
-              <span className="nft-value">{nftInfo.issueDate}</span>
-            </div>
-          </div>
-
           <div className="card defect-log-card">
             <h3 className="card-title">초기 결함 로그 (AI 탐지)</h3>
             <div className="defect-list">
@@ -212,7 +200,12 @@ export default function CarDetailPage() {
           <div className="card recent-reservations-card">
             <div className="card-header-row">
               <h3 className="card-title">최근 예약</h3>
-              <button className="view-all-btn">전체보기</button>
+              <button 
+                className="view-all-btn"
+                onClick={() => navigate('/reservations')}
+              >
+                전체보기
+              </button>
             </div>
             <div className="reservations-list">
               {recentReservations.map((reservation) => (

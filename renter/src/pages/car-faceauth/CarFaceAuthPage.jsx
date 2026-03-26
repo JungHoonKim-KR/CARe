@@ -24,6 +24,8 @@ export default function CarFaceAuthPage() {
   const [step, setStep] = useState('intro')
   const [licenseImage, setLicenseImage] = useState(null)
   const [failMsg, setFailMsg] = useState('')
+  const [timeBlocked, setTimeBlocked] = useState(false)
+  const [pickupDateTime, setPickupDateTime] = useState(null)
 
   // 카메라
   const videoRef = useRef(null)
@@ -37,6 +39,23 @@ export default function CarFaceAuthPage() {
   const [livenessProgress, setLivenessProgress] = useState(0)
   const [livenessComplete, setLivenessComplete] = useState(false)
   const capturedRef = useRef(false)
+
+  // ── 예약 시간 체크 ────────────────────────────────────────────
+  useEffect(() => {
+    if (!reservation) return
+    const raw = reservation.pickupDate || reservation.startDate
+    if (!raw) return
+    let dt
+    if (Array.isArray(raw)) {
+      const [y, mo, d, h = 0, m = 0] = raw
+      dt = new Date(y, mo - 1, d, h, m)
+    } else {
+      dt = new Date(raw)
+    }
+    if (isNaN(dt.getTime())) return
+    setPickupDateTime(dt)
+    if (new Date() < dt) setTimeBlocked(true)
+  }, [reservation])
 
   // ── 카메라 제어 ──────────────────────────────────────────────
   const stopCamera = useCallback(() => {
@@ -178,6 +197,41 @@ export default function CarFaceAuthPage() {
 
   // SVG arc offset (progress 0→100 : offset circumference→0)
   const arcOffset = CIRCLE_C - (CIRCLE_C * livenessProgress) / 100
+
+  const formatPickupTime = (dt) => {
+    if (!dt) return ''
+    const m = dt.getMonth() + 1
+    const d = dt.getDate()
+    const hh = String(dt.getHours()).padStart(2, '0')
+    const mm = String(dt.getMinutes()).padStart(2, '0')
+    return `${m}월 ${d}일 ${hh}:${mm}`
+  }
+
+  // ─── 예약 시간 전 차단 ────────────────────────────────────────
+  if (timeBlocked) return (
+    <div className="cfa-page cfa-blocked-page">
+      <div className="cfa-blocked-modal">
+        <div className="cfa-blocked-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="white">
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+          </svg>
+        </div>
+        <h2 className="cfa-blocked-title">아직 예약 시간이 아니에요</h2>
+        <p className="cfa-blocked-desc">
+          스마트키는 픽업 시작 시간부터<br/>사용할 수 있어요.
+        </p>
+        {pickupDateTime && (
+          <div className="cfa-blocked-time">
+            <span className="cfa-blocked-time-label">픽업 시작 시간</span>
+            <span className="cfa-blocked-time-value">{formatPickupTime(pickupDateTime)}</span>
+          </div>
+        )}
+        <button className="cfa-blocked-btn" onClick={() => navigate('/my-car')}>
+          돌아가기
+        </button>
+      </div>
+    </div>
+  )
 
   // ─── 메인 안내 ───────────────────────────────────────────────
   if (step === 'intro') return (

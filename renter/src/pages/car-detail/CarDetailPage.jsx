@@ -146,7 +146,10 @@ export default function CarDetailPage() {
         {/* 차량 이미지 슬라이더 */}
         <div className="cd-img-area">
           <button className="cd-arr cd-arr-l" onClick={() => setImgIdx(p => Math.max(0, p - 1))}>‹</button>
-          <span className="cd-car-img">{car.emoji || '🚗'}</span>
+          {car.thumbnailUrl
+            ? <img src={car.thumbnailUrl} alt={car.modelName} className="cd-car-img-photo" />
+            : <span className="cd-car-img">{car.emoji || '🚗'}</span>
+          }
           <button className="cd-arr cd-arr-r" onClick={() => setImgIdx(p => Math.min(2, p + 1))}>›</button>
           <div className="cd-dots">
             {[0,1,2].map(i => <span key={i} className={`cd-dot${imgIdx === i ? ' on' : ''}`}/>)}

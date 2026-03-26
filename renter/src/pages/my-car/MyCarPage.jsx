@@ -82,6 +82,13 @@ function getPickupStatus(reservation) {
   }
 }
 
+const ACTIVE_STATUSES = new Set(['RESERVED', 'IN_USE', 'AFTER_SCAN'])
+const IMPORTANT_NOTIFICATION_TYPES = new Set([
+  'DISPUTE_CREATED',
+  'SETTLEMENT_REQUESTED',
+  'SETTLEMENT_COMPLETED',
+])
+
 export default function MyCarPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -90,11 +97,10 @@ export default function MyCarPage() {
   const [loading, setLoading] = useState(!state?.reservation)
   const [showDisputeModal, setShowDisputeModal] = useState(false)
   const [pendingDisputeNotification, setPendingDisputeNotification] = useState(null)
-  const [hasMultiple, setHasMultiple] = useState(false)
 
   const applyDisputeNotification = (notification) => {
     if (!notification) return
-    if (notification.notificationType !== 'DISPUTE_CREATED') return
+    if (!IMPORTANT_NOTIFICATION_TYPES.has(notification.notificationType)) return
     if (notification.read) return
     setPendingDisputeNotification(notification)
     setShowDisputeModal(true)
@@ -108,42 +114,21 @@ export default function MyCarPage() {
           getMyReservations(),
           getMyNotifications(),
         ])
-
-        const data = reservationData
-        const list = Array.isArray(data) ? data : (data?.data ?? [])
-        const sorted = [...list].sort((a, b) =>
-          new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
-        )
-        const activeList = sorted.filter((r) => r.status !== 'CANCELLED')
-        const active = activeList[0]
-        if (activeList.length > 1) setHasMultiple(true)
-        if (active) {
-          setReservation(active)
-        } else {
-          setReservation(null)
-        }
+        const list = Array.isArray(reservationData) ? reservationData : (reservationData?.data ?? [])
+        const latest = list
+          .filter(r => ACTIVE_STATUSES.has(r.status))
+          .sort((a, b) => new Date(b.pickupDate || 0) - new Date(a.pickupDate || 0))[0] || null
+        setReservation(latest)
 
         const notificationList = Array.isArray(notificationData) ? notificationData : (notificationData?.data ?? [])
         const unreadDispute = notificationList.find(
-          (item) => item.notificationType === 'DISPUTE_CREATED' && item.read === false,
+          (item) => IMPORTANT_NOTIFICATION_TYPES.has(item.notificationType) && item.read === false,
         )
         applyDisputeNotification(unreadDispute || null)
       } catch {
         setReservation(null)
       } finally {
         setLoading(false)
-      }
-
-      // 알림 조회 (실패해도 예약 표시에 영향 없음)
-      try {
-        const notificationData = await getMyNotifications()
-        const notificationList = Array.isArray(notificationData) ? notificationData : (notificationData?.data ?? [])
-        const unreadDispute = notificationList.find(
-          (item) => item.notificationType === 'DISPUTE_CREATED' && item.read === false,
-        )
-        applyDisputeNotification(unreadDispute || null)
-      } catch {
-        // 알림 조회 실패 무시
       }
     }
     fetchData()
@@ -333,13 +318,6 @@ export default function MyCarPage() {
             <span>{reservation.insuranceName} | {reservation.plateNumber}</span>
           </div>
         </div>
-
-        {/* 다중 예약 안내 */}
-        {hasMultiple && (
-          <div style={{ margin: '0 16px 12px', padding: '12px 16px', background: '#FFF8EC', borderRadius: 12, fontSize: 13, color: '#B8860B', textAlign: 'center' }}>
-            {t('myCar.multipleReservations')}
-          </div>
-        )}
 
         {/* 차량 외관 촬영 카드 */}
         {isCompleted ? (

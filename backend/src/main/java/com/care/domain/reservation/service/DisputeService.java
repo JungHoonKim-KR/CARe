@@ -1,5 +1,6 @@
 package com.care.domain.reservation.service;
 
+import com.care.domain.company.service.CompanyNotificationService;
 import com.care.domain.reservation.controller.dto.request.DisputeCreateRequest;
 import com.care.domain.reservation.controller.dto.request.DisputeDefenseRequest;
 import com.care.domain.reservation.controller.dto.request.DisputeSettleRequest;
@@ -44,6 +45,7 @@ public class DisputeService {
 	private final CareTokenService careTokenService;
 	private final AiScratchSimilarityClient aiScratchSimilarityClient;
 	private final RenterNotificationService renterNotificationService;
+	private final CompanyNotificationService companyNotificationService;
 
 	@Value("${ai.scratch.similarity-threshold:60.0}")
 	private double similarityThreshold;
@@ -63,8 +65,8 @@ public class DisputeService {
 		validateScratchBelongsToReservation(targetScratch, reservationId);
 		validateLogType(targetScratch, "AFTER", "targetLogId는 AFTER 로그여야 합니다.");
 
-		boolean hasActiveDispute = disputeRepository.existsByTargetScratch_LogIdAndStatusNot(
-				targetScratch.getLogId(), DisputeStatus.RESOLVED.name());
+		boolean hasActiveDispute = disputeRepository.existsByTargetScratch_LogIdAndStatusNotIn(
+				targetScratch.getLogId(), List.of(DisputeStatus.COMPLETED.name(), "RESOLVED"));
 		if (hasActiveDispute || targetScratch.isDisputed()) {
 			throw new IllegalArgumentException("이미 분쟁이 진행 중인 흠집입니다.");
 		}
@@ -266,9 +268,13 @@ public class DisputeService {
 				.orElseThrow(() -> new IllegalArgumentException("방어 흠집 로그를 찾을 수 없습니다: " + request.getDefenseLogId()));
 
 		validateScratchBelongsToReservation(defenseScratch, reservationId);
-		validateLogType(defenseScratch, "BEFORE", "defenseLogId는 BEFORE 로그여야 합니다.");
 
 		dispute.defend(defenseScratch);
+		companyNotificationService.createDefenseSubmittedNotification(
+				dispute.getReservation().getOwnedCar().getCompany(),
+				dispute,
+				defenseScratch
+		);
 		return DisputeDefenseResponse.from(dispute);
 	}
 
@@ -313,7 +319,7 @@ public class DisputeService {
 		Reservation reservation = dispute.getReservation();
 		validateParticipantAccess(requesterId, reservation);
 
-		if (dispute.getStatusEnum() == DisputeStatus.RESOLVED) {
+		if (dispute.getStatusEnum() == DisputeStatus.COMPLETED) {
 			throw new IllegalStateException("이미 정산이 완료된 분쟁입니다.");
 		}
 
@@ -369,11 +375,26 @@ public class DisputeService {
 		}
 
 		if (!dispute.isSettlementFullyAgreed()) {
+			if (!alreadyAgreedByRequester) {
+				if (requesterIsCompany) {
+					renterNotificationService.createSettlementRequestedNotification(
+							reservation.getRenter(),
+							dispute,
+							finalAmount
+					);
+				} else {
+					companyNotificationService.createSettlementRequestedNotification(
+							reservation.getOwnedCar().getCompany(),
+							dispute,
+							finalAmount
+					);
+				}
+			}
 			return DisputeSettleResponse.of(
 					disputeId,
 					reservation.getReservationId(),
 					finalAmount,
-					SettlementStatus.PENDING.name(),
+					DisputeStatus.OPEN.name(),
 					null,
 					null
 			);
@@ -399,6 +420,18 @@ public class DisputeService {
 		}
 		dispute.resolve();
 		dispute.getTargetScratch().clearDisputed();
+		renterNotificationService.createSettlementCompletedNotification(
+				reservation.getRenter(),
+				dispute,
+				targetStatus.name(),
+				finalAmount
+		);
+		companyNotificationService.createSettlementCompletedNotification(
+				reservation.getOwnedCar().getCompany(),
+				dispute,
+				targetStatus.name(),
+				finalAmount
+		);
 
 		return DisputeSettleResponse.of(
 				disputeId,

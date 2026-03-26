@@ -163,6 +163,14 @@
   min-height: 88px;
 }
 
+.cl-car-img {
+  width: 120px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
+
 .cl-emoji {
   font-size: 48px;
   line-height: 1;

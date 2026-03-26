@@ -896,6 +896,95 @@
   font-weight: 500;
 }
 
+.mc-dispute-modal-sub {
+  font-size: 12px;
+  color: #aaa;
+  margin: -6px 0 0;
+  text-align: center;
+}
+
+/* ─── 예약 토글 버튼 ─────────────────────────────────── */
+.mc-res-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: white;
+  border: none;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.mc-res-toggle-btn:active { background: #fafafa; }
+
+/* ─── 예약 선택 circles ─────────────────────────────────── */
+.mc-res-circles-strip {
+  background: white;
+  padding: 16px 16px 12px;
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.mc-res-circles-strip::-webkit-scrollbar { display: none; }
+
+.mc-res-circle-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  min-width: 60px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.mc-res-circle-dot {
+  width: 52px;
+  height: 52px;
+  background: #f0f0f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: #888;
+  border: 2.5px solid transparent;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.mc-res-circle-btn.active .mc-res-circle-dot {
+  background: #FFF3E0;
+  border-color: #F7A633;
+  color: #F7A633;
+}
+
+.mc-res-circle-name {
+  font-size: 11px;
+  color: #888;
+  margin: 0;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+.mc-res-circle-btn.active .mc-res-circle-name {
+  color: #F7A633;
+}
+
 .mc-dispute-modal-btns {
   display: flex;
   gap: 10px;

@@ -16,7 +16,7 @@ export default function PaymentPage() {
   const carId       = state?.carId       || car.id || car.carId || ''
   const insuranceId = state?.insuranceId || ''
   const searchInfo  = state?.searchInfo  || {}
-  const insurance   = state?.insurance   || { label: '스탠다드', price: 80 }
+  const insurance   = state?.insurance   || { name: '스탠다드', price: 80 }
   const rentalPrice = state?.rentalPrice || 0
   const total       = rentalPrice + (insurance.price || 0) + DEPOSIT
 
@@ -133,7 +133,7 @@ export default function PaymentPage() {
             <span className="pay-row-val">{rentalPrice.toLocaleString()} CARE</span>
           </div>
           <div className="pay-row">
-            <span className="pay-row-lbl">{insurance.label} 보험료</span>
+            <span className="pay-row-lbl">{insurance.name} 보험료</span>
             <span className="pay-row-val">{insurance.price.toLocaleString()} CARE</span>
           </div>
           <div className="pay-row">

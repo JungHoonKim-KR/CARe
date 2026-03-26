@@ -12,17 +12,6 @@ export default function DIDConfirmPage() {
   const isPassport = docType === 'passport'
   const ocrData = state?.ocrData
 
-  const parseLicenseNumber = (licenseNum) => {
-    if (!licenseNum) return { licenZero: '', licenFirst: '', licenSecond: '', licenThird: '' }
-    const parts = licenseNum.split('-')
-    return {
-      licenZero: parts[0] || '',
-      licenFirst: parts[1] || '',
-      licenSecond: parts[2] || '',
-      licenThird: parts[3] || '',
-    }
-  }
-
   const [form, setForm] = useState(() => {
     const base = {
       name: '',
@@ -30,10 +19,7 @@ export default function DIDConfirmPage() {
       birthDate: '',
       issueDate: '',
       expiryDate: '',
-      licenZero: '',
-      licenFirst: '',
-      licenSecond: '',
-      licenThird: '',
+      licenseNumber: '',
     }
     if (!ocrData) return base
     if (isPassport) {
@@ -52,7 +38,7 @@ export default function DIDConfirmPage() {
         birthDate: ocrData.date_of_birth || '',
         issueDate: ocrData.date_of_issue || '',
         expiryDate: ocrData.date_of_expiry || '',
-        ...parseLicenseNumber(ocrData.license_number),
+        licenseNumber: ocrData.license_number || '',
       }
     }
   })
@@ -75,8 +61,12 @@ export default function DIDConfirmPage() {
         return
       }
     } else {
-      if (!form.licenZero.trim() || !form.licenFirst.trim() || !form.licenSecond.trim() || !form.licenThird.trim()) {
-        setError('면허증 번호를 모두 입력해 주세요.')
+      if (!form.licenseNumber.trim()) {
+        setError('면허증 번호를 입력해 주세요.')
+        return
+      }
+      if (!form.expiryDate.trim()) {
+        setError('만료일자를 입력해 주세요.')
         return
       }
     }
@@ -92,18 +82,22 @@ export default function DIDConfirmPage() {
             issueDate: form.issueDate.replace(/-/g, ''),
             expiryDate: form.expiryDate.replace(/-/g, ''),
           }
-        : {
-            docType: 'INT_LICENSE',
-            name: form.name,
-            birthY: form.birthDate.slice(0, 4),
-            birthM: form.birthDate.slice(5, 7),
-            birthD: form.birthDate.slice(8, 10),
-            licenZero: form.licenZero,
-            licenFirst: form.licenFirst,
-            licenSecond: form.licenSecond,
-            licenThird: form.licenThird,
-            issueDate: form.issueDate.replace(/-/g, ''),
-          }
+        : (() => {
+            const parts = form.licenseNumber.split('-')
+            return {
+              docType: 'INT_LICENSE',
+              name: form.name,
+              birthY: form.birthDate.slice(0, 4),
+              birthM: form.birthDate.slice(5, 7),
+              birthD: form.birthDate.slice(8, 10),
+              licenZero:   parts[0] || '',
+              licenFirst:  parts[1] || '',
+              licenSecond: parts[2] || '',
+              licenThird:  parts[3] || '',
+              issueDate: form.issueDate.replace(/-/g, ''),
+              expiryDate: form.expiryDate.replace(/-/g, ''),
+            }
+          })()
 
       const res = await renterLicense(payload)
 
@@ -178,29 +172,20 @@ export default function DIDConfirmPage() {
           <input
             type="text"
             className="did-input"
-            placeholder="HONG GIL DONG"
+            placeholder="HONG GILDONG"
             value={form.name}
             onChange={setField('name')}
           />
         </div>
         <div className="did-input-group">
-          <label className="did-input-label">{isPassport ? '여권번호' : '면허증 번호 (4자리-2자리-6자리-2자리)'}</label>
-          {isPassport ? (
-            <input
-              type="text"
-              className="did-input"
-              placeholder="M12345678"
-              value={form.passportNo}
-              onChange={setField('passportNo')}
-            />
-          ) : (
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <input type="text" className="did-input" placeholder="11" value={form.licenZero} onChange={setField('licenZero')} style={{ width: '20%' }} />
-              <input type="text" className="did-input" placeholder="22" value={form.licenFirst} onChange={setField('licenFirst')} style={{ width: '20%' }} />
-              <input type="text" className="did-input" placeholder="123456" value={form.licenSecond} onChange={setField('licenSecond')} style={{ width: '35%' }} />
-              <input type="text" className="did-input" placeholder="78" value={form.licenThird} onChange={setField('licenThird')} style={{ width: '20%' }} />
-            </div>
-          )}
+          <label className="did-input-label">{isPassport ? '여권번호' : '면허증 번호'}</label>
+          <input
+            type="text"
+            className="did-input"
+            placeholder={isPassport ? 'M12345678' : '21-21-174133-01'}
+            value={isPassport ? form.passportNo : form.licenseNumber}
+            onChange={setField(isPassport ? 'passportNo' : 'licenseNumber')}
+          />
         </div>
         <div className="did-input-group">
           <label className="did-input-label">생년월일</label>
@@ -222,18 +207,16 @@ export default function DIDConfirmPage() {
             onChange={setField('issueDate')}
           />
         </div>
-        {isPassport && (
-          <div className="did-input-group">
-            <label className="did-input-label">만료일자</label>
-            <input
-              type="text"
-              className="did-input"
-              placeholder="YYYY-MM-DD"
-              value={form.expiryDate}
-              onChange={setField('expiryDate')}
-            />
-          </div>
-        )}
+        <div className="did-input-group">
+          <label className="did-input-label">만료일자</label>
+          <input
+            type="text"
+            className="did-input"
+            placeholder="YYYY-MM-DD"
+            value={form.expiryDate}
+            onChange={setField('expiryDate')}
+          />
+        </div>
       </div>
 
       {error && <p className="did-confirm-error">{error}</p>}

@@ -111,13 +111,6 @@ export default function CarDetailPage() {
     },
   ]
 
-  const handleDelete = () => {
-    if (window.confirm('정말 삭제하시겠습니까?')) {
-      console.log('Delete car:', id)
-      navigate('/cars')
-    }
-  }
-
   if (loading) {
     return (
       <div className="reservation-detail-page">

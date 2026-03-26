@@ -252,6 +252,8 @@
   "dispute": {
     "title": "紛争詳細",
     "statusOpen": "紛争申請済み",
+    "statusPending": "処理中",
+    "statusCompleted": "完了",
     "statusDefended": "反論提出済み",
     "statusResolved": "解決済み",
     "statusRejected": "却下",

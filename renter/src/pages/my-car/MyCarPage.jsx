@@ -83,6 +83,11 @@ function getPickupStatus(reservation) {
 }
 
 const ACTIVE_STATUSES = new Set(['RESERVED', 'IN_USE', 'AFTER_SCAN'])
+const IMPORTANT_NOTIFICATION_TYPES = new Set([
+  'DISPUTE_CREATED',
+  'SETTLEMENT_REQUESTED',
+  'SETTLEMENT_COMPLETED',
+])
 
 export default function MyCarPage() {
   const { t } = useTranslation()
@@ -95,7 +100,7 @@ export default function MyCarPage() {
 
   const applyDisputeNotification = (notification) => {
     if (!notification) return
-    if (notification.notificationType !== 'DISPUTE_CREATED') return
+    if (!IMPORTANT_NOTIFICATION_TYPES.has(notification.notificationType)) return
     if (notification.read) return
     setPendingDisputeNotification(notification)
     setShowDisputeModal(true)
@@ -117,7 +122,7 @@ export default function MyCarPage() {
 
         const notificationList = Array.isArray(notificationData) ? notificationData : (notificationData?.data ?? [])
         const unreadDispute = notificationList.find(
-          (item) => item.notificationType === 'DISPUTE_CREATED' && item.read === false,
+          (item) => IMPORTANT_NOTIFICATION_TYPES.has(item.notificationType) && item.read === false,
         )
         applyDisputeNotification(unreadDispute || null)
       } catch {

@@ -41,10 +41,9 @@ public class CareTokenService {
     @Value("${blockchain.chain-id}")
     private long chainId;
 
-    // 1 CARE = 1_000_000 (decimals: 6)
     // 1원 = 1 CARE
     public static BigInteger toCare(double amount) {
-        return BigInteger.valueOf((long) (amount * 1_000_000));
+        return BigInteger.valueOf((long) (amount));
     }
 
     public CareTokenService(Web3j web3j, Credentials credentials) {

@@ -173,9 +173,17 @@ export default function PaymentPage() {
       <div className="pay-btn-area">
         {error && <p className="pay-error" style={{ margin: '0 0 10px', textAlign: 'center' }}>{error}</p>}
         <button className="pay-btn" onClick={handlePay} disabled={loading}>
-          {loading ? '처리 중...' : `${total.toLocaleString()} CARE 결제하기`}
+          {`${total.toLocaleString()} CARE 결제하기`}
         </button>
       </div>
+
+      {loading && (
+        <div className="pay-loading-overlay">
+          <div className="pay-loading-spinner" />
+          <p className="pay-loading-text">결제 중입니다...</p>
+          <p className="pay-loading-sub">잠시만 기다려주세요</p>
+        </div>
+      )}
 
       <BottomNav />
 
@@ -201,7 +209,7 @@ export default function PaymentPage() {
                 취소
               </button>
               <button
-                onClick={() => navigate('/wallet/charge')}
+                onClick={() => navigate('/wallet/charge', { state: { returnTo: '/payment', returnState: state } })}
                 style={{ flex: 1, padding: '14px 0', borderRadius: 12, border: 'none', background: '#F7A633', color: 'white', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
               >
                 충전하기

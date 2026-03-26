@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { chargeToken } from '../../api/auth'
 import { addTokenHistory } from '../../utils/careToken'
 import './ChargePage.css'
@@ -8,6 +8,10 @@ const PRESET_AMOUNTS = [10, 50, 100, 500]
 
 export default function ChargePage() {
   const navigate = useNavigate()
+  const { state } = useLocation()
+  const returnTo = state?.returnTo || null
+  const returnState = state?.returnState || null
+
   const [amount, setAmount] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null) // { balance, txHash }
@@ -60,9 +64,20 @@ export default function ChargePage() {
           </div>
         </div>
 
-        <button className="charge-confirm-btn" onClick={() => navigate('/wallet')}>
-          확인
-        </button>
+        {returnTo ? (
+          <div className="charge-result-btns">
+            <button className="charge-confirm-btn charge-confirm-btn--secondary" onClick={() => navigate('/wallet')}>
+              내 지갑 보기
+            </button>
+            <button className="charge-confirm-btn" onClick={() => navigate(returnTo, { state: returnState })}>
+              예약으로 돌아가기
+            </button>
+          </div>
+        ) : (
+          <button className="charge-confirm-btn" onClick={() => navigate('/wallet')}>
+            확인
+          </button>
+        )}
       </div>
     )
   }
@@ -117,8 +132,16 @@ export default function ChargePage() {
         onClick={handleCharge}
         disabled={loading || !amount}
       >
-        {loading ? '충전 중...' : '충전하기'}
+        충전하기
       </button>
+
+      {loading && (
+        <div className="charge-loading-overlay">
+          <div className="charge-loading-spinner" />
+          <p className="charge-loading-text">충전 중입니다...</p>
+          <p className="charge-loading-sub">잠시만 기다려주세요</p>
+        </div>
+      )}
     </div>
   )
 }

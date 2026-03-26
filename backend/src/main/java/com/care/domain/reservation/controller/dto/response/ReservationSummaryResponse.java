@@ -17,7 +17,9 @@ public record ReservationSummaryResponse(
         String insuranceName,
         LocalDateTime pickupDate,
         LocalDateTime returnDate,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String airportCode,
+        String countryCode
 ) {
     public static ReservationSummaryResponse from(Reservation r) {
         return new ReservationSummaryResponse(
@@ -32,7 +34,9 @@ public record ReservationSummaryResponse(
                 r.getInsurance().getName(),
                 r.getPickupDate(),
                 r.getReturnDate(),
-                r.getCreatedAt()
+                r.getCreatedAt(),
+                r.getOwnedCar().getCompany().getAirportCode(),
+                r.getOwnedCar().getCompany().getCountryCode()
         );
     }
 }

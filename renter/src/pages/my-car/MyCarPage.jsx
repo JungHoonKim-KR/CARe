@@ -93,8 +93,11 @@ export default function MyCarPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { state } = useLocation()
-  const [reservation, setReservation] = useState(state?.reservation || null)
+  const [reservations, setReservations] = useState(state?.reservation ? [state.reservation] : [])
+  const [selectedIdx, setSelectedIdx] = useState(0)
+  const [showCircles, setShowCircles] = useState(false)
   const [loading, setLoading] = useState(!state?.reservation)
+  const reservation = reservations[selectedIdx] || null
   const [showDisputeModal, setShowDisputeModal] = useState(false)
   const [pendingDisputeNotification, setPendingDisputeNotification] = useState(null)
 
@@ -115,10 +118,10 @@ export default function MyCarPage() {
           getMyNotifications(),
         ])
         const list = Array.isArray(reservationData) ? reservationData : (reservationData?.data ?? [])
-        const latest = list
+        const activeList = list
           .filter(r => ACTIVE_STATUSES.has(r.status))
-          .sort((a, b) => new Date(b.pickupDate || 0) - new Date(a.pickupDate || 0))[0] || null
-        setReservation(latest)
+          .sort((a, b) => new Date(b.pickupDate || 0) - new Date(a.pickupDate || 0))
+        setReservations(activeList)
 
         const notificationList = Array.isArray(notificationData) ? notificationData : (notificationData?.data ?? [])
         const unreadDispute = notificationList.find(
@@ -126,7 +129,7 @@ export default function MyCarPage() {
         )
         applyDisputeNotification(unreadDispute || null)
       } catch {
-        setReservation(null)
+        setReservations([])
       } finally {
         setLoading(false)
       }
@@ -170,7 +173,7 @@ export default function MyCarPage() {
     )
   }
 
-  if (!reservation) {
+  if (reservations.length === 0) {
     return (
       <div className="mc-page">
         <div className="mc-empty">
@@ -230,6 +233,38 @@ export default function MyCarPage() {
   return (
     <div className="mc-page">
       <div className="mc-scroll">
+        {/* 예약 목록 토글 버튼 */}
+        {reservations.length > 1 && (
+          <button className="mc-res-toggle-btn" onClick={() => setShowCircles(v => !v)}>
+            <span>예약 {reservations.length}건</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+              style={{ transform: showCircles ? 'rotate(180deg)' : '', transition: 'transform 0.2s' }}>
+              <path d="M6 9l6 6 6-6" stroke="#F7A633" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
+
+        {/* 예약 선택 circles */}
+        {reservations.length > 1 && showCircles && (
+          <div className="mc-res-circles-strip">
+            {reservations.map((r, i) => (
+              <button
+                key={r.reservationId}
+                className={`mc-res-circle-btn${i === selectedIdx ? ' active' : ''}`}
+                onClick={() => { setSelectedIdx(i); setShowCircles(false) }}
+              >
+                <div className="mc-res-circle-dot">
+                  {(() => {
+                    const d = r.pickupDate ? new Date(Array.isArray(r.pickupDate) ? r.pickupDate[0]+'-'+String(r.pickupDate[1]).padStart(2,'0')+'-'+String(r.pickupDate[2]).padStart(2,'0') : r.pickupDate) : null
+                    return d ? <span style={{fontSize:13,fontWeight:900}}>{d.getMonth()+1}/{d.getDate()}</span> : <span>-</span>
+                  })()}
+                </div>
+                <p className="mc-res-circle-name">{r.airportCode || r.countryCode || '---'}</p>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* 차량 헤더 */}
         <div className="mc-car-header">
           <div className="mc-plate-row">
@@ -431,8 +466,18 @@ export default function MyCarPage() {
               <span>!</span>
             </div>
             <p className="mc-dispute-modal-text">
-              {pendingDisputeNotification?.message || '분쟁이 접수되었습니다.'}
+              {pendingDisputeNotification?.title || '분쟁이 접수되었습니다.'}
             </p>
+            {pendingDisputeNotification?.reservationId && (
+              <p className="mc-dispute-modal-sub">
+                예약번호 #{pendingDisputeNotification.reservationId.slice(-8)}
+              </p>
+            )}
+            {pendingDisputeNotification?.createdAt && (
+              <p className="mc-dispute-modal-sub">
+                {new Date(pendingDisputeNotification.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+            )}
             <div className="mc-dispute-modal-btns">
               <button
                 className="mc-dispute-modal-confirm"

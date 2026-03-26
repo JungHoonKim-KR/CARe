@@ -50,6 +50,12 @@ export default function DisputePage() {
     dispute?.defenseCropS3Url,
   ].filter(Boolean)
 
+  const defenseLog = scratchLogs.find((log) => log.logId === dispute?.defenseLogId)
+  const defenseImages = [
+    dispute?.defenseOriginalS3Url || defenseLog?.originalS3Url,
+    dispute?.defenseCropS3Url || defenseLog?.cropS3Url,
+  ].filter(Boolean)
+
   const timeline = dispute
     ? [
       { date: formatDateTime(dispute.createdAt), action: '분쟁 요청', user: '업체' },

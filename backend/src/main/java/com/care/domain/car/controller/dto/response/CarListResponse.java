@@ -11,7 +11,8 @@ public record CarListResponse(
         String modelName,
         String fuelType,
         String thumbnailUrl,
-        String frontImageUrl
+        String frontImageUrl,
+        int dailyPrice
 ) {
     public static CarListResponse of(OwnedCar car, String frontImageUrl) {
         return new CarListResponse(
@@ -22,7 +23,8 @@ public record CarListResponse(
                 car.getCarModel().getModelName(),
                 car.getCarModel().getFuelType(),
                 car.getCarModel().getThumbnailUrl(),
-                frontImageUrl
+                frontImageUrl,
+                car.getDailyPrice()
         );
     }
 }

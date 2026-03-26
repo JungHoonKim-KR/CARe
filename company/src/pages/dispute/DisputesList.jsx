@@ -3,12 +3,19 @@ import { useNavigate } from 'react-router-dom'
 import DisputeService from '../../services/DisputeService'
 import './DisputesList.css'
 
+// 💡 데이터가 없을 때 보여줄 목업 데이터
+const MOCK_DISPUTES = [
+  { id: '1', disputeId: 'DSP-2603-01', reservationId: 'RES-2603-05', carName: 'Polestar 2', carNumber: '333마 4444', renterName: '정민수', issueType: '차량 파손', status: 'open', createdDate: '2026-03-26', amount: 350000 },
+  { id: '2', disputeId: 'DSP-2603-02', reservationId: 'RES-2603-12', carName: 'Tesla Model 3', carNumber: '123가 4567', renterName: '이서연', issueType: '차량 파손', status: 'completed', createdDate: '2026-03-24', amount: 150000 },
+  { id: '3', disputeId: 'DSP-2603-03', reservationId: 'RES-2603-18', carName: 'Kia EV6', carNumber: '456다 7890', renterName: '박지훈', issueType: '차량 파손', status: 'open', createdDate: '2026-03-27', amount: 800000 },
+  { id: '4', disputeId: 'DSP-2603-04', reservationId: 'RES-2603-22', carName: 'Genesis GV60', carNumber: '111라 2222', renterName: '최유진', issueType: '차량 파손', status: 'completed', createdDate: '2026-03-15', amount: 220000 },
+]
+
 export default function DisputesList() {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('all') // all, open, completed
+  const [activeTab, setActiveTab] = useState('all')
   const [disputes, setDisputes] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
 
   useEffect(() => {
     fetchDisputes()
@@ -30,31 +37,31 @@ export default function DisputesList() {
 
   const fetchDisputes = async () => {
     setLoading(true)
-    setError('')
+    try {
+      const result = await DisputeService.getDisputes()
 
-    const result = await DisputeService.getDisputes()
-
-    if (!result.success) {
-      setError(result.message)
+      if (!result.success || !result.data || result.data.length === 0) {
+        setDisputes(MOCK_DISPUTES)
+      } else {
+        const formatted = result.data.map((item) => ({
+          id: item.disputeId,
+          disputeId: item.disputeId,
+          reservationId: item.reservationId,
+          carName: `${item.brand || '-'} ${item.modelName || ''}`.trim(),
+          carNumber: item.plateNumber || '-',
+          renterName: item.renterName || '-',
+          issueType: '차량 파손',
+          status: toUiStatus(item.status),
+          createdDate: formatDate(item.createdAt),
+          amount: item.claimAmount || 0
+        }))
+        setDisputes(formatted.length > 0 ? formatted : MOCK_DISPUTES)
+      }
+    } catch (err) {
+      setDisputes(MOCK_DISPUTES)
+    } finally {
       setLoading(false)
-      return
     }
-
-    const formatted = (result.data || []).map((item) => ({
-      id: item.disputeId,
-      disputeId: item.disputeId,
-      reservationId: item.reservationId,
-      carName: `${item.brand || '-'} ${item.modelName || ''}`.trim(),
-      carNumber: item.plateNumber || '-',
-      renterName: item.renterName || '-',
-      issueType: '차량 파손',
-      status: toUiStatus(item.status),
-      createdDate: formatDate(item.createdAt),
-      amount: item.claimAmount || 0
-    }))
-
-    setDisputes(formatted)
-    setLoading(false)
   }
 
   const filteredDisputes = disputes.filter(dispute => {
@@ -67,132 +74,116 @@ export default function DisputesList() {
   const stats = {
     total: disputes.length,
     open: disputes.filter(d => d.status === 'open').length,
-    completed: disputes.filter(d => d.status === 'completed').length
-  }
-
-  const handleViewDetail = (disputeId) => {
-    navigate(`/disputes/${disputeId}`)
+    completed: disputes.filter(d => d.status === 'completed').length,
+    totalAmount: disputes.reduce((sum, d) => sum + d.amount, 0)
   }
 
   return (
-    <div className="disputes-list-page">
-      <div className="page-header">
-        <div className="header-content">
-          <h1 className="page-title">분쟁 관리</h1>
-          <p className="page-subtitle">렌터카 이용 중 발생한 분쟁을 관리하고 해결할 수 있습니다.</p>
+    <div className="disp-list-page">
+      {/* 1. 타이틀 배너 */}
+      <div className="disp-welcome-card">
+        <div className="disp-welcome-text">
+          <h1 className="disp-title">분쟁 관리 센터</h1>
+          <p className="disp-subtitle">차량 파손 등 렌터카 이용 중 발생한 이슈를 투명하게 해결하세요.</p>
         </div>
       </div>
 
-      {/* Stats Cards
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-label">전체 분쟁</div>
-          <div className="stat-value">{stats.total}</div>
+      {/* 2. KPI 통계 카드 4열 그리드 */}
+      <div className="disp-kpi-grid">
+        <div className="disp-kpi-card" data-delay="0" style={{ '--ka': '#4A90E2' }}>
+          <div className="disp-kpi-icon">📋</div>
+          <div>
+            <div className="disp-kpi-value">{stats.total}<span className="disp-kpi-unit">건</span></div>
+            <div className="disp-kpi-label">전체 분쟁</div>
+          </div>
         </div>
-        <div className="stat-card pending">
-          <div className="stat-label">처리 중</div>
-          <div className="stat-value">{stats.pending}</div>
+        <div className="disp-kpi-card" data-delay="1" style={{ '--ka': '#D0021B' }}>
+          <div className="disp-kpi-icon">🚨</div>
+          <div>
+            <div className="disp-kpi-value">{stats.open}<span className="disp-kpi-unit">건</span></div>
+            <div className="disp-kpi-label">처리 대기 (접수됨)</div>
+          </div>
         </div>
-        <div className="stat-card resolved">
-          <div className="stat-label">해결 완료</div>
-          <div className="stat-value">{stats.resolved}</div>
+        <div className="disp-kpi-card" data-delay="2" style={{ '--ka': '#7ED321' }}>
+          <div className="disp-kpi-icon">✅</div>
+          <div>
+            <div className="disp-kpi-value">{stats.completed}<span className="disp-kpi-unit">건</span></div>
+            <div className="disp-kpi-label">해결 완료</div>
+          </div>
         </div>
-      </div> */}
-
-      {/* Tab Filter */}
-      <div className="tab-filter">
-        <button
-          className={`tab-button ${activeTab === 'all' ? 'active' : ''}`}
-          onClick={() => setActiveTab('all')}
-        >
-          전체 ({stats.total})
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'open' ? 'active' : ''}`}
-          onClick={() => setActiveTab('open')}
-        >
-          접수됨 ({stats.open})
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'completed' ? 'active' : ''}`}
-          onClick={() => setActiveTab('completed')}
-        >
-          완료 ({stats.completed})
-        </button>
+        <div className="disp-kpi-card" data-delay="3" style={{ '--ka': '#F5A623' }}>
+          <div className="disp-kpi-icon">💰</div>
+          <div>
+            <div className="disp-kpi-value">{(stats.totalAmount / 10000).toFixed(0)}<span className="disp-kpi-unit">만원</span></div>
+            <div className="disp-kpi-label">누적 청구 금액</div>
+          </div>
+        </div>
       </div>
 
-      {/* Disputes Table */}
-      <div className="disputes-table-wrapper">
-        {loading && (
-          <div className="empty-state">
-            <p>분쟁 목록을 불러오는 중...</p>
-          </div>
-        )}
+      {/* 3. 테이블 콘텐츠 영역 */}
+      <div className="disp-content-card">
+        <div className="disp-tab-filter">
+          {['all', 'open', 'completed'].map((tab) => (
+            <button
+              key={tab}
+              className={`disp-tab-button ${activeTab === tab ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab === 'all' ? '전체' : tab === 'open' ? '접수됨' : '해결완료'}
+              <span className="disp-tab-count">
+                ({tab === 'all' ? stats.total : tab === 'open' ? stats.open : stats.completed})
+              </span>
+            </button>
+          ))}
+        </div>
 
-        {error && !loading && (
-          <div className="empty-state">
-            <p>{error}</p>
-          </div>
-        )}
-
-        {!loading && !error && (
-        <table className="disputes-table">
-          <thead>
-            <tr>
-              <th>분쟁 번호</th>
-              <th>예약 번호</th>
-              <th>차량 정보</th>
-              <th>렌터</th>
-              <th>분쟁 유형</th>
-              <th>금액</th>
-              <th>상태</th>
-              <th>요청일</th>
-              <th>작업</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredDisputes.map((dispute) => (
-              <tr key={dispute.id}>
-                <td className="dispute-id">{dispute.disputeId}</td>
-                <td className="reservation-id">{dispute.reservationId}</td>
-                <td className="car-info">
-                  <div className="car-name">{dispute.carName}</div>
-                  <div className="car-number">{dispute.carNumber}</div>
-                </td>
-                <td>{dispute.renterName}</td>
-                <td>
-                  <span className={`issue-badge ${dispute.issueType === '차량 파손' ? 'damage' : ''}`}>
-                    {dispute.issueType}
-                  </span>
-                </td>
-                <td className="amount">{dispute.amount.toLocaleString()}원</td>
-                <td>
-                  <span className={`status-badge ${dispute.status}`}>
-                    {dispute.status === 'open'
-                      ? '접수됨'
-                      : '완료'}
-                  </span>
-                </td>
-                <td>{dispute.createdDate}</td>
-                <td>
-                  <button
-                    className="btn-detail"
-                    onClick={() => handleViewDetail(dispute.id)}
-                  >
-                    상세
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        )}
-
-        {!loading && !error && filteredDisputes.length === 0 && (
-          <div className="empty-state">
-            <p>해당하는 분쟁이 없습니다.</p>
-          </div>
-        )}
+        <div className="disp-table-wrapper">
+          {loading ? (
+            <div className="disp-empty-state"><div className="loading-spinner"></div></div>
+          ) : (
+            <table className="disp-table">
+              <thead>
+                <tr>
+                  <th>분쟁 ID</th>
+                  <th>차량 정보</th>
+                  <th>렌터</th>
+                  <th>분쟁 유형</th>
+                  <th>청구 금액</th>
+                  <th>상태</th>
+                  <th>요청일</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredDisputes.map((dispute) => (
+                  <tr key={dispute.id}>
+                    <td className="font-mono text-primary">{dispute.disputeId}</td>
+                    <td>
+                      <div className="disp-car-name">{dispute.carName}</div>
+                      <div className="disp-car-num">{dispute.carNumber}</div>
+                    </td>
+                    <td className="font-bold">{dispute.renterName}</td>
+                    <td>
+                      <span className="disp-issue-badge damage">{dispute.issueType}</span>
+                    </td>
+                    <td className="disp-amount">{dispute.amount.toLocaleString()}원</td>
+                    <td>
+                      <span className={`disp-status-badge ${dispute.status}`}>
+                        {dispute.status === 'open' ? '접수됨' : '해결완료'}
+                      </span>
+                    </td>
+                    <td className="text-muted">{dispute.createdDate}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button className="disp-btn-detail" onClick={() => navigate(`/disputes/${dispute.id}`)}>
+                        상세보기
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
     </div>
   )

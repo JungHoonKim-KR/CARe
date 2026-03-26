@@ -103,10 +103,6 @@ public class DisputeService {
 				.toList();
 
 		if (candidates.isEmpty()) {
-			candidates = beforeScratches;
-		}
-
-		if (candidates.isEmpty()) {
 			dispute.captureReturnReportSnapshot(
 					null,
 					null,

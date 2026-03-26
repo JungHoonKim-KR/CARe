@@ -267,17 +267,14 @@ public class CarService {
                 .toList();
 
         if (candidates.isEmpty()) {
-            candidates = beforeScratches;
-        }
-
-        if (candidates.isEmpty()) {
             return new ReturnReportResponse.ComparisonDetail(
                     null,
                     afterScratch.getLogId(),
                     null,
                     afterScratch.getCropS3Url(),
                     0.0,
-                    100.0,
+                    0.0,
+                    true,
                     true
             );
         }
@@ -296,7 +293,8 @@ public class CarService {
                     afterScratch.getCropS3Url(),
                     afterScratch.getAiSimilarity(),
                     afterScratch.getAiDiffScore(),
-                    warning
+                    warning,
+                    false
             );
         }
 
@@ -330,7 +328,8 @@ public class CarService {
                     afterScratch.getCropS3Url(),
                     0.0,
                     100.0,
-                    true
+                    true,
+                    false
             );
         }
 
@@ -344,7 +343,8 @@ public class CarService {
                 afterScratch.getCropS3Url(),
                 bestSimilarity,
                 bestDiffScore,
-                warning
+                warning,
+                false
         );
     }
 

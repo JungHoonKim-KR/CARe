@@ -102,7 +102,7 @@ public class CareTokenService {
         BigInteger balance = balanceOf(fromAddress);
         BigInteger required = toCare(amount);
         if (balance.compareTo(required) < 0) {
-            throw new RuntimeException("잔액 부족: 보유=" + balance + " CARE, 필요=" + (long) amount + " CARE");
+            throw new RuntimeException("잔액 부족: 보유=" + balance.divide(BigInteger.valueOf(1_000_000)) + " CARE, 필요=" + (long) amount + " CARE");
         }
 
         // burn (출금)

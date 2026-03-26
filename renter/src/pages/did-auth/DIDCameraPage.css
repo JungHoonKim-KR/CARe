@@ -1,18 +1,20 @@
 * { box-sizing: border-box; }
 
 .did-camera-page {
-  min-height: 100vh;
+  height: 100dvh;
   background: #2B2B2E;
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow: hidden;
 }
 
 /* -- Top text -- */
 .did-camera-top {
-  padding: 48px 28px 24px;
+  padding: 20px 28px 10px;
   text-align: center;
   width: 100%;
+  flex-shrink: 0;
 }
 
 .did-camera-title {
@@ -86,10 +88,11 @@
 
 /* -- Shutter button -- */
 .did-camera-footer {
-  padding: 28px 0 44px;
+  padding: 16px 0 28px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .did-shutter-btn {

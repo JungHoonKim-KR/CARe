@@ -15,7 +15,8 @@ public record CarSummaryResponse(
         String companyId,
         String companyName,
         String thumbnailUrl,
-        String frontImageUrl
+        String frontImageUrl,
+        int dailyPrice
 ) {
     public static CarSummaryResponse of(OwnedCar car, String frontImageUrl) {
         return new CarSummaryResponse(
@@ -30,7 +31,8 @@ public record CarSummaryResponse(
                 car.getCompany().getCompanyId(),
                 car.getCompany().getName(),
                 car.getCarModel().getThumbnailUrl(),
-                frontImageUrl
+                frontImageUrl,
+                car.getDailyPrice()
         );
     }
 }

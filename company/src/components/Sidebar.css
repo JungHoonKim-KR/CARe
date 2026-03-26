@@ -213,6 +213,31 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.sidebar-company-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sidebar-inline-logout-btn {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.sidebar-inline-logout-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .company-name {
   font-size: 13px;
   font-weight: 600;
@@ -223,14 +248,4 @@
 .company-email {
   font-size: 11px;
   color: var(--sidebar-text);
-}
-
-
-.sidebar-logout-button.sidebar-item {
-  width: 100%;
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  font-size: 14px;
 }

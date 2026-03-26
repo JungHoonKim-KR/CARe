@@ -243,8 +243,11 @@ export default function MyCarPage() {
 
         {/* 차량 이미지 */}
         <div className="mc-car-image-wrap">
-            <div className="mc-car-emoji-wrap">
-            <span className="mc-car-emoji">🚗</span>
+          <div className="mc-car-emoji-wrap">
+            {reservation.thumbnailUrl
+              ? <img src={reservation.thumbnailUrl} alt={carName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 16 }} />
+              : <span className="mc-car-emoji">🚗</span>
+            }
           </div>
         </div>
 

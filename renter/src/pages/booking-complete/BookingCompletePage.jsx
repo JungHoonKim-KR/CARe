@@ -53,13 +53,13 @@ export default function BookingCompletePage() {
 
         {/* 차량 이미지 */}
         <div className="bc-car-area">
-          <div
-            className="bc-car-img"
-            style={{ background: `linear-gradient(160deg, ${car.color || '#ececec'} 0%, #f7f7f7 100%)` }}
-          >
-            <span className="bc-car-emoji">{car.emoji || '🚗'}</span>
+          <div className="bc-car-img" style={{ background: '#f4f4f4', overflow: 'hidden' }}>
+            {car.thumbnailUrl
+              ? <img src={car.thumbnailUrl} alt={car.modelName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <span className="bc-car-emoji">🚗</span>
+            }
           </div>
-          <p className="bc-car-name">{car.name || '메르세데스-벤츠 SL65 AMG'}</p>
+          <p className="bc-car-name">{car.brand && car.modelName ? `${car.brand} ${car.modelName}` : car.name || '차량'}</p>
         </div>
 
         {/* 예약 상세 카드 */}

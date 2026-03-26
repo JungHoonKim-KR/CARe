@@ -1,15 +1,37 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../../components/BottomNav'
-import { getMyReservations } from '../../api/reservation'
+import { getMyReservations, getMyNotifications } from '../../api/reservation'
 import './ReservationListPage.css'
 
 const STATUS_LABEL = {
   RESERVED:   { text: '예약완료', color: '#5B8DEF' },
   IN_USE:     { text: '이용중',   color: '#4CAF50' },
-  AFTER_SCAN: { text: '스캔완료', color: '#888'    },
+  AFTER_SCAN: { text: '스캔완료', color: '#F7A633' },
   COMPLETED:  { text: '반납완료', color: '#888'    },
   CANCELLED:  { text: '취소됨',   color: '#FF4D4F' },
+}
+
+const DEPOSIT_BADGE = {
+  LOCKED:   { text: '분쟁중',  color: '#FF4D4F', bg: '#FF4D4F' },
+  DEDUCTED: { text: '정산완료', color: '#fff',   bg: '#888'    },
+}
+
+const TABS = [
+  { key: 'ALL',      label: '전체' },
+  { key: 'ACTIVE',   label: '예약완료' },
+  { key: 'DONE',     label: '반납완료' },
+  { key: 'DISPUTE',  label: '분쟁중' },
+]
+
+const ACTIVE_STATUSES = new Set(['RESERVED', 'IN_USE', 'AFTER_SCAN'])
+
+function filterReservations(list, tab) {
+  if (tab === 'ALL')     return list
+  if (tab === 'ACTIVE')  return list.filter(r => ACTIVE_STATUSES.has(r.status))
+  if (tab === 'DONE')    return list.filter(r => r.status === 'COMPLETED')
+  if (tab === 'DISPUTE') return list.filter(r => r.depositStatus === 'LOCKED')
+  return list
 }
 
 function formatDate(dateStr) {
@@ -22,13 +44,25 @@ export default function ReservationListPage() {
   const navigate = useNavigate()
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('ALL')
+  const [disputeMap, setDisputeMap] = useState({})
 
   useEffect(() => {
-    getMyReservations()
-      .then((data) => setReservations(Array.isArray(data) ? data : []))
-      .catch(() => setReservations([]))
+    Promise.all([getMyReservations(), getMyNotifications()])
+      .then(([reservData, notifData]) => {
+        setReservations(Array.isArray(reservData) ? reservData : [])
+        const notifs = Array.isArray(notifData) ? notifData : []
+        const map = {}
+        notifs.forEach(n => {
+          if (n.disputeId && n.reservationId) map[n.reservationId] = n.disputeId
+        })
+        setDisputeMap(map)
+      })
+      .catch(() => { setReservations([]); setDisputeMap({}) })
       .finally(() => setLoading(false))
   }, [])
+
+  const filtered = filterReservations(reservations, activeTab)
 
   return (
     <div className="rl-page">
@@ -41,13 +75,27 @@ export default function ReservationListPage() {
         <h1 className="rl-title">예약 내역</h1>
       </div>
 
+      <div className="rl-tabs">
+        {TABS.map(tab => (
+          <button
+            key={tab.key}
+            className={`rl-tab ${activeTab === tab.key ? 'rl-tab--active' : ''}`}
+            onClick={() => setActiveTab(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div className="rl-body">
         {loading && <p className="rl-empty">불러오는 중...</p>}
-        {!loading && reservations.length === 0 && (
-          <p className="rl-empty">예약 내역이 없습니다.</p>
+        {!loading && filtered.length === 0 && (
+          <p className="rl-empty">해당 내역이 없습니다.</p>
         )}
-        {reservations.map((r) => {
+        {filtered.map((r) => {
           const status = STATUS_LABEL[r.status] || { text: r.status, color: '#888' }
+          const depositBadge = DEPOSIT_BADGE[r.depositStatus]
+          const isDispute = r.depositStatus === 'LOCKED'
           return (
             <div
               key={r.reservationId}
@@ -56,7 +104,14 @@ export default function ReservationListPage() {
             >
               <div className="rl-card-top">
                 <span className="rl-car-name">{r.brand} {r.modelName}</span>
-                <span className="rl-status" style={{ color: status.color }}>{status.text}</span>
+                <div className="rl-card-badges">
+                  {depositBadge && (
+                    <span className="rl-badge-deposit" style={{ background: depositBadge.bg, color: depositBadge.color }}>
+                      {depositBadge.text}
+                    </span>
+                  )}
+                  <span className="rl-status" style={{ color: status.color }}>{status.text}</span>
+                </div>
               </div>
               <p className="rl-plate">{r.plateNumber}</p>
               <div className="rl-dates">
@@ -65,6 +120,17 @@ export default function ReservationListPage() {
                 <span>{formatDate(r.returnDate)}</span>
               </div>
               <p className="rl-insurance">{r.insuranceName}</p>
+              {isDispute && (
+                <button
+                  className="rl-dispute-btn"
+                  onClick={e => {
+                    e.stopPropagation()
+                    navigate('/dispute', { state: { reservation: r, disputeId: disputeMap[r.reservationId] } })
+                  }}
+                >
+                  분쟁 내역 보기 →
+                </button>
+              )}
             </div>
           )
         })}

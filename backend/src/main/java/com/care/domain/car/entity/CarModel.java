@@ -27,6 +27,12 @@ public class CarModel extends BaseEntity {
     @Column(name = "car_size", length = 10, nullable = false)
     private CarSize carSize;
 
+    @Column(name = "thumbnail_url", length = 500)
+    private String thumbnailUrl;
+
+    @Column(name = "thumbnail_ipfs_cid", length = 200)
+    private String thumbnailIpfsCid;
+
     public static CarModel create(String modelId, String brand, String modelName, String fuelType, CarSize carSize) {
         CarModel carModel = new CarModel();
         carModel.modelId = modelId;
@@ -35,5 +41,10 @@ public class CarModel extends BaseEntity {
         carModel.fuelType = fuelType;
         carModel.carSize = carSize;
         return carModel;
+    }
+
+    public void updateThumbnail(String thumbnailUrl, String thumbnailIpfsCid) {
+        this.thumbnailUrl = thumbnailUrl;
+        this.thumbnailIpfsCid = thumbnailIpfsCid;
     }
 }

@@ -6,9 +6,8 @@ import { getDisputeDetail, settleDispute } from '../../api/reservation'
 import './DisputePage.css'
 
 const STATUS_LABELS = {
-  PENDING: '검토 중',
-  DEFENDED: '이의 신청됨',
-  RESOLVED: '해결됨',
+  OPEN: '분쟁 신청됨',
+  COMPLETED: '완료됨',
   REJECTED: '기각됨',
 }
 
@@ -60,7 +59,7 @@ export default function DisputePage() {
     try {
       const result = await settleDispute(dispute.disputeId, dispute.claimAmount || 0, 'COMPLETED')
 
-      if (result?.status === 'PENDING') {
+      if (result?.status !== 'COMPLETED') {
         alert(t('dispute.settlePending'))
       } else {
         alert(t('dispute.settleComplete'))
@@ -99,7 +98,8 @@ export default function DisputePage() {
       </header>
 
       <div className="dp-scroll">
-        {/* 분쟁 배너 */}
+        {/* 분쟁 배너 - OPEN 상태에서만 표시 */}
+        {(!dispute || dispute.status === 'OPEN') && (
         <button className="dp-dispute-banner" onClick={handleDispute}>
           <div className="dp-banner-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -114,6 +114,7 @@ export default function DisputePage() {
             <p className="dp-banner-sub">{t('dispute.bannerSub')}</p>
           </div>
         </button>
+        )}
 
         {/* 로딩 / 에러 */}
         {loading && (
@@ -171,58 +172,84 @@ export default function DisputePage() {
             {/* Before */}
             <div className="dp-compare-card">
               <div className="dp-compare-img before">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="5" width="18" height="14" rx="2" stroke="#ccc" strokeWidth="1.5"/>
-                  <circle cx="12" cy="12" r="3" stroke="#ccc" strokeWidth="1.5"/>
-                  <circle cx="17.5" cy="7.5" r="1" fill="#ccc"/>
-                </svg>
+                {dispute?.snapshotBeforeCropS3Url
+                  ? <img src={dispute.snapshotBeforeCropS3Url} alt="before" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                  : <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="5" width="18" height="14" rx="2" stroke="#ccc" strokeWidth="1.5"/>
+                      <circle cx="12" cy="12" r="3" stroke="#ccc" strokeWidth="1.5"/>
+                      <circle cx="17.5" cy="7.5" r="1" fill="#ccc"/>
+                    </svg>
+                }
               </div>
               <p className="dp-compare-label">Before</p>
-              <p className="dp-compare-date">2025년 3월 12일 2:24 pm</p>
-              <span className="dp-compare-tag normal">Normal</span>
+              {dispute?.snapshotCapturedAt && (
+                <p className="dp-compare-date">{formatDateTime(dispute.snapshotCapturedAt)}</p>
+              )}
+              <span className="dp-compare-tag normal">기존 상태</span>
             </div>
 
             {/* After */}
             <div className="dp-compare-card">
               <div className="dp-compare-img after">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="5" width="18" height="14" rx="2" stroke="#ccc" strokeWidth="1.5"/>
-                  <circle cx="12" cy="12" r="3" stroke="#ccc" strokeWidth="1.5"/>
-                  <circle cx="17.5" cy="7.5" r="1" fill="#ccc"/>
-                  <path d="M5 9l3 3M7 7l4 4" stroke="#FF4D4F" strokeWidth="1.5"
-                    strokeLinecap="round"/>
-                </svg>
+                {dispute?.snapshotAfterCropS3Url
+                  ? <img src={dispute.snapshotAfterCropS3Url} alt="after" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                  : <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="5" width="18" height="14" rx="2" stroke="#ccc" strokeWidth="1.5"/>
+                      <circle cx="12" cy="12" r="3" stroke="#ccc" strokeWidth="1.5"/>
+                      <circle cx="17.5" cy="7.5" r="1" fill="#ccc"/>
+                      <path d="M5 9l3 3M7 7l4 4" stroke="#FF4D4F" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                }
               </div>
               <p className="dp-compare-label">After</p>
-              <p className="dp-compare-date">2025년 3월 13일 11:57 am</p>
-              <span className="dp-compare-tag attention">Requires Attention</span>
+              {dispute?.createdAt && (
+                <p className="dp-compare-date">{formatDateTime(dispute.createdAt)}</p>
+              )}
+              <span className={`dp-compare-tag${dispute?.snapshotWarning ? ' attention' : ' normal'}`}>
+                {dispute?.snapshotWarning ? '주의 필요' : '정상'}
+              </span>
             </div>
           </div>
         </div>
 
         {/* 설명 텍스트 */}
-        <div className="dp-desc-box">
-          <p className="dp-desc-text">
-            이전에 발생했던 흠집과 달리<br/>
-            유사도가 <strong>5%</strong>로 확인되는<br/>
-            다른 흠집들이 발견됐어요.<br/>
-            관련 사항에 대해 소명을 하고 싶으신 경우<br/>
-            이의 신청 버튼을 해주세요.
-          </p>
-        </div>
+        {dispute && (
+          <div className="dp-desc-box">
+            <p className="dp-desc-text">
+              이전에 발생했던 흠집과 달리<br/>
+              유사도가 <strong>{dispute.snapshotSimilarity != null ? Math.round(dispute.snapshotSimilarity * 100) : '--'}%</strong>로 확인되는<br/>
+              다른 흠집들이 발견됐어요.
+              {dispute.status === 'OPEN' && (
+                <>
+                  <br/>관련 사항에 대해 소명을 하고 싶으신 경우<br/>
+                  이의 신청 버튼을 해주세요.
+                </>
+              )}
+            </p>
+          </div>
+        )}
 
         <div style={{ height: 160 }} />
       </div>
 
-      {/* 하단 버튼 */}
-      <div className="dp-footer">
-        <button className="dp-dispute-btn" onClick={handleDispute}>
-          이의 신청하기
-        </button>
-        <button className="dp-settle-btn" onClick={handleSettle} disabled={settling}>
-          이의 없음 (정산 동의)
-        </button>
-      </div>
+      {/* 하단 버튼 - OPEN 상태에서만 표시 */}
+      {(!dispute || dispute.status === 'OPEN') && (
+        <div className="dp-footer">
+          <button className="dp-dispute-btn" onClick={handleDispute}>
+            이의 신청하기
+          </button>
+          <button className="dp-settle-btn" onClick={handleSettle} disabled={settling}>
+            이의 없음 (정산 동의)
+          </button>
+        </div>
+      )}
+      {dispute && dispute.status !== 'OPEN' && (
+        <div className="dp-footer dp-footer-resolved">
+          <p className="dp-resolved-text">
+            {dispute.status === 'RESOLVED' ? '분쟁이 완료되었습니다.' : '이의 신청이 접수되어 검토 중입니다.'}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

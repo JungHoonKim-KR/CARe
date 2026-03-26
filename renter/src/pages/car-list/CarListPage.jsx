@@ -119,8 +119,8 @@ export default function CarListPage() {
 
             {/* 왼쪽: 차량 이미지 */}
             <div className="cl-img-wrap">
-              {car.frontImageUrl
-                ? <img src={car.frontImageUrl} alt={car.modelName} className="cl-car-img" />
+              {car.thumbnailUrl
+                ? <img src={car.thumbnailUrl} alt={car.modelName} className="cl-car-img" />
                 : <span className="cl-emoji">🚗</span>
               }
               <button className="cl-heart" onClick={e => toggleFav(car.carId, e)}>

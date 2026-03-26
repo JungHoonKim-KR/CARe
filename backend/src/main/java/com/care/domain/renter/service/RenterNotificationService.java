@@ -63,6 +63,50 @@ public class RenterNotificationService {
             pushNotification(renter.getUserId(), RenterNotificationResponse.from(saved));
     }
 
+    @Transactional
+    public void createSettlementRequestedNotification(Renter renter, Dispute dispute, long finalAmount) {
+        if (renter == null) {
+            throw new IllegalArgumentException("렌터 정보가 없습니다.");
+        }
+        if (dispute == null) {
+            throw new IllegalArgumentException("분쟁 정보가 없습니다.");
+        }
+
+        RenterNotification notification = RenterNotification.settlementRequested(
+                renter,
+                dispute.getReservation().getReservationId(),
+                dispute.getDisputeId(),
+                finalAmount
+        );
+        RenterNotification saved = renterNotificationRepository.save(notification);
+        pushNotification(renter.getUserId(), RenterNotificationResponse.from(saved));
+    }
+
+    @Transactional
+    public void createSettlementCompletedNotification(
+            Renter renter,
+            Dispute dispute,
+            String settlementStatus,
+            long finalAmount
+    ) {
+        if (renter == null) {
+            throw new IllegalArgumentException("렌터 정보가 없습니다.");
+        }
+        if (dispute == null) {
+            throw new IllegalArgumentException("분쟁 정보가 없습니다.");
+        }
+
+        RenterNotification notification = RenterNotification.settlementCompleted(
+                renter,
+                dispute.getReservation().getReservationId(),
+                dispute.getDisputeId(),
+                settlementStatus,
+                finalAmount
+        );
+        RenterNotification saved = renterNotificationRepository.save(notification);
+        pushNotification(renter.getUserId(), RenterNotificationResponse.from(saved));
+    }
+
     @Transactional(readOnly = true)
     public List<RenterNotificationResponse> getMyNotifications(String userId) {
         return renterNotificationRepository.findByRenter_UserIdOrderByCreatedAtDesc(userId)

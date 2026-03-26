@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { issueSmartKey, unlockSmartKey, lockSmartKey } from '../../api/reservation'
 import './CarSmartKeyPage.css'
@@ -13,6 +13,26 @@ export default function CarSmartKeyPage() {
   const pickupReady  = faceAuthDone
 
   const [locked, setLocked] = useState(!pickupReady)
+  const [timeBlocked, setTimeBlocked] = useState(false)
+  const [pickupDateTime, setPickupDateTime] = useState(null)
+
+  useEffect(() => {
+    if (!reservation) return
+    const raw = reservation.pickupDate || reservation.startDate
+    if (!raw) return
+    let dt
+    if (Array.isArray(raw)) {
+      const [y, mo, d, h = 0, m = 0] = raw
+      dt = new Date(y, mo - 1, d, h, m)
+    } else {
+      dt = new Date(raw)
+    }
+    if (isNaN(dt.getTime())) return
+    setPickupDateTime(dt)
+    if (new Date() < dt) {
+      setTimeBlocked(true)
+    }
+  }, [reservation])
 
   const handleLockToggle = async () => {
     if (!pickupReady) return
@@ -32,6 +52,38 @@ export default function CarSmartKeyPage() {
   const carName = reservation?.carName || '내 차량'
   const plateNumber = reservation?.plateNumber || '---'
   const batteryLevel = reservation?.batteryLevel ?? null
+
+  const formatPickupTime = (dt) => {
+    if (!dt) return ''
+    return `${dt.getMonth()+1}월 ${dt.getDate()}일 ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`
+  }
+
+  if (timeBlocked) {
+    return (
+      <div className="sk-page sk-blocked-page">
+        <div className="sk-blocked-modal">
+          <div className="sk-blocked-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="white">
+              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+            </svg>
+          </div>
+          <h2 className="sk-blocked-title">아직 예약 시간이 아니에요</h2>
+          <p className="sk-blocked-desc">
+            스마트키는 픽업 시작 시간부터<br/>사용할 수 있어요.
+          </p>
+          {pickupDateTime && (
+            <div className="sk-blocked-time">
+              <span className="sk-blocked-time-label">픽업 시작 시간</span>
+              <span className="sk-blocked-time-value">{formatPickupTime(pickupDateTime)}</span>
+            </div>
+          )}
+          <button className="sk-blocked-btn" onClick={() => navigate('/my-car')}>
+            돌아가기
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="sk-page">

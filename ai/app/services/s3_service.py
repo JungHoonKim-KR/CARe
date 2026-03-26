@@ -24,9 +24,13 @@ def upload_image_to_s3(image: Image.Image, prefix: str = "scratches") -> str:
 
     key = f"{prefix}/{uuid.uuid4()}.jpg"
     s3.upload_fileobj(buffer, BUCKET, key, ExtraArgs={"ContentType": "image/jpeg"})
-    return f"{CLOUDFRONT_DOMAIN}/{key}"  # ← CloudFront URL
+    url = f"{CLOUDFRONT_DOMAIN}/{key}"
+    print(f"[S3] 업로드 성공: {url}")
+    return url
 
 def upload_file_to_s3(file_path: Path, prefix: str = "originals") -> str:
     key = f"{prefix}/{uuid.uuid4()}{file_path.suffix}"
     s3.upload_file(str(file_path), BUCKET, key, ExtraArgs={"ContentType": "image/jpeg"})
-    return f"{CLOUDFRONT_DOMAIN}/{key}"  # ← 여기도 CloudFront URL로 변경
+    url = f"{CLOUDFRONT_DOMAIN}/{key}"
+    print(f"[S3] 업로드 성공: {url}")
+    return url

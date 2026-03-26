@@ -379,6 +379,18 @@ export default function MyCarPage() {
           className={`mc-smartkey-inner${pickupReady ? '' : ' locked'}`}
           onClick={() => {
             if (pickupReady) {
+              // 예약 시간 전이면 스마트키 페이지 진입 차단
+              const rawPickup = reservation?.pickupDate || reservation?.startDate
+              if (rawPickup) {
+                const pickupDt = Array.isArray(rawPickup)
+                  ? new Date(rawPickup[0], rawPickup[1]-1, rawPickup[2], rawPickup[3]||0, rawPickup[4]||0)
+                  : new Date(rawPickup)
+                if (new Date() < pickupDt) {
+                  const timeStr = (d) => 
+                  alert()
+                  return
+                }
+              }
               navigate('/car-smartkey', { state: { reservation } })
             } else if (!faceAuthDone) {
               navigate('/car-faceauth', { state: { reservation } })

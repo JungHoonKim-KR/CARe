@@ -370,3 +370,89 @@
 .sk-return-btn:active {
   opacity: 0.75;
 }
+
+/* ── 예약 시간 전 차단 화면 ────────────────── */
+.sk-blocked-page {
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.sk-blocked-modal {
+  background: white;
+  border-radius: 24px;
+  padding: 36px 28px;
+  margin: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+  text-align: center;
+}
+
+.sk-blocked-icon {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(145deg, #aaa, #777);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  margin-bottom: 4px;
+}
+
+.sk-blocked-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #111;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.sk-blocked-desc {
+  font-size: 14px;
+  color: #888;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.sk-blocked-time {
+  width: 100%;
+  background: #f5f5f7;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.sk-blocked-time-label {
+  font-size: 13px;
+  color: #888;
+}
+
+.sk-blocked-time-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #F7A633;
+}
+
+.sk-blocked-btn {
+  width: 100%;
+  background: #F7A633;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 8px;
+  transition: opacity 0.15s;
+}
+
+.sk-blocked-btn:active { opacity: 0.85; }

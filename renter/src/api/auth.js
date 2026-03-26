@@ -102,7 +102,7 @@ export const renterLanguage = () =>
 
 // ── CARE 토큰 충전 ────────────────────────────────────────────
 export const chargeToken = (amount) =>
-  api.post('/api/renters/me/token/charge', { amount: amount * 1_000_000 }).then((r) => r.data)
+  api.post('/api/renters/me/token/charge', { amount }).then((r) => r.data)
 
 // ── CARE 토큰 잔액 조회 ───────────────────────────────────────
 export const getTokenBalance = () =>

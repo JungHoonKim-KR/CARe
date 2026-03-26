@@ -1,6 +1,7 @@
 import tempfile
 from pathlib import Path
 
+import pillow_avif  # noqa: F401  — AVIF 이미지 지원
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.schemas.document import LicenseOCRResponse, PassportOCRResponse

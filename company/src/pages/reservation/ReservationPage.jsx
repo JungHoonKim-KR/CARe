@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import TabFilter from '../../components/TabFilter'
 import ReservationTable from '../../components/ReservationTable'
 import ReservationService from '../../services/ReservationService'
 import './ReservationPage.css'
 
+// 여기는 하드코딩 — API 실패 또는 데이터 없을 때 사용하는 폴백
 const MOCK_RESERVATIONS = [
   { id: 'RES-2603-01', carName: 'Tesla Model 3', carType: '123가 4567', renterName: '김현우', renterCountry: '삼성화재', startDate: '2026.03.26 10:00', endDate: '2026.03.28 10:00', location: '서울 강남구', amount: '150,000원', status: '이용중', category: 'ongoing' },
   { id: 'RES-2603-02', carName: 'Hyundai Ioniq 5', carType: '890나 1234', renterName: '이서연', renterCountry: '현대해상', startDate: '2026.03.25 14:00', endDate: '2026.03.27 14:00', location: '부산 해운대구', amount: '120,000원', status: '반납대기', category: 'ongoing' },
@@ -60,12 +61,12 @@ export default function ReservationPage() {
           id: reservation.reservationId,
           carName: `${reservation.brand || '-'} ${reservation.modelName || ''}`.trim(),
           carType: reservation.plateNumber || '-',
-          renterName: '-',
+          renterName: '-', // 여기는 하드코딩 — 예약 목록 API에 임차인 이름 없음
           renterCountry: reservation.insuranceName || '-',
           startDate: formatDate(reservation.pickupDate),
           endDate: formatDate(reservation.returnDate),
-          location: '-',
-          amount: '-',
+          location: '-', // 여기는 하드코딩 — 위치 정보 API 없음
+          amount: reservation.totalPrice != null ? `${reservation.totalPrice.toLocaleString()}원` : '-',
           status: getStatusLabel(reservation.status),
           category: getCategoryFromStatus(reservation.status),
         }))

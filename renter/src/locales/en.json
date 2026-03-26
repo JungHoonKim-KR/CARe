@@ -231,7 +231,11 @@
     "statusReserved": "Reserved",
     "statusInUse": "In Use",
     "statusCompleted": "Returned",
-    "statusCancelled": "Cancelled"
+    "statusCancelled": "Cancelled",
+    "statusAfterScan": "Scan Done",
+    "monthDay": "{{month}}/{{day}}",
+    "reservationCount": "{{n}} Reservations",
+    "noCarInfo": "No car info"
   },
   "carList": {
     "filterAll": "All",
@@ -301,6 +305,23 @@
     "doneTitle": "Return completed",
     "doneDesc": "Photos have been securely stored on the blockchain.\nThank you for using our service.",
     "goHome": "Back to Home"
+  },
+  "reservationList": {
+    "title": "Reservations",
+    "loading": "Loading...",
+    "empty": "No reservations found.",
+    "tabAll": "All",
+    "tabActive": "Reserved",
+    "tabDone": "Returned",
+    "tabDispute": "Dispute",
+    "depositLocked": "Dispute",
+    "depositDeducted": "Settled",
+    "disputeBtn": "View Dispute →"
+  },
+  "reservationDetail": {
+    "title": "Booking Details",
+    "notFound": "Reservation not found",
+    "backToList": "Back to List"
   },
   "dispute": {
     "title": "Dispute Detail",

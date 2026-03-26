@@ -28,15 +28,6 @@ const MOCK_RESERVATION = {
   pickupLocation: '인천국제공항',
 }
 
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
-
-const STATUS_LABEL = {
-  RESERVED: '예약 완료',
-  IN_USE: '이용 중',
-  COMPLETED: '반납 완료',
-  CANCELLED: '취소됨',
-}
-
 function parseDate(val) {
   if (!val) return null
   // 배열 형태 [2026, 3, 15] 처리
@@ -50,10 +41,10 @@ function formatDateLabel(dateStr) {
   if (!dateStr) return null
   const d = parseDate(dateStr)
   if (!d) return null
-  return { month: d.getMonth() + 1, day: d.getDate(), weekday: WEEKDAYS[d.getDay()] }
+  return { month: d.getMonth() + 1, day: d.getDate(), date: d }
 }
 
-function getPickupStatus(reservation) {
+function getPickupStatus(reservation, t) {
   if (!reservation?.startDate || !reservation?.endDate) return null
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -71,14 +62,14 @@ function getPickupStatus(reservation) {
   const elapsedRental = Math.round((today - start) / msPerDay)
 
   if (daysToStart > 0) {
-    return { type: 'before', label: `픽업 D-${daysToStart}`, color: '#F7A633', progress: 0 }
+    return { type: 'before', label: t('myCar.pickupDday', { n: daysToStart }), color: '#F7A633', progress: 0 }
   } else if (daysToStart === 0) {
-    return { type: 'today', label: '오늘 픽업 가능!', color: '#4CAF50', progress: 0 }
+    return { type: 'today', label: t('myCar.pickupToday'), color: '#4CAF50', progress: 0 }
   } else if (daysToEnd > 0) {
     const progress = totalRental > 0 ? Math.min(elapsedRental / totalRental, 1) : 0
-    return { type: 'active', label: `반납 D-${daysToEnd}`, color: '#5B8DEF', progress }
+    return { type: 'active', label: t('myCar.returnDday', { n: daysToEnd }), color: '#5B8DEF', progress }
   } else {
-    return { type: 'return', label: '반납일', color: '#FF4D4F', progress: 1 }
+    return { type: 'return', label: t('myCar.returnDue'), color: '#FF4D4F', progress: 1 }
   }
 }
 
@@ -90,7 +81,7 @@ const IMPORTANT_NOTIFICATION_TYPES = new Set([
 ])
 
 export default function MyCarPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { state } = useLocation()
   const [reservations, setReservations] = useState(state?.reservation ? [state.reservation] : [])
@@ -219,16 +210,24 @@ export default function MyCarPage() {
   const { date: startDate, time: startTime } = splitDT(rawPickup)
   const { date: endDate,   time: endTime   } = splitDT(rawReturn)
 
-  const pickupStatus = getPickupStatus({ ...reservation, startDate, endDate })
+  const pickupStatus = getPickupStatus({ ...reservation, startDate, endDate }, t)
   const startLabel = formatDateLabel(startDate)
   const endLabel   = formatDateLabel(endDate)
+  const fmtWeekday = (date) => new Intl.DateTimeFormat(i18n.language, { weekday: 'short' }).format(date)
+  const statusLabel = {
+    RESERVED: t('myCar.statusReserved'),
+    IN_USE: t('myCar.statusInUse'),
+    COMPLETED: t('myCar.statusCompleted'),
+    CANCELLED: t('myCar.statusCancelled'),
+    AFTER_SCAN: t('myCar.statusAfterScan'),
+  }
 
   // 반납 버튼: 픽업일 당일 이후부터 활성화
   const today = new Date(); today.setHours(0,0,0,0)
   const returnActive = startDate ? new Date(startDate) <= today : false
   const carName    = reservation.brand && reservation.modelName
     ? `${reservation.brand} ${reservation.modelName}`
-    : reservation.carName || '차량 정보 없음'
+    : reservation.carName || t('myCar.noCarInfo')
 
   return (
     <div className="mc-page">
@@ -236,7 +235,7 @@ export default function MyCarPage() {
         {/* 예약 목록 토글 버튼 */}
         {reservations.length > 1 && (
           <button className="mc-res-toggle-btn" onClick={() => setShowCircles(v => !v)}>
-            <span>예약 {reservations.length}건</span>
+            <span>{t('myCar.reservationCount', { n: reservations.length })}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
               style={{ transform: showCircles ? 'rotate(180deg)' : '', transition: 'transform 0.2s' }}>
               <path d="M6 9l6 6 6-6" stroke="#F7A633" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -270,7 +269,7 @@ export default function MyCarPage() {
           <div className="mc-plate-row">
             <span className="mc-plate">{reservation.plateNumber}</span>
             <span className={`mc-nft-badge${reservation.status === 'COMPLETED' ? ' completed' : ''}`}>
-              {STATUS_LABEL[reservation.status] || reservation.status}
+              {statusLabel[reservation.status] || reservation.status}
             </span>
           </div>
           <h1 className="mc-car-name">{carName}</h1>
@@ -308,8 +307,8 @@ export default function MyCarPage() {
             <div className="mc-schedule-col">
               <span className="mc-schedule-tag pickup">{t('myCar.pickup')}</span>
               <p className="mc-schedule-date">
-                {startLabel ? `${startLabel.month}월 ${startLabel.day}일` : '--'}
-                {startLabel && <span className="mc-schedule-weekday"> ({startLabel.weekday})</span>}
+                {startLabel ? t('myCar.monthDay', { month: startLabel.month, day: startLabel.day }) : '--'}
+                {startLabel && <span className="mc-schedule-weekday"> ({fmtWeekday(startLabel.date)})</span>}
               </p>
               {startTime && <p className="mc-schedule-time">{startTime}</p>}
             </div>
@@ -324,8 +323,8 @@ export default function MyCarPage() {
             <div className="mc-schedule-col">
               <span className="mc-schedule-tag return">{t('myCar.return')}</span>
               <p className="mc-schedule-date">
-                {endLabel ? `${endLabel.month}월 ${endLabel.day}일` : '--'}
-                {endLabel && <span className="mc-schedule-weekday"> ({endLabel.weekday})</span>}
+                {endLabel ? t('myCar.monthDay', { month: endLabel.month, day: endLabel.day }) : '--'}
+                {endLabel && <span className="mc-schedule-weekday"> ({fmtWeekday(endLabel.date)})</span>}
               </p>
               {endTime && <p className="mc-schedule-time">{endTime}</p>}
             </div>
@@ -466,7 +465,7 @@ export default function MyCarPage() {
               <span>!</span>
             </div>
             <p className="mc-dispute-modal-text">
-              {pendingDisputeNotification?.title || '분쟁이 접수되었습니다.'}
+              {pendingDisputeNotification?.title || t('myCar.disputeDefault')}
             </p>
             {pendingDisputeNotification?.reservationId && (
               <p className="mc-dispute-modal-sub">

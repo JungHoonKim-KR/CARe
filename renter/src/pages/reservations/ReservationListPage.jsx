@@ -1,28 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import BottomNav from '../../components/BottomNav'
 import { getMyReservations, getMyNotifications } from '../../api/reservation'
 import './ReservationListPage.css'
 
-const STATUS_LABEL = {
-  RESERVED:   { text: '예약완료', color: '#5B8DEF' },
-  IN_USE:     { text: '이용중',   color: '#4CAF50' },
-  AFTER_SCAN: { text: '스캔완료', color: '#F7A633' },
-  COMPLETED:  { text: '반납완료', color: '#888'    },
-  CANCELLED:  { text: '취소됨',   color: '#FF4D4F' },
+const STATUS_COLOR = {
+  RESERVED:   '#5B8DEF',
+  IN_USE:     '#4CAF50',
+  AFTER_SCAN: '#F7A633',
+  COMPLETED:  '#888',
+  CANCELLED:  '#FF4D4F',
 }
-
-const DEPOSIT_BADGE = {
-  LOCKED:   { text: '분쟁중',  color: '#FF4D4F', bg: '#FF4D4F' },
-  DEDUCTED: { text: '정산완료', color: '#fff',   bg: '#888'    },
-}
-
-const TABS = [
-  { key: 'ALL',      label: '전체' },
-  { key: 'ACTIVE',   label: '예약완료' },
-  { key: 'DONE',     label: '반납완료' },
-  { key: 'DISPUTE',  label: '분쟁중' },
-]
 
 const ACTIVE_STATUSES = new Set(['RESERVED', 'IN_USE', 'AFTER_SCAN'])
 
@@ -52,11 +41,32 @@ function pickupMs(r) {
 }
 
 export default function ReservationListPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('ALL')
   const [disputeMap, setDisputeMap] = useState({})
+
+  const TABS = [
+    { key: 'ALL',     label: t('reservationList.tabAll') },
+    { key: 'ACTIVE',  label: t('reservationList.tabActive') },
+    { key: 'DONE',    label: t('reservationList.tabDone') },
+    { key: 'DISPUTE', label: t('reservationList.tabDispute') },
+  ]
+
+  const STATUS_LABEL = {
+    RESERVED:   { text: t('myCar.statusReserved'),   color: STATUS_COLOR.RESERVED   },
+    IN_USE:     { text: t('myCar.statusInUse'),      color: STATUS_COLOR.IN_USE     },
+    AFTER_SCAN: { text: t('myCar.statusAfterScan'),  color: STATUS_COLOR.AFTER_SCAN },
+    COMPLETED:  { text: t('myCar.statusCompleted'),  color: STATUS_COLOR.COMPLETED  },
+    CANCELLED:  { text: t('myCar.statusCancelled'),  color: STATUS_COLOR.CANCELLED  },
+  }
+
+  const DEPOSIT_BADGE = {
+    LOCKED:   { text: t('reservationList.depositLocked'),   color: '#FF4D4F', bg: '#FF4D4F' },
+    DEDUCTED: { text: t('reservationList.depositDeducted'), color: '#fff',    bg: '#888'    },
+  }
 
   useEffect(() => {
     Promise.all([getMyReservations(), getMyNotifications()])
@@ -85,7 +95,7 @@ export default function ReservationListPage() {
             <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="#111" />
           </svg>
         </button>
-        <h1 className="rl-title">예약 내역</h1>
+        <h1 className="rl-title">{t('reservationList.title')}</h1>
       </div>
 
       <div className="rl-tabs">
@@ -101,9 +111,9 @@ export default function ReservationListPage() {
       </div>
 
       <div className="rl-body">
-        {loading && <p className="rl-empty">불러오는 중...</p>}
+        {loading && <p className="rl-empty">{t('reservationList.loading')}</p>}
         {!loading && filtered.length === 0 && (
-          <p className="rl-empty">해당 내역이 없습니다.</p>
+          <p className="rl-empty">{t('reservationList.empty')}</p>
         )}
         {filtered.map((r) => {
           const status = STATUS_LABEL[r.status] || { text: r.status, color: '#888' }
@@ -147,7 +157,7 @@ export default function ReservationListPage() {
                     navigate('/dispute', { state: { reservation: r, disputeId: disputeMap[r.reservationId] } })
                   }}
                 >
-                  분쟁 내역 보기 →
+                  {t('reservationList.disputeBtn')}
                 </button>
               )}
             </div>

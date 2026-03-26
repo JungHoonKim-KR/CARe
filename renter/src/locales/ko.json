@@ -231,7 +231,11 @@
     "statusReserved": "예약 완료",
     "statusInUse": "이용 중",
     "statusCompleted": "반납 완료",
-    "statusCancelled": "취소됨"
+    "statusCancelled": "취소됨",
+    "statusAfterScan": "스캔완료",
+    "monthDay": "{{month}}월 {{day}}일",
+    "reservationCount": "예약 {{n}}건",
+    "noCarInfo": "차량 정보 없음"
   },
   "carList": {
     "filterAll": "전체",
@@ -301,6 +305,23 @@
     "doneTitle": "반납이 완료되었습니다",
     "doneDesc": "사진이 블록체인에 안전하게 저장됐어요.\n이용해 주셔서 감사합니다.",
     "goHome": "홈으로 돌아가기"
+  },
+  "reservationList": {
+    "title": "예약 내역",
+    "loading": "불러오는 중...",
+    "empty": "해당 내역이 없습니다.",
+    "tabAll": "전체",
+    "tabActive": "예약완료",
+    "tabDone": "반납완료",
+    "tabDispute": "분쟁중",
+    "depositLocked": "분쟁중",
+    "depositDeducted": "정산완료",
+    "disputeBtn": "분쟁 내역 보기 →"
+  },
+  "reservationDetail": {
+    "title": "예약 상세",
+    "notFound": "예약 정보를 찾을 수 없어요",
+    "backToList": "예약 목록으로"
   },
   "dispute": {
     "title": "분쟁 상세",

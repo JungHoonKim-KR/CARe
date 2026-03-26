@@ -171,16 +171,16 @@ export default function CarDetailPage() {
           <p className="cd-sec-title">{t('carDetail.specTitle')}</p>
           <div className="cd-spec-grid">
             <div className="cd-spec-cell">
-              <p className="cd-spec-lbl">{t('carDetail.year')}</p>
+              <p className="cd-spec-lbl">{t('carDetail.brand')}</p>
               <p className="cd-spec-val">{car.brand || '-'}</p>
             </div>
             <div className="cd-spec-cell cd-spec-mid">
-              <p className="cd-spec-lbl">{t('carDetail.mileage')}</p>
-              <p className="cd-spec-val">{car.carSize || '-'}</p>
+              <p className="cd-spec-lbl">{t('carDetail.size')}</p>
+              <p className="cd-spec-val">{car.carSize ? t(`carDetail.size${car.carSize.charAt(0) + car.carSize.slice(1).toLowerCase()}`) : '-'}</p>
             </div>
             <div className="cd-spec-cell">
               <p className="cd-spec-lbl">{t('carDetail.fuel')}</p>
-              <p className="cd-spec-val">{car.fuelType || '-'}</p>
+              <p className="cd-spec-val">{car.fuelType ? t(`carDetail.fuel${car.fuelType.charAt(0) + car.fuelType.slice(1).toLowerCase()}`) : '-'}</p>
             </div>
           </div>
         </div>
@@ -196,7 +196,7 @@ export default function CarDetailPage() {
                 onClick={() => setInsurance(plan.insuranceId)}
               >
                 <p className="cd-ins-lbl">{plan.name}</p>
-                <p className="cd-ins-price">{plan.price}T</p>
+                <p className="cd-ins-price">{Number(plan.price).toLocaleString()} CARE</p>
                 <p className="cd-ins-cov">{plan.description}</p>
               </button>
             ))}

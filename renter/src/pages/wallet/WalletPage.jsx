@@ -93,7 +93,7 @@ export default function WalletPage() {
               <p className="token-balance-value token-balance-loading">{t('wallet.loading')}</p>
             ) : (
               <p className="token-balance-value">
-                {careBalance ?? '--'} <span className="token-balance-unit">CARE</span>
+                {careBalance != null ? Number(careBalance).toLocaleString() : '--'} <span className="token-balance-unit">CARE</span>
               </p>
             )}
           </div>

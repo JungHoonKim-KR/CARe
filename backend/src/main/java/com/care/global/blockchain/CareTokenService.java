@@ -114,6 +114,7 @@ public class CareTokenService {
         );
         String burnTxHash = sendFunction(burnFunction);
         log.info("[CareToken] burn {} CARE from {} txHash: {}", amount, fromAddress, burnTxHash);
+        waitForReceipt(burnTxHash);
 
         // faucet (입금)
         Function mintFunction = new Function(
@@ -123,6 +124,7 @@ public class CareTokenService {
         );
         String mintTxHash = sendFunction(mintFunction);
         log.info("[CareToken] faucet {} CARE → {} txHash: {}", amount, toAddress, mintTxHash);
+        waitForReceipt(mintTxHash);
 
         return mintTxHash;
     }

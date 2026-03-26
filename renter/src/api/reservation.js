@@ -99,7 +99,7 @@ export const getDisputeDetail = async (reservationId, disputeId) => {
 }
 
 // 예약 생성
-export const createReservation = async (carId, insuranceId, pickupDate, pickupTime, returnDate, returnTime) => {
+export const createReservation = async (carId, insuranceId, pickupDate, pickupTime, returnDate, returnTime, totalPrice) => {
   const toDateTime = (date, time) => {
     if (!date) return null
     const t = time || '10:00'
@@ -110,6 +110,7 @@ export const createReservation = async (carId, insuranceId, pickupDate, pickupTi
     insuranceId,
     pickupDate: toDateTime(pickupDate, pickupTime),
     returnDate: toDateTime(returnDate, returnTime),
+    totalPrice,
   })
   return response.data
 }

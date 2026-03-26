@@ -302,6 +302,8 @@
   "dispute": {
     "title": "Dispute Detail",
     "statusOpen": "Dispute Filed",
+    "statusPending": "In Progress",
+    "statusCompleted": "Completed",
     "statusDefended": "Defense Submitted",
     "statusResolved": "Resolved",
     "statusRejected": "Rejected",

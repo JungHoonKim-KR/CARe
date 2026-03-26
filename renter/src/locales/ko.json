@@ -302,6 +302,8 @@
   "dispute": {
     "title": "분쟁 상세",
     "statusOpen": "분쟁 신청됨",
+    "statusPending": "처리 중",
+    "statusCompleted": "완료됨",
     "statusDefended": "소명 완료",
     "statusResolved": "해결됨",
     "statusRejected": "기각됨",

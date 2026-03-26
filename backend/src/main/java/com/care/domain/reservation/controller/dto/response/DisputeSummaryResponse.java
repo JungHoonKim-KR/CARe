@@ -26,7 +26,7 @@ public record DisputeSummaryResponse(
                 dispute.getReservation().getOwnedCar().getCarModel().getModelName(),
                 dispute.getReservation().getRenter().getName(),
                 dispute.getClaimAmount(),
-                dispute.getStatus(),
+                dispute.getStatusEnum().name(),
                 dispute.getCreatedAt()
         );
     }

@@ -81,8 +81,18 @@ export default function CarDetailPage() {
   }, [car.companyId])
 
   const selectedPlan = insurancePlans.find((p) => p.insuranceId === insurance) || insurancePlans[0]
-  const basePrice    = car.pricePerDay || 1033
-  const totalPrice   = basePrice + (selectedPlan?.price || 0)
+  const basePrice    = car.dailyPrice || 0
+
+  const rentalDays = (() => {
+    const p = searchInfo.pickupDate
+    const r = searchInfo.returnDate
+    if (!p || !r) return 1
+    const diff = (new Date(r) - new Date(p)) / (1000 * 60 * 60 * 24)
+    return diff > 0 ? diff : 1
+  })()
+
+  const rentalPrice  = basePrice * rentalDays
+  const totalPrice   = rentalPrice + (selectedPlan?.price || 0)
 
   const toggleAll = () => {
     const next = !allChecked
@@ -110,9 +120,7 @@ export default function CarDetailPage() {
         insuranceId: selectedPlan?.insuranceId,
         searchInfo,
         insurance: selectedPlan,
-        rentalPrice: basePrice,
-        deposit: 300,
-        total: totalPrice + 300,
+        rentalPrice,
       },
     })
   }

@@ -15,9 +15,8 @@ export default function PaymentPage() {
   const insuranceId = state?.insuranceId || ''
   const searchInfo  = state?.searchInfo  || {}
   const insurance   = state?.insurance   || { label: '스탠다드', price: 80 }
-  const rentalPrice = state?.rentalPrice || 1033
-  const deposit     = state?.deposit     || 300
-  const total       = state?.total       || rentalPrice + insurance.price + deposit
+  const rentalPrice = state?.rentalPrice || 0
+  const total       = rentalPrice + (insurance.price || 0)
 
   const [walletBalance, setWalletBalance] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -29,7 +28,7 @@ export default function PaymentPage() {
   }, [])
 
   const handlePay = async () => {
-    if (walletBalance !== null && walletBalance < total) {
+    if (walletBalance !== null && walletBalance < total && total > 0) {
       setShowChargeModal(true)
       return
     }
@@ -101,7 +100,7 @@ export default function PaymentPage() {
           </div>
           <div className="pay-row">
             <span className="pay-row-lbl">결제 금액</span>
-            <span className="pay-row-val">{(rentalPrice + insurance.price).toLocaleString()} CARE</span>
+            <span className="pay-row-val">{total.toLocaleString()} CARE</span>
           </div>
         </div>
 
@@ -134,10 +133,6 @@ export default function PaymentPage() {
           <div className="pay-row">
             <span className="pay-row-lbl">{insurance.label} 보험료</span>
             <span className="pay-row-val">{insurance.price.toLocaleString()} CARE</span>
-          </div>
-          <div className="pay-row">
-            <span className="pay-row-lbl">예치 보증금</span>
-            <span className="pay-row-val">{deposit.toLocaleString()} CARE</span>
           </div>
           <div className="pay-total-line" />
           <div className="pay-row pay-row-last pay-row-total">

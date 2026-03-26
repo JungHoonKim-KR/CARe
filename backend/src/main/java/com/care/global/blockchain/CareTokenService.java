@@ -42,9 +42,9 @@ public class CareTokenService {
     private long chainId;
 
     // 1 CARE = 1_000_000 (decimals: 6)
-    // 1원으로 가정
+    // 1원 = 1 CARE
     public static BigInteger toCare(double amount) {
-        return BigInteger.valueOf((long) (amount));
+        return BigInteger.valueOf((long) (amount * 1_000_000));
     }
 
     public CareTokenService(Web3j web3j, Credentials credentials) {

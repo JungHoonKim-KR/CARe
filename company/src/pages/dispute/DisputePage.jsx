@@ -45,11 +45,6 @@ export default function DisputePage() {
   }
   const uiStatus = toUiStatus(dispute?.status)
 
-  const defenseImages = [
-    dispute?.defenseOriginalS3Url,
-    dispute?.defenseCropS3Url,
-  ].filter(Boolean)
-
   const defenseLog = scratchLogs.find((log) => log.logId === dispute?.defenseLogId)
   const defenseImages = [
     dispute?.defenseOriginalS3Url || defenseLog?.originalS3Url,

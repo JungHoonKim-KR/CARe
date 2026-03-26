@@ -31,6 +31,7 @@ import DamageDetailPage from './pages/damage-detail/DamageDetailPage'
 import DisputePage from './pages/dispute/DisputePage'
 import DisputeHistoryPage from './pages/dispute/DisputeHistoryPage'
 import ReservationListPage from './pages/reservations/ReservationListPage'
+import ReservationDetailPage from './pages/reservations/ReservationDetailPage'
 import ReturnGuidePage from './pages/car-return/ReturnGuidePage'
 import CarReturnPage from './pages/car-return/CarReturnPage'
 import CarCrackPage from './pages/car-crack/CarCrackPage'
@@ -71,6 +72,7 @@ function App() {
           <Route path="/dispute" element={<DisputePage />} />
           <Route path="/dispute-history" element={<DisputeHistoryPage />} />
           <Route path="/reservations" element={<ReservationListPage />} />
+          <Route path="/reservations/:reservationId" element={<ReservationDetailPage />} />
           <Route path="/return-guide" element={<ReturnGuidePage />} />
           <Route path="/car-return" element={<CarReturnPage />} />
           <Route path="/car-crack" element={<CarCrackPage />} />

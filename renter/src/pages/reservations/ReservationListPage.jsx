@@ -100,7 +100,7 @@ export default function ReservationListPage() {
             <div
               key={r.reservationId}
               className="rl-card"
-              onClick={() => navigate('/my-car', { state: { reservation: r } })}
+              onClick={() => navigate(`/reservations/${r.reservationId}`, { state: { reservation: r, disputeId: disputeMap[r.reservationId] } })}
             >
               <div className="rl-card-top">
                 <span className="rl-car-name">{r.brand} {r.modelName}</span>

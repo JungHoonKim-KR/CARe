@@ -23,11 +23,7 @@ export default function LanguageSelectPage() {
   const handleConfirm = () => {
     i18n.changeLanguage(selected)
     localStorage.setItem('language', selected)
-    if (isSettings) {
-      navigate(-1)
-    } else {
-      navigate('/landing')
-    }
+    navigate(-1)
   }
 
   const currentLabel = LANGUAGES.find((l) => l.code === selected)?.label || ''

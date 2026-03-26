@@ -1,11 +1,14 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AuthService from '../services/AuthService'
+import CompanyNotificationService from '../services/CompanyNotificationService'
 import './Sidebar.css'
 
 export default function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
+  const [notifications, setNotifications] = useState([])
+  const [notificationOpen, setNotificationOpen] = useState(false)
 
   const menuItems = [
     { id: 'dashboard', label: '대시보드', path: '/dashboard' },
@@ -19,6 +22,68 @@ export default function Sidebar() {
     { id: 'settings', label: '설정', path: '/settings' }
   ]
 
+  useEffect(() => {
+    let mounted = true
+
+    const loadNotifications = async () => {
+      const result = await CompanyNotificationService.getNotifications()
+      if (!mounted || !result.success) return
+      setNotifications(result.data)
+    }
+
+    loadNotifications()
+
+    const token = localStorage.getItem('token')
+    if (!token) {
+      return () => {
+        mounted = false
+      }
+    }
+
+    const abortController = new AbortController()
+    CompanyNotificationService.subscribeNotifications({
+      token,
+      signal: abortController.signal,
+      onNotification: (notification) => {
+        setNotifications((prev) => [notification, ...prev])
+      },
+      onError: (error) => {
+        console.error('업체 알림 SSE 연결 오류:', error)
+      },
+    }).catch((error) => {
+      if (abortController.signal.aborted) return
+      console.error('업체 알림 SSE 구독 실패:', error)
+    })
+
+    return () => {
+      mounted = false
+      abortController.abort()
+    }
+  }, [])
+
+  const unreadCount = useMemo(
+    () => notifications.filter((item) => !item.read).length,
+    [notifications]
+  )
+
+  const handleNotificationClick = async (notification) => {
+    if (!notification.read && notification.notificationId) {
+      const result = await CompanyNotificationService.markAsRead(notification.notificationId)
+      if (result.success) {
+        setNotifications((prev) => prev.map((item) => (
+          item.notificationId === notification.notificationId
+            ? { ...item, read: true, readAt: result.data?.readAt || item.readAt }
+            : item
+        )))
+      }
+    }
+
+    if (notification.disputeId) {
+      navigate(`/disputes/${notification.disputeId}`)
+      setNotificationOpen(false)
+    }
+  }
+
   const handleLogout = async () => {
     const confirmed = window.confirm('로그아웃하시겠습니까?')
     if (!confirmed) return
@@ -30,8 +95,42 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <div className="sidebar-logo">
-          <span className="logo-text">CARe 업체</span>
+        <div className="sidebar-header-row">
+          <div className="sidebar-logo">
+            <span className="logo-text">CARe 업체</span>
+          </div>
+          <div className="sidebar-notification-wrap">
+            <button
+              type="button"
+              className="sidebar-notification-btn"
+              onClick={() => setNotificationOpen((prev) => !prev)}
+              aria-label="알림"
+            >
+              알림
+              {unreadCount > 0 && <span className="sidebar-notification-badge">{unreadCount}</span>}
+            </button>
+            {notificationOpen && (
+              <div className="sidebar-notification-panel">
+                <div className="sidebar-notification-title">실시간 알림</div>
+                <div className="sidebar-notification-list">
+                  {notifications.length === 0 && (
+                    <div className="sidebar-notification-empty">새 알림이 없습니다.</div>
+                  )}
+                  {notifications.slice(0, 10).map((notification) => (
+                    <button
+                      key={notification.notificationId}
+                      type="button"
+                      className={`sidebar-notification-item ${notification.read ? '' : 'unread'}`}
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <div className="sidebar-notification-item-title">{notification.title}</div>
+                      <div className="sidebar-notification-item-message">{notification.message}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

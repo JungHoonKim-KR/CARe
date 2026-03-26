@@ -6,9 +6,8 @@ import { getDisputeDetail, settleDispute } from '../../api/reservation'
 import './DisputePage.css'
 
 const STATUS_LABELS = {
-  PENDING: '검토 중',
-  DEFENDED: '이의 신청됨',
-  RESOLVED: '해결됨',
+  OPEN: '분쟁 신청됨',
+  COMPLETED: '완료됨',
   REJECTED: '기각됨',
 }
 
@@ -60,7 +59,7 @@ export default function DisputePage() {
     try {
       const result = await settleDispute(dispute.disputeId, dispute.claimAmount || 0, 'COMPLETED')
 
-      if (result?.status === 'PENDING') {
+      if (result?.status !== 'COMPLETED') {
         alert(t('dispute.settlePending'))
       } else {
         alert(t('dispute.settleComplete'))

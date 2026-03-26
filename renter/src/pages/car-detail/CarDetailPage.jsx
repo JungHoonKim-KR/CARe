@@ -141,7 +141,7 @@ export default function CarDetailPage() {
               strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
-        <h1 className="cd-header-title">{car.name || '메르세데스-벤츠 SL65 AMG'}</h1>
+        <h1 className="cd-header-title">{car.brand && car.modelName ? `${car.brand} ${car.modelName}` : car.name || '차량 상세'}</h1>
         <button className="cd-fav" onClick={() => setFavorite(!favorite)}>
           {favorite
             ? <svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#F7A633"/></svg>
@@ -177,15 +177,15 @@ export default function CarDetailPage() {
           <div className="cd-spec-grid">
             <div className="cd-spec-cell">
               <p className="cd-spec-lbl">{t('carDetail.year')}</p>
-              <p className="cd-spec-val">{car.year || '2024년 3월'}</p>
+              <p className="cd-spec-val">{car.brand || '-'}</p>
             </div>
             <div className="cd-spec-cell cd-spec-mid">
               <p className="cd-spec-lbl">{t('carDetail.mileage')}</p>
-              <p className="cd-spec-val">{car.mileage || '12,450 km/h'}</p>
+              <p className="cd-spec-val">{car.carSize || '-'}</p>
             </div>
             <div className="cd-spec-cell">
               <p className="cd-spec-lbl">{t('carDetail.fuel')}</p>
-              <p className="cd-spec-val">{car.fuel || '가솔린'}</p>
+              <p className="cd-spec-val">{car.fuelType || '-'}</p>
             </div>
           </div>
         </div>
@@ -228,7 +228,7 @@ export default function CarDetailPage() {
             </div>
             <div className="cd-company">
               <div className="cd-co-logo">O</div>
-              <span className="cd-co-name">{car.company || 'ORIX Rent-A-Car'}</span>
+              <span className="cd-co-name">{car.companyName || '-'}</span>
               <button className="cd-co-link">{t('carDetail.companyInfo')}</button>
             </div>
           </div>

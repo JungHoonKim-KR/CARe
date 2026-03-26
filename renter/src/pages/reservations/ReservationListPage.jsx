@@ -36,8 +36,19 @@ function filterReservations(list, tab) {
 
 function formatDate(dateStr) {
   if (!dateStr) return '--'
+  if (Array.isArray(dateStr)) {
+    const [y, mo, d] = dateStr
+    return `${y}.${String(mo).padStart(2,'0')}.${String(d).padStart(2,'0')}`
+  }
   const d = dateStr.split('T')[0]
   return d.replace(/-/g, '.')
+}
+
+function pickupMs(r) {
+  const p = r.pickupDate
+  if (!p) return 0
+  if (Array.isArray(p)) return new Date(p[0], p[1]-1, p[2]).getTime()
+  return new Date(p).getTime() || 0
 }
 
 export default function ReservationListPage() {
@@ -63,6 +74,8 @@ export default function ReservationListPage() {
   }, [])
 
   const filtered = filterReservations(reservations, activeTab)
+    .slice()
+    .sort((a, b) => pickupMs(b) - pickupMs(a))
 
   return (
     <div className="rl-page">
@@ -100,7 +113,13 @@ export default function ReservationListPage() {
             <div
               key={r.reservationId}
               className="rl-card"
-              onClick={() => navigate(`/reservations/${r.reservationId}`, { state: { reservation: r, disputeId: disputeMap[r.reservationId] } })}
+              onClick={() => {
+                if (ACTIVE_STATUSES.has(r.status)) {
+                  navigate('/my-car', { state: { reservation: r } })
+                } else {
+                  navigate(`/reservations/${r.reservationId}`, { state: { reservation: r, disputeId: disputeMap[r.reservationId] } })
+                }
+              }}
             >
               <div className="rl-card-top">
                 <span className="rl-car-name">{r.brand} {r.modelName}</span>

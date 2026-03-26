@@ -6,7 +6,7 @@ from deepface import DeepFace
 def verify(
     img1_path: Path | str,
     img2_path: Path | str,
-    model_name: str = "Facenet",
+    model_name: str = "Facenet512",
     detector_backend: str = "opencv",
     enforce_detection: bool = False,
 ) -> dict:
@@ -22,6 +22,7 @@ def verify(
         model_name=model_name,
         detector_backend=detector_backend,
         enforce_detection=enforce_detection,
+        threshold=0.9,
     )
     return {
         "verified": result["verified"],

@@ -10,5 +10,6 @@ public record ReservationCreateRequest(
         @NotBlank String carId,
         @NotBlank String insuranceId,
         @NotNull LocalDateTime pickupDate,
-        @NotNull LocalDateTime returnDate
+        @NotNull LocalDateTime returnDate,
+        @NotNull @Positive int totalPrice
 ) {}

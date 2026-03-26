@@ -5,6 +5,7 @@ python-multipart==0.0.20
 torch==2.6.0+cu124
 torchvision==0.21.0+cu124
 pillow==11.1.0
+pillow-avif-plugin>=1.4.0
 deepface==0.0.93
 tf-keras
 httpx>=0.25.0

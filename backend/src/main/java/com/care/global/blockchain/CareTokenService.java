@@ -41,10 +41,9 @@ public class CareTokenService {
     @Value("${blockchain.chain-id}")
     private long chainId;
 
-    // 1 CARE = 1_000_000 (decimals: 6)
     // 1원 = 1 CARE
     public static BigInteger toCare(double amount) {
-        return BigInteger.valueOf((long) (amount * 1_000_000));
+        return BigInteger.valueOf((long) (amount));
     }
 
     public CareTokenService(Web3j web3j, Credentials credentials) {
@@ -103,7 +102,7 @@ public class CareTokenService {
         BigInteger balance = balanceOf(fromAddress);
         BigInteger required = toCare(amount);
         if (balance.compareTo(required) < 0) {
-            throw new RuntimeException("잔액 부족: 보유=" + balance + ", 필요=" + required);
+            throw new RuntimeException("잔액 부족: 보유=" + balance.divide(BigInteger.valueOf(1_000_000)) + " CARE, 필요=" + (long) amount + " CARE");
         }
 
         // burn (출금)
@@ -114,6 +113,7 @@ public class CareTokenService {
         );
         String burnTxHash = sendFunction(burnFunction);
         log.info("[CareToken] burn {} CARE from {} txHash: {}", amount, fromAddress, burnTxHash);
+        waitForReceipt(burnTxHash);
 
         // faucet (입금)
         Function mintFunction = new Function(
@@ -123,6 +123,7 @@ public class CareTokenService {
         );
         String mintTxHash = sendFunction(mintFunction);
         log.info("[CareToken] faucet {} CARE → {} txHash: {}", amount, toAddress, mintTxHash);
+        waitForReceipt(mintTxHash);
 
         return mintTxHash;
     }

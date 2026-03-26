@@ -1,214 +1,187 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import TabFilter from '../../components/TabFilter'
 import CarService from '../../services/CarService'
 import './CarManagementPage.css'
+
+/* ── 매핑 ── */
+const STATUS_META = {
+  ACTIVE:      { label: '대여가능', cls: 'available',   dot: '#1a7a45' },
+  RENTED:      { label: '대여중',   cls: 'rented',      dot: '#3d4ecf' },
+  MAINTENANCE: { label: '정비중',   cls: 'maintenance', dot: '#b45309' },
+  INACTIVE:    { label: '대여불가', cls: 'inactive',     dot: '#52525e' },
+}
+const FUEL_MAP = {
+  GASOLINE: '가솔린', DIESEL: '디젤', ELECTRIC: '전기', HYBRID: '하이브리드',
+}
+const CAT_MAP = {
+  ACTIVE: 'available', RENTED: 'rented', MAINTENANCE: 'maintenance', INACTIVE: 'inactive',
+}
+const CAR_ICONS = ['🚗','🚙','🚕','🏎️','🚐']
+
+/* ── 목업 데이터 ── */
+const MOCK_CARS = [
+  { carId: 1, brand: '현대', modelName: '아반떼', fuelType: 'GASOLINE', status: 'ACTIVE',      dailyPrice: 65000,  reservationCount: 12 },
+  { carId: 2, brand: '기아',  modelName: 'K5',    fuelType: 'HYBRID',   status: 'RENTED',      dailyPrice: 80000,  reservationCount: 8  },
+  { carId: 3, brand: 'BMW',  modelName: '320i',  fuelType: 'GASOLINE', status: 'RENTED',      dailyPrice: 150000, reservationCount: 5  },
+  { carId: 4, brand: '현대', modelName: '싼타페', fuelType: 'DIESEL',   status: 'MAINTENANCE', dailyPrice: 110000, reservationCount: 20 },
+  { carId: 5, brand: '테슬라',modelName: 'Model3',fuelType: 'ELECTRIC', status: 'ACTIVE',      dailyPrice: 130000, reservationCount: 15 },
+]
+
+/* ── 스켈레톤 로딩 ── */
+function SkeletonRows() {
+  return Array.from({ length: 4 }).map((_, i) => (
+    <tr key={i} className="skeleton-row">
+      <td><div className="skeleton sk-car" /></td>
+      <td><div className="skeleton sk-short" /></td>
+      <td><div className="skeleton sk-mid" /></td>
+      <td><div className="skeleton sk-short" /></td>
+      <td><div className="skeleton sk-badge" /></td>
+      <td />
+    </tr>
+  ))
+}
 
 export default function CarManagementPage() {
   const [activeTab, setActiveTab] = useState('all')
   const [cars, setCars] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
-    fetchCompanyCars()
+    const load = async () => {
+      setLoading(true)
+      const companyId = localStorage.getItem('companyId')
+      if (companyId) {
+        const result = await CarService.getCompanyCars(companyId)
+        setCars(result.success && result.data?.length ? result.data : MOCK_CARS)
+      } else {
+        setCars(MOCK_CARS)
+      }
+      setLoading(false)
+    }
+    load()
   }, [])
 
-  const fetchCompanyCars = async () => {
-    setLoading(true)
-    setError(null)
-
-    const companyId = localStorage.getItem('companyId')
-    if (!companyId) {
-      setError('회사 정보를 찾을 수 없습니다.')
-      setLoading(false)
-      return
-    }
-
-    const result = await CarService.getCompanyCars(companyId)
-
-    if (result.success) {
-      setCars(result.data || [])
-    } else {
-      setError(result.message)
-    }
-
-    setLoading(false)
+  /* 탭 카운트 */
+  const counts = {
+    all:         cars.length,
+    available:   cars.filter(c => c.status === 'ACTIVE').length,
+    rented:      cars.filter(c => c.status === 'RENTED').length,
+    maintenance: cars.filter(c => c.status === 'MAINTENANCE').length,
   }
 
-  // 상태 매핑 함수
-  const getStatusText = (status) => {
-    const statusMap = {
-      ACTIVE: '대여가능',
-      RENTED: '대여중',
-      MAINTENANCE: '정비중',
-      INACTIVE: '대여불가'
-    }
-    return statusMap[status] || status
-  }
-
-  // 연료 타입 매핑 함수
-  const getFuelTypeText = (fuelType) => {
-    const fuelMap = {
-      GASOLINE: '가솔린',
-      DIESEL: '디젤',
-      ELECTRIC: '전기',
-      HYBRID: '하이브리드'
-    }
-    return fuelMap[fuelType] || fuelType
-  }
-
-  // 상태별 카테고리 매핑
-  const getCategoryFromStatus = (status) => {
-    const categoryMap = {
-      ACTIVE: 'available',
-      RENTED: 'rented',
-      MAINTENANCE: 'maintenance',
-      INACTIVE: 'inactive'
-    }
-    return categoryMap[status] || 'all'
-  }
-
-  // 탭 카운트 계산
-  const getTabCounts = () => {
-    const counts = {
-      all: cars.length,
-      available: cars.filter(car => car.status === 'ACTIVE').length,
-      rented: cars.filter(car => car.status === 'RENTED').length,
-      maintenance: cars.filter(car => car.status === 'MAINTENANCE').length
-    }
-    return counts
-  }
-
-  const tabCounts = getTabCounts()
-
-  const tabs = [
-    { id: 'all', label: '총', count: tabCounts.all },
-    { id: 'available', label: '대여가능', count: tabCounts.available },
-    { id: 'rented', label: '대여중', count: tabCounts.rented },
-    { id: 'maintenance', label: '정비중', count: tabCounts.maintenance },
+  const chips = [
+    { id: 'all',         label: '전체',    count: counts.all,         dot: '#F5A623' },
+    { id: 'available',   label: '대여가능', count: counts.available,   dot: '#1a7a45' },
+    { id: 'rented',      label: '대여중',   count: counts.rented,      dot: '#3d4ecf' },
+    { id: 'maintenance', label: '정비중',   count: counts.maintenance, dot: '#b45309' },
   ]
 
-  const handleItemClick = (carId) => {
-    navigate(`/cars/${carId}`)
-  }
+  const filtered = activeTab === 'all'
+    ? cars
+    : cars.filter(c => CAT_MAP[c.status] === activeTab)
 
-  const filteredCars =
-    activeTab === 'all'
-      ? cars
-      : cars.filter((car) => getCategoryFromStatus(car.status) === activeTab)
-
-  const getStatusBadge = (status) => {
-    const statusMap = {
-      ACTIVE: 'badge-blue',
-      RENTED: 'badge-green',
-      MAINTENANCE: 'badge-amber',
-      INACTIVE: 'badge-gray'
-    }
-    return statusMap[status] || 'badge-gray'
-  }
-
-  if (loading) {
-    return (
-      <div className="car-management-page">
-        <div className="page-header-with-button">
-          <div>
-            <h1 className="page-title">차량 관리</h1>
-            <p className="page-subtitle">등록된 차량을 관리하고 새로운 차량을 등록하세요</p>
-          </div>
-        </div>
-        <div style={{ textAlign: 'center', padding: '50px' }}>로딩 중...</div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="car-management-page">
-        <div className="page-header-with-button">
-          <div>
-            <h1 className="page-title">차량 관리</h1>
-            <p className="page-subtitle">등록된 차량을 관리하고 새로운 차량을 등록하세요</p>
-          </div>
-        </div>
-        <div style={{ textAlign: 'center', padding: '50px', color: 'red' }}>
-          {error}
-        </div>
-      </div>
-    )
-  }
+  const maxReservations = Math.max(...cars.map(c => c.reservationCount ?? 0), 1)
 
   return (
     <div className="car-management-page">
+
+      {/* ── 헤더 ── */}
       <div className="page-header-with-button">
         <div>
           <h1 className="page-title">차량 관리</h1>
-          <p className="page-subtitle">등록된 차량을 관리하고 새로운 차량을 등록하세요</p>
+          <p className="page-subtitle">등록된 차량을 관리하고 새 차량을 등록하세요</p>
         </div>
-        <button className="btn btn-primary"
-          onClick={() => navigate('/cars/register')}>+ 차량 등록</button>
+        <button className="btn-register" onClick={() => navigate('/cars/register')}>
+          + 차량 등록
+        </button>
       </div>
 
-      <TabFilter tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+      {/* ── 요약 칩 ── */}
+      <div className="car-summary-bar">
+        {chips.map(chip => (
+          <button
+            key={chip.id}
+            className={`car-summary-chip${activeTab === chip.id ? ' active-chip' : ''}`}
+            onClick={() => setActiveTab(chip.id)}
+          >
+            <span
+              className="car-summary-chip-dot"
+              style={{ background: activeTab === chip.id ? '#fff' : chip.dot }}
+            />
+            {chip.label}
+            <span className="car-summary-chip-count">{chip.count}</span>
+          </button>
+        ))}
+      </div>
 
+      {/* ── 테이블 ── */}
       <div className="car-table-container">
         <table className="car-table">
           <thead>
             <tr>
               <th>차량</th>
-              <th>차종</th>
-              <th>위치</th>
+              <th>연료</th>
               <th>일일 대여료</th>
               <th>예약 수</th>
               <th>상태</th>
-              <th></th>
+              <th />
             </tr>
           </thead>
           <tbody>
-            {filteredCars.length === 0 ? (
+            {loading ? (
+              <SkeletonRows />
+            ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan="7" style={{ textAlign: 'center', padding: '50px' }}>
-                  등록된 차량이 없습니다.
+                <td colSpan={6}>
+                  <div className="car-empty">
+                    <div className="car-empty-icon">🚗</div>
+                    <div className="car-empty-text">해당 조건의 차량이 없습니다</div>
+                    <div className="car-empty-sub">다른 필터를 선택해보세요</div>
+                  </div>
                 </td>
               </tr>
             ) : (
-              filteredCars.map((car) => (
-                <tr key={car.carId}
-                  onClick={() => handleItemClick(car.carId)}
-                >
-                  <td>
-                    <div className="cell-with-icon">
-                      <div className="cell-content">
-                        <div className="cell-primary">{car.brand} {car.modelName}</div>
-                        <div className="cell-secondary">
-                          {getFuelTypeText(car.fuelType)}
+              filtered.map((car, idx) => {
+                const meta = STATUS_META[car.status] ?? { label: car.status, cls: 'inactive', dot: '#888' }
+                const icon = CAR_ICONS[idx % CAR_ICONS.length]
+                const resCount = car.reservationCount ?? 0
+                const resPct = Math.round((resCount / maxReservations) * 100)
+                return (
+                  <tr key={car.carId} onClick={() => navigate(`/cars/${car.carId}`)}>
+                    <td>
+                      <div className="car-cell">
+                        <div className="car-icon-wrap">{icon}</div>
+                        <div>
+                          <div className="car-name">{car.brand} {car.modelName}</div>
+                          <div className="car-fuel">{FUEL_MAP[car.fuelType] ?? car.fuelType}</div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="cell-text">-</div>
-                  </td>
-                  <td>
-                    <div className="cell-text">-</div>
-                  </td>
-                  <td>
-                    <div className="cell-amount">-</div>
-                  </td>
-                  <td>
-                    <div className="cell-text">-</div>
-                  </td>
-                  <td>
-                    <span className={`badge ${getStatusBadge(car.status)}`}>
-                      {getStatusText(car.status)}
-                    </span>
-                  </td>
-                  <td>
-                    <button className="menu-button">⋮</button>
-                  </td>
-                </tr>
-              ))
+                    </td>
+                    <td>{FUEL_MAP[car.fuelType] ?? '-'}</td>
+                    <td className="cell-amount">
+                      {car.dailyPrice ? `${car.dailyPrice.toLocaleString()}원` : '-'}
+                    </td>
+                    <td>
+                      <div className="reservation-bar-wrap">
+                        <div className="reservation-bar-track">
+                          <div className="reservation-bar-fill" style={{ width: `${resPct}%` }} />
+                        </div>
+                        <span className="reservation-bar-num">{resCount}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${meta.cls}`}>{meta.label}</span>
+                    </td>
+                    <td>
+                      <button
+                        className="menu-button"
+                        onClick={e => { e.stopPropagation() }}
+                      >⋮</button>
+                    </td>
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>

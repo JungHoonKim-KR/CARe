@@ -35,7 +35,7 @@ export default function PaymentPage() {
     setLoading(true)
     setError('')
     try {
-      const result = await createReservation(carId, insuranceId, searchInfo.pickupDate, searchInfo.pickupTime, searchInfo.returnDate, searchInfo.returnTime)
+      const result = await createReservation(carId, insuranceId, searchInfo.pickupDate, searchInfo.pickupTime, searchInfo.returnDate, searchInfo.returnTime, total)
       const modelName = car.name ? car.name.split(' ').slice(-2).join(' ') : '차량'
       addTokenHistory({ type: 'payment', amount: total, desc: `${modelName} 렌탈 결제`, txHash: result.paymentTxHash || result.data?.paymentTxHash })
       navigate('/booking-complete', {

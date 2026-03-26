@@ -2,8 +2,17 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import careLogo from '../../assets/care_logo.png'
-import { getDisputeDetail, settleDispute } from '../../api/reservation'
+import { getDisputeDetail, settleDispute, getCarScratches } from '../../api/reservation'
 import './DisputePage.css'
+
+const LOCATION_LABELS = {
+  FRONT: '전면부', front: '전면부',
+  REAR: '후면부',  rear: '후면부',
+  LEFT: '좌측',   left: '좌측',
+  RIGHT: '우측',  right: '우측',
+  ROOF: '루프',
+  HOOD: '보닛',
+}
 
 const STATUS_LABELS = {
   OPEN: '분쟁 신청됨',
@@ -31,6 +40,7 @@ export default function DisputePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [settling, setSettling] = useState(false)
+  const [scratchZone, setScratchZone] = useState(null)
 
   useEffect(() => {
     const reservationId = reservation?.reservationId
@@ -48,6 +58,17 @@ export default function DisputePage() {
       })
       .finally(() => setLoading(false))
   }, [reservation?.reservationId, disputeId])
+
+  useEffect(() => {
+    if (!dispute?.targetLogId || !reservation?.reservationId) return
+    getCarScratches(reservation.reservationId)
+      .then(data => {
+        const list = Array.isArray(data) ? data : data?.data || []
+        const match = list.find(s => s.logId === dispute.targetLogId || s.scratchId === dispute.targetLogId)
+        if (match) setScratchZone(match.zone || match.location || null)
+      })
+      .catch(() => {})
+  }, [dispute?.targetLogId, reservation?.reservationId])
 
   const handleSettle = async () => {
     if (!dispute?.disputeId) {
@@ -210,6 +231,21 @@ export default function DisputePage() {
               </span>
             </div>
           </div>
+
+          {/* 부위 표시 + 이력 버튼 */}
+          {scratchZone && (
+            <div className="dp-zone-row">
+              <span className="dp-zone-label">
+                📍 부위: {LOCATION_LABELS[scratchZone] || scratchZone}
+              </span>
+              <button
+                className="dp-zone-btn"
+                onClick={() => navigate('/damage-history', { state: { reservation, filterZone: scratchZone } })}
+              >
+                해당 부위 이력 보기 →
+              </button>
+            </div>
+          )}
         </div>
 
         {/* 설명 텍스트 */}
@@ -217,7 +253,7 @@ export default function DisputePage() {
           <div className="dp-desc-box">
             <p className="dp-desc-text">
               이전에 발생했던 흠집과 달리<br/>
-              유사도가 <strong>{dispute.snapshotSimilarity != null ? Math.round(dispute.snapshotSimilarity * 100) : '--'}%</strong>로 확인되는<br/>
+              유사도가 <strong>{dispute.snapshotSimilarity != null ? Number(dispute.snapshotSimilarity).toFixed(2) : '--'}%</strong>로 확인되는<br/>
               다른 흠집들이 발견됐어요.
               {dispute.status === 'OPEN' && (
                 <>
@@ -246,7 +282,7 @@ export default function DisputePage() {
       {dispute && dispute.status !== 'OPEN' && (
         <div className="dp-footer dp-footer-resolved">
           <p className="dp-resolved-text">
-            {dispute.status === 'RESOLVED' ? '분쟁이 완료되었습니다.' : '이의 신청이 접수되어 검토 중입니다.'}
+            {['RESOLVED', 'COMPLETED'].includes(dispute.status) ? '완료된 분쟁입니다.' : '이의 신청이 접수되어 검토 중입니다.'}
           </p>
         </div>
       )}

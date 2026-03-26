@@ -22,6 +22,7 @@ def verify(
         model_name=model_name,
         detector_backend=detector_backend,
         enforce_detection=enforce_detection,
+        threshold=0.9,
     )
     return {
         "verified": result["verified"],

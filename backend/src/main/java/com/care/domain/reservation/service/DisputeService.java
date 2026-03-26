@@ -24,6 +24,7 @@ import com.care.global.blockchain.CareTokenService;
 import com.care.global.blockchain.DisputeSettlementService;
 import com.care.global.ai.AiScratchSimilarityClient;
 import com.care.global.ai.AiScratchSimilarityResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,7 @@ public class DisputeService {
 	private final AiScratchSimilarityClient aiScratchSimilarityClient;
 	private final RenterNotificationService renterNotificationService;
 	private final CompanyNotificationService companyNotificationService;
+	private final ObjectMapper objectMapper;
 
 	@Value("${ai.scratch.similarity-threshold:60.0}")
 	private double similarityThreshold;
@@ -99,10 +101,6 @@ public class DisputeService {
 		List<Scratch> candidates = beforeScratches.stream()
 				.filter(before -> before.getCarPart().equalsIgnoreCase(targetScratch.getCarPart()))
 				.toList();
-
-		if (candidates.isEmpty()) {
-			candidates = beforeScratches;
-		}
 
 		if (candidates.isEmpty()) {
 			dispute.captureReturnReportSnapshot(
@@ -213,13 +211,21 @@ public class DisputeService {
 				.toList();
 	}
 
-	@Transactional(readOnly = true)
+	@Transactional
 	public DisputeAiAnalysisResponse getDisputeAiAnalysis(String requesterId, String disputeId) {
 		Dispute dispute = disputeRepository.findByDisputeId(disputeId)
 				.orElseThrow(() -> new IllegalArgumentException("분쟁을 찾을 수 없습니다: " + disputeId));
 
 		Reservation reservation = dispute.getReservation();
 		validateParticipantAccess(requesterId, reservation);
+
+		if (dispute.getAiAnalysisReport() != null) {
+			try {
+				return objectMapper.readValue(dispute.getAiAnalysisReport(), DisputeAiAnalysisResponse.class);
+			} catch (Exception e) {
+				// 파싱 실패 시 재생성
+			}
+		}
 
 		String reservationId = reservation.getReservationId();
 		List<Scratch> beforeScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "BEFORE")
@@ -249,13 +255,21 @@ public class DisputeService {
 			}
 		}
 
-		return new DisputeAiAnalysisResponse(
+		DisputeAiAnalysisResponse response = new DisputeAiAnalysisResponse(
 				dispute.getDisputeId(),
 				reservationId,
 				beforeScratches.size(),
 				afterScratches.size(),
 				comparisons
 		);
+
+		try {
+			dispute.cacheAiAnalysis(objectMapper.writeValueAsString(response));
+		} catch (Exception e) {
+			// 캐시 저장 실패해도 응답은 정상 반환
+		}
+
+		return response;
 	}
 	@Transactional
 	public DisputeDefenseResponse defendDispute(String requesterId,

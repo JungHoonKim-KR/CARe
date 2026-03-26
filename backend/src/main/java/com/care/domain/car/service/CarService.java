@@ -226,7 +226,7 @@ public class CarService {
     /**
      * 차량 반납 리포트 조회
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public ReturnReportResponse getReturnReport(String carId, String reservationId) {
         ownedCarRepository.findById(carId)
                 .orElseThrow(() -> new BusinessException(CarErrorCode.CAR_NOT_FOUND));
@@ -267,18 +267,34 @@ public class CarService {
                 .toList();
 
         if (candidates.isEmpty()) {
-            candidates = beforeScratches;
-        }
-
-        if (candidates.isEmpty()) {
             return new ReturnReportResponse.ComparisonDetail(
                     null,
                     afterScratch.getLogId(),
                     null,
                     afterScratch.getCropS3Url(),
                     0.0,
-                    100.0,
+                    0.0,
+                    true,
                     true
+            );
+        }
+
+        if (afterScratch.getAiSimilarity() != null) {
+            String cachedBeforeUrl = candidates.stream()
+                    .filter(b -> b.getLogId().equals(afterScratch.getAiBeforeLogId()))
+                    .findFirst()
+                    .map(com.care.domain.reservation.entity.Scratch::getCropS3Url)
+                    .orElse(null);
+            boolean warning = afterScratch.getAiSimilarity() < similarityThreshold;
+            return new ReturnReportResponse.ComparisonDetail(
+                    afterScratch.getAiBeforeLogId(),
+                    afterScratch.getLogId(),
+                    cachedBeforeUrl,
+                    afterScratch.getCropS3Url(),
+                    afterScratch.getAiSimilarity(),
+                    afterScratch.getAiDiffScore(),
+                    warning,
+                    false
             );
         }
 
@@ -312,9 +328,12 @@ public class CarService {
                     afterScratch.getCropS3Url(),
                     0.0,
                     100.0,
-                    true
+                    true,
+                    false
             );
         }
+
+        afterScratch.cacheAiComparison(bestBefore.getLogId(), bestSimilarity, bestDiffScore);
 
         boolean warning = bestSimilarity < similarityThreshold;
         return new ReturnReportResponse.ComparisonDetail(
@@ -324,7 +343,8 @@ public class CarService {
                 afterScratch.getCropS3Url(),
                 bestSimilarity,
                 bestDiffScore,
-                warning
+                warning,
+                false
         );
     }
 

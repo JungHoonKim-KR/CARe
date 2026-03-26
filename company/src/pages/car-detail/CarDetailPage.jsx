@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import NFTModal from '../../components/NFTModal'
 import CarService from '../../services/CarService'
@@ -19,19 +19,15 @@ export default function CarDetailPage() {
   const fetchCarDetail = async () => {
     setLoading(true)
     setError(null)
-
     const result = await CarService.getCarDetail(id)
-
     if (result.success) {
       setCarData(result.data)
     } else {
       setError(result.message)
     }
-
     setLoading(false)
   }
 
-  // 상태 매핑 함수
   const getStatusText = (status) => {
     const statusMap = {
       ACTIVE: '대여가능',
@@ -42,7 +38,6 @@ export default function CarDetailPage() {
     return statusMap[status] || status
   }
 
-  // 연료 타입 매핑 함수
   const getFuelTypeText = (fuelType) => {
     const fuelMap = {
       GASOLINE: '가솔린',
@@ -56,68 +51,39 @@ export default function CarDetailPage() {
 
   const handleDelete = () => {
     if (window.confirm('정말 이 차량을 삭제하시겠습니까?')) {
-      // 삭제 API 호출 로직
+      // 여기는 하드코딩 — 차량 삭제 API 없음
       console.log('차량 삭제:', id)
     }
   }
 
+  // NFT tokenId는 API에서, issueDate는 하드코딩
   const nftInfo = {
-    tokenId: '0x1234 ... 5678',
-    issueDate: '2026.01.15',
+    tokenId: carData?.nftTokenId || '-',
+    issueDate: '여기는 하드코딩', // NFT 발행일 API 없음
   }
 
+  // 여기는 하드코딩 — 차량별 초기 결함 로그 API 없음
   const defectLogs = [
-    {
-      id: 1,
-      location: '앞 범퍼 좌측',
-      type: '스크래치',
-      date: '2026.01.15',
-    },
-    {
-      id: 2,
-      location: '뒷 휠 우측',
-      type: '',
-      date: '',
-    },
+    { id: 1, location: '여기는 하드코딩', type: '', date: '' },
   ]
 
+  // 여기는 하드코딩 — 차량별 운영 통계 API 없음 (총 예약 수, 총 수익, 평균 평점)
   const operationStats = {
-    totalReservations: 12,
-    totalRevenue: '1,500,000원',
-    avgRating: '4.8 / 5.0',
+    totalReservations: '여기는 하드코딩',
+    totalRevenue: '여기는 하드코딩',
+    avgRating: '여기는 하드코딩',
   }
 
+  // 여기는 하드코딩 — 차량별 최근 예약 목록 API 없음
   const recentReservations = [
-    {
-      id: 1,
-      name: '김철수',
-      period: '2026.03.05 - 2026.03.08',
-      amount: '150,000원',
-      status: '이용중',
-    },
-    {
-      id: 2,
-      name: '이영희',
-      period: '2026.02.20 - 2026.02.23',
-      amount: '150,000원',
-      status: '반납완료',
-    },
-    {
-      id: 3,
-      name: '박민수',
-      period: '2026.02.10 - 2026.02.12',
-      amount: '100,000원',
-      status: '반납완료',
-    },
+    { id: 1, name: '여기는 하드코딩', period: '-', amount: '-', status: '-' },
   ]
 
   if (loading) {
     return (
       <div className="reservation-detail-page">
         <div className="page-header-bar">
-          <button className="back-button" onClick={() => navigate(-1)}>
-            ←
-          </button>
+          <button className="back-button" onClick={() => navigate(-1)}>←</button>
           <h1 className="page-title">차량 상세</h1>
         </div>
         <div style={{ textAlign: 'center', padding: '50px' }}>로딩 중...</div>
@@ -129,14 +95,10 @@ export default function CarDetailPage() {
     return (
       <div className="reservation-detail-page">
         <div className="page-header-bar">
-          <button className="back-button" onClick={() => navigate(-1)}>
-            ←
-          </button>
+          <button className="back-button" onClick={() => navigate(-1)}>←</button>
           <h1 className="page-title">차량 상세</h1>
         </div>
-        <div style={{ textAlign: 'center', padding: '50px', color: 'red' }}>
-          {error}
-        </div>
+        <div style={{ textAlign: 'center', padding: '50px', color: 'red' }}>{error}</div>
       </div>
     )
   }
@@ -145,14 +107,10 @@ export default function CarDetailPage() {
     return (
       <div className="reservation-detail-page">
         <div className="page-header-bar">
-          <button className="back-button" onClick={() => navigate(-1)}>
-            ←
-          </button>
+          <button className="back-button" onClick={() => navigate(-1)}>←</button>
           <h1 className="page-title">차량 상세</h1>
         </div>
-        <div style={{ textAlign: 'center', padding: '50px' }}>
-          차량 정보를 찾을 수 없습니다.
-        </div>
+        <div style={{ textAlign: 'center', padding: '50px' }}>차량 정보를 찾을 수 없습니다.</div>
       </div>
     )
   }
@@ -160,15 +118,12 @@ export default function CarDetailPage() {
   return (
     <div className="reservation-detail-page">
       <div className="page-header-bar">
-        <button className="back-button" onClick={() => navigate(-1)}>
-          ←
-        </button>
+        <button className="back-button" onClick={() => navigate(-1)}>←</button>
         <h1 className="page-title">차량 상세</h1>
         <div className="header-actions">
+          {/* 여기는 하드코딩 — 수정 API 없음 */}
           <button className="btn-secondary">수정</button>
-          <button className="btn-danger" onClick={handleDelete}>
-            삭제
-          </button>
+          <button className="btn-danger" onClick={handleDelete}>삭제</button>
         </div>
       </div>
 
@@ -212,6 +167,7 @@ export default function CarDetailPage() {
             </div>
           </div>
 
+          {/* 여기는 하드코딩 — 차량별 초기 결함 로그 API 없음 */}
           <div className="card defect-log-card">
             <h3 className="card-title">초기 결함 로그 (AI 탐지)</h3>
             <div className="defect-list">
@@ -229,11 +185,12 @@ export default function CarDetailPage() {
         </div>
 
         <div className="sidebar-column">
+          {/* 여기는 하드코딩 — 차량별 운영 통계 API 없음 */}
           <div className="card stats-card">
             <h3 className="card-title">운영 통계</h3>
             <div className="stat-row">
               <span className="stat-label">총 예약 수</span>
-              <span className="stat-value">{operationStats.totalReservations}건</span>
+              <span className="stat-value">{operationStats.totalReservations}</span>
             </div>
             <div className="stat-row">
               <span className="stat-label">총 수익</span>
@@ -245,13 +202,11 @@ export default function CarDetailPage() {
             </div>
           </div>
 
+          {/* 여기는 하드코딩 — 차량별 최근 예약 목록 API 없음 */}
           <div className="card recent-reservations-card">
             <div className="card-header-row">
               <h3 className="card-title">최근 예약</h3>
-              <button 
-                className="view-all-btn"
-                onClick={() => navigate('/reservations')}
-              >
+              <button className="view-all-btn" onClick={() => navigate('/reservations')}>
                 전체보기
               </button>
             </div>
@@ -260,11 +215,7 @@ export default function CarDetailPage() {
                 <div key={reservation.id} className="reservation-item">
                   <div className="reservation-header">
                     <span className="renter-name">{reservation.name}</span>
-                    <span
-                      className={`status-tag ${
-                        reservation.status === '이용중' ? 'ongoing' : 'completed'
-                      }`}
-                    >
+                    <span className={`status-tag ${reservation.status === '이용중' ? 'ongoing' : 'completed'}`}>
                       {reservation.status}
                     </span>
                   </div>

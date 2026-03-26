@@ -22,14 +22,8 @@ const AIRPORTS = {
   DEFAULT: [{ key: 'DEFAULT1' }, { key: 'DEFAULT2' }]
 }
 
-const HOUR_OPTIONS = Array.from({ length: 24 }, (_, h) => {
-  const period = h >= 12 ? 'PM' : 'AM'
-  const hour12 = h % 12 || 12
-  return {
-    value: `${String(h).padStart(2, '0')}:00`,
-    label: `${period} ${String(hour12).padStart(2, '0')}:00`,
-  }
-})
+const HOURS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'))
+const MINUTES = ['00', '10', '20', '30', '40', '50']
 
 const initialFormState = {
   country: '',
@@ -88,6 +82,9 @@ export default function HomePage() {
   const [airportSheet, setAirportSheet] = useState(false)
   const [carTypeSheet, setCarTypeSheet] = useState(false)
   const [dateModal, setDateModal] = useState(null)
+  const [timeSheet, setTimeSheet] = useState(null) // 'pickup' | 'return' | null
+  const [tempHour, setTempHour] = useState('10')
+  const [tempMin, setTempMin] = useState('00')
   const [countrySearch, setCountrySearch] = useState('')
   const [airportSearch, setAirportSearch] = useState('')
 
@@ -277,18 +274,16 @@ export default function HomePage() {
               </span>
             </div>
           </button>
-          <div className="search-field time-field">
-            <span className="date-label">{t('home.time')}</span>
-            <select
-              className="time-select"
-              value={form.pickupTime}
-              onChange={(e) => setForm((p) => ({ ...p, pickupTime: e.target.value }))}
-            >
-              {HOUR_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </div>
+          <button className="search-field time-field" onClick={() => {
+            const [h, m] = form.pickupTime.split(':')
+            setTempHour(h); setTempMin(m || '00'); setTimeSheet('pickup')
+          }}>
+            <span className="field-icon">🕐</span>
+            <div className="date-content">
+              <span className="date-label">{t('home.time')}</span>
+              <span className="field-value">{form.pickupTime}</span>
+            </div>
+          </button>
         </div>
 
         <div className="date-row">
@@ -301,18 +296,16 @@ export default function HomePage() {
               </span>
             </div>
           </button>
-          <div className="search-field time-field">
-            <span className="date-label">{t('home.time')}</span>
-            <select
-              className="time-select"
-              value={form.returnTime}
-              onChange={(e) => setForm((p) => ({ ...p, returnTime: e.target.value }))}
-            >
-              {HOUR_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </div>
+          <button className="search-field time-field" onClick={() => {
+            const [h, m] = form.returnTime.split(':')
+            setTempHour(h); setTempMin(m || '00'); setTimeSheet('return')
+          }}>
+            <span className="field-icon">🕐</span>
+            <div className="date-content">
+              <span className="date-label">{t('home.time')}</span>
+              <span className="field-value">{form.returnTime}</span>
+            </div>
+          </button>
         </div>
 
         <button className="search-field" onClick={() => setCarTypeSheet(true)}>
@@ -426,6 +419,63 @@ export default function HomePage() {
         onClose={() => setDateModal(null)}
         onSelect={selectDate}
       />
+
+      {/* 시간 선택 모달 */}
+      {!!timeSheet && (
+        <div className="timepicker-overlay" onClick={() => setTimeSheet(null)}>
+          <div className="timepicker-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="timepicker-title">{t('home.time')} 선택</h3>
+
+            <div className="timepicker-cols">
+              <div className="timepicker-col">
+                <p className="timepicker-col-label">시간</p>
+                <div className="timepicker-scroll">
+                  {HOURS.map((h) => (
+                    <button
+                      key={h}
+                      className={`timepicker-item${tempHour === h ? ' active' : ''}`}
+                      onClick={() => setTempHour(h)}
+                    >
+                      {h}시
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="timepicker-divider" />
+
+              <div className="timepicker-col">
+                <p className="timepicker-col-label">분</p>
+                <div className="timepicker-scroll">
+                  {MINUTES.map((m) => (
+                    <button
+                      key={m}
+                      className={`timepicker-item${tempMin === m ? ' active' : ''}`}
+                      onClick={() => setTempMin(m)}
+                    >
+                      {m}분
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <button
+              className="timepicker-confirm"
+              onClick={() => {
+                const val = `${tempHour}:${tempMin}`
+                setForm((p) => ({
+                  ...p,
+                  [timeSheet === 'pickup' ? 'pickupTime' : 'returnTime']: val,
+                }))
+                setTimeSheet(null)
+              }}
+            >
+              {tempHour}:{tempMin} 확인
+            </button>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>

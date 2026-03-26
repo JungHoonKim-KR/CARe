@@ -1,10 +1,14 @@
+body, #root {
+  min-height: 100vh;
+  background: #f7f4f0;
+}
+
 .app-container {
   display: flex;
-  flex-direction: column;      /* ← 가로→세로 변경 */
+  flex-direction: column;
   width: 100%;
   min-height: 100vh;
   min-width: 0;
-  overflow: hidden;
 }
 
 .main-content {
@@ -15,7 +19,7 @@
   display: flex;
   flex-direction: column;
   overflow: auto;
-  padding-top: 80px;           /* ← topbar 높이만큼 밀어내기 */
+  padding-top: 64px; /* topbar 높이 */
 }
 
 .placeholder-page {
@@ -26,5 +30,4 @@
   font-size: 24px;
   font-weight: 600;
   color: var(--text-muted);
-  background: var(--bg);
 }

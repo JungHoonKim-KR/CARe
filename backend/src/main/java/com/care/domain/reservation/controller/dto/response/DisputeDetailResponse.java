@@ -39,7 +39,6 @@ public record DisputeDetailResponse(
 				dispute.getDefenseScratch() != null ? dispute.getDefenseScratch().getOriginalS3Url() : null,
 				dispute.getDefenseScratch() != null ? dispute.getDefenseScratch().getCropS3Url() : null,
 				dispute.getStatusEnum().name(),
-				dispute.getStatus(),
 				dispute.getReason(),
 				dispute.getClaimAmount(),
 				dispute.getSettlementFinalAmount(),

@@ -58,6 +58,9 @@ public class DisputeService {
 				.orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
 
 		validateCompanyAccess(requesterId, reservation);
+		if (disputeRepository.existsByReservation_ReservationId(reservationId)) {
+			throw new IllegalArgumentException("해당 예약 건에는 이미 분쟁이 생성되어 있습니다.");
+		}
 
 		Scratch targetScratch = scratchRepository.findById(request.getTargetLogId())
 				.orElseThrow(() -> new IllegalArgumentException("대상 흠집 로그를 찾을 수 없습니다: " + request.getTargetLogId()));

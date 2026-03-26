@@ -10,6 +10,7 @@ public interface DisputeRepository extends JpaRepository<Dispute, String> {
 
     Optional<Dispute> findByDisputeId(String disputeId);
     Optional<Dispute> findByReservation_ReservationId(String reservationId);
+    boolean existsByReservation_ReservationId(String reservationId);
     Optional<Dispute> findByDisputeIdAndReservation_ReservationId(String disputeId, String reservationId);
     List<Dispute> findByReservation_OwnedCar_Company_CompanyIdOrderByCreatedAtDesc(String companyId);
     boolean existsByTargetScratch_LogIdAndStatusNotIn(String logId, List<String> statuses);

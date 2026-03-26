@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 
 @Slf4j
@@ -39,10 +38,7 @@ public class RenterTokenService {
             log.info("[RenterToken] 충전 완료 | userId: {}, amount: {} CARE, txHash: {}", userId, amount, txHash);
 
             BigInteger rawBalance = careTokenService.balanceOf(walletAddress);
-            String balance = new BigDecimal(rawBalance)
-                    .movePointLeft(6)
-                    .stripTrailingZeros()
-                    .toPlainString();
+            String balance = rawBalance.toString();
 
             return new TokenChargeResponse(walletAddress, amount, txHash, balance);
         } catch (BusinessException e) {
@@ -67,10 +63,7 @@ public class RenterTokenService {
 
         try {
             BigInteger rawBalance = careTokenService.balanceOf(walletAddress);
-            return new BigDecimal(rawBalance)
-                    .movePointLeft(6)
-                    .stripTrailingZeros()
-                    .toPlainString();
+            return rawBalance.toString();
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {

@@ -26,7 +26,7 @@ public class Dispute extends BaseEntity {
     @JoinColumn(name = "target_log_id", nullable = false)
     private Scratch targetScratch;
 
-    // 고객이 방어 시 제출한 대여 전 흠집 기록 (방어 전까지 null)
+    // 고객이 방어 시 제출한 흠집 기록 (방어 전까지 null)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "defense_log_id")
     private Scratch defenseScratch;
@@ -146,15 +146,14 @@ public class Dispute extends BaseEntity {
         assertStatus(DisputeStatus.OPEN);
 
         this.defenseScratch = defenseScratch;
-        setStatus(DisputeStatus.DEFENDED);
     }
 
     public void resolve() {
         DisputeStatus current = getStatusEnum();
-        if (current != DisputeStatus.OPEN && current != DisputeStatus.DEFENDED) {
+        if (current != DisputeStatus.OPEN) {
             throw new IllegalStateException("현재 상태에서는 해결 처리할 수 없습니다: " + current.name());
         }
-        setStatus(DisputeStatus.RESOLVED);
+        setStatus(DisputeStatus.COMPLETED);
     }
 
     public void proposeSettlement(long finalAmount, SettlementStatus settlementStatus) {

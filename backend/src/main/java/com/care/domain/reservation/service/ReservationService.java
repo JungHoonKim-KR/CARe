@@ -60,12 +60,7 @@ public class ReservationService {
             throw new BusinessException(ReservationErrorCode.WALLET_NOT_REGISTERED);
         }
 
-        // totalPrice 서버 계산: 대여일수 × 차량일일요금 + 보험료
-        long days = ChronoUnit.DAYS.between(request.pickupDate(), request.returnDate());
-        if (days < 1) {
-            throw new BusinessException(ReservationErrorCode.INVALID_DATE);
-        }
-        int totalPrice = (int) (days * car.getDailyPrice()) + insurance.getPrice();
+        int totalPrice = request.totalPrice();
 
         // 블록체인 결제
         String txHash;

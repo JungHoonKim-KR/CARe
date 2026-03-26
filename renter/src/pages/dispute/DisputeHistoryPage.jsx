@@ -6,22 +6,36 @@ import { getCarScratches, submitDefense } from '../../api/reservation'
 import './DisputeHistoryPage.css'
 
 const PARTS = [
-  { id: 'all',   label: '전체' },
-  { id: 'FRONT', label: '전면' },
-  { id: 'REAR',  label: '후면' },
-  { id: 'LEFT',  label: '좌측' },
-  { id: 'RIGHT', label: '우측' },
+  { id: 'all',         label: '전체' },
+  { id: 'front',       label: '전면' },
+  { id: 'rear',        label: '후면' },
+  { id: 'front-left',  label: '좌측 앞' },
+  { id: 'rear-left',   label: '좌측 뒤' },
+  { id: 'front-right', label: '우측 앞' },
+  { id: 'rear-right',  label: '우측 뒤' },
 ]
 
-function getPartKey(carPart) {
-  if (!carPart) return 'FRONT'
-  const upper = carPart.toUpperCase()
-  if (upper.includes('FRONT')) return 'FRONT'
-  if (upper.includes('REAR') || upper.includes('BACK')) return 'REAR'
-  if (upper.includes('LEFT')) return 'LEFT'
-  if (upper.includes('RIGHT')) return 'RIGHT'
-  return 'FRONT'
+const CAR_PART_LABELS = {
+  'front':       '전면 (보닛)',
+  'rear':        '후면 (범퍼)',
+  'front-left':  '좌측 앞바퀴',
+  'rear-left':   '좌측 뒷바퀴',
+  'front-right': '우측 앞바퀴',
+  'rear-right':  '우측 뒷바퀴',
 }
+
+function getPartLabel(carPart) {
+  if (!carPart) return '위치 미상'
+  return CAR_PART_LABELS[carPart.toLowerCase()] || carPart
+}
+
+// carPart 값을 PARTS id로 정규화
+function getPartKey(carPart) {
+  if (!carPart) return 'front'
+  return carPart.toLowerCase()
+}
+
+const LOG_TYPE_LABEL = { BEFORE: '탑승 전 스캔', AFTER: '반납 후 스캔' }
 
 function formatDate(val) {
   if (!val) return ''
@@ -63,7 +77,7 @@ export default function DisputeHistoryPage() {
     return scratches.filter(item => {
       const partKey = getPartKey(item.carPart)
       const matchPart = activePart === 'all' || partKey === activePart
-      const matchQuery = !query || (item.carPart || '').includes(query)
+      const matchQuery = !query || getPartLabel(item.carPart).includes(query)
       return matchPart && matchQuery
     })
   }, [scratches, activePart, query])
@@ -189,13 +203,13 @@ export default function DisputeHistoryPage() {
                   onClick={() => setExpanded(expanded === item.logId ? null : item.logId)}
                 >
                   <div className="dh-item-top">
-                    <span className="dh-item-num">{idx + 1}번째 흠집</span>
+                    <span className="dh-item-num">{getPartLabel(item.carPart)}</span>
                     <span className={`dh-location-badge loc-${getPartKey(item.carPart).toLowerCase()}`}>
                       {PARTS.find(p => p.id === getPartKey(item.carPart))?.label}
                     </span>
                   </div>
                   <div className="dh-item-bottom">
-                    <span className="dh-item-desc">{item.carPart}</span>
+                    <span className="dh-item-desc">{LOG_TYPE_LABEL[item.logType] || item.logType}</span>
                     <span className="dh-item-date">{formatDate(item.createdAt)}</span>
                   </div>
                 </button>

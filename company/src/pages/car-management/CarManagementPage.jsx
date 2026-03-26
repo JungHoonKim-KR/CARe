@@ -1,84 +1,142 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TabFilter from '../../components/TabFilter'
+import CarService from '../../services/CarService'
 import './CarManagementPage.css'
 
 export default function CarManagementPage() {
   const [activeTab, setActiveTab] = useState('all')
+  const [cars, setCars] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const navigate = useNavigate()
 
+  useEffect(() => {
+    fetchCompanyCars()
+  }, [])
+
+  const fetchCompanyCars = async () => {
+    setLoading(true)
+    setError(null)
+
+    const companyId = localStorage.getItem('companyId')
+    if (!companyId) {
+      setError('회사 정보를 찾을 수 없습니다.')
+      setLoading(false)
+      return
+    }
+
+    const result = await CarService.getCompanyCars(companyId)
+
+    if (result.success) {
+      setCars(result.data || [])
+    } else {
+      setError(result.message)
+    }
+
+    setLoading(false)
+  }
+
+  // 상태 매핑 함수
+  const getStatusText = (status) => {
+    const statusMap = {
+      ACTIVE: '대여가능',
+      RENTED: '대여중',
+      MAINTENANCE: '정비중',
+      INACTIVE: '대여불가'
+    }
+    return statusMap[status] || status
+  }
+
+  // 연료 타입 매핑 함수
+  const getFuelTypeText = (fuelType) => {
+    const fuelMap = {
+      GASOLINE: '가솔린',
+      DIESEL: '디젤',
+      ELECTRIC: '전기',
+      HYBRID: '하이브리드'
+    }
+    return fuelMap[fuelType] || fuelType
+  }
+
+  // 상태별 카테고리 매핑
+  const getCategoryFromStatus = (status) => {
+    const categoryMap = {
+      ACTIVE: 'available',
+      RENTED: 'rented',
+      MAINTENANCE: 'maintenance',
+      INACTIVE: 'inactive'
+    }
+    return categoryMap[status] || 'all'
+  }
+
+  // 탭 카운트 계산
+  const getTabCounts = () => {
+    const counts = {
+      all: cars.length,
+      available: cars.filter(car => car.status === 'ACTIVE').length,
+      rented: cars.filter(car => car.status === 'RENTED').length,
+      maintenance: cars.filter(car => car.status === 'MAINTENANCE').length
+    }
+    return counts
+  }
+
+  const tabCounts = getTabCounts()
+
   const tabs = [
-    { id: 'all', label: '총', count: 4 },
-    { id: 'available', label: '대여가능', count: 2 },
-    { id: 'rented', label: '대여중', count: 1 },
-    { id: 'maintenance', label: '정비중', count: 1 },
+    { id: 'all', label: '총', count: tabCounts.all },
+    { id: 'available', label: '대여가능', count: tabCounts.available },
+    { id: 'rented', label: '대여중', count: tabCounts.rented },
+    { id: 'maintenance', label: '정비중', count: tabCounts.maintenance },
   ]
 
   const handleItemClick = (carId) => {
     navigate(`/cars/${carId}`)
   }
 
-  const allCars = [
-    {
-      id: 1,
-      name: '현대 아반떼',
-      year: '2024년식',
-      options: '가솔린',
-      type: '세단 · 5인승',
-      location: '서울 강남구',
-      dailyRate: '50,000원',
-      reservations: 12,
-      status: '대여가능',
-      category: 'available',
-    },
-    {
-      id: 2,
-      name: '기아 K5',
-      year: '2023년식',
-      options: '하이브리드',
-      type: '세단 · 5인승',
-      location: '서울 송파구',
-      dailyRate: '60,000원',
-      reservations: 8,
-      status: '대여중',
-      category: 'rented',
-    },
-    {
-      id: 3,
-      name: 'BMW 320i',
-      year: '2024년식',
-      options: '가솔린',
-      type: '세단 · 5인승',
-      location: '서울 서초구',
-      dailyRate: '120,000원',
-      reservations: 15,
-      status: '대여가능',
-      category: 'available',
-    },
-    {
-      id: 4,
-      name: '현대 싼타페',
-      year: '2024년식',
-      options: '디젤',
-      type: 'SUV · 7인승',
-      location: '서울 강남구',
-      dailyRate: '80,000원',
-      reservations: 10,
-      status: '정비중',
-      category: 'maintenance',
-    },
-  ]
-
   const filteredCars =
-    activeTab === 'all' ? allCars : allCars.filter((car) => car.category === activeTab)
+    activeTab === 'all'
+      ? cars
+      : cars.filter((car) => getCategoryFromStatus(car.status) === activeTab)
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      대여가능: 'badge-blue',
-      대여중: 'badge-green',
-      정비중: 'badge-amber',
+      ACTIVE: 'badge-blue',
+      RENTED: 'badge-green',
+      MAINTENANCE: 'badge-amber',
+      INACTIVE: 'badge-gray'
     }
     return statusMap[status] || 'badge-gray'
+  }
+
+  if (loading) {
+    return (
+      <div className="car-management-page">
+        <div className="page-header-with-button">
+          <div>
+            <h1 className="page-title">차량 관리</h1>
+            <p className="page-subtitle">등록된 차량을 관리하고 새로운 차량을 등록하세요</p>
+          </div>
+        </div>
+        <div style={{ textAlign: 'center', padding: '50px' }}>로딩 중...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="car-management-page">
+        <div className="page-header-with-button">
+          <div>
+            <h1 className="page-title">차량 관리</h1>
+            <p className="page-subtitle">등록된 차량을 관리하고 새로운 차량을 등록하세요</p>
+          </div>
+        </div>
+        <div style={{ textAlign: 'center', padding: '50px', color: 'red' }}>
+          {error}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -108,40 +166,50 @@ export default function CarManagementPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredCars.map((car) => (
-              <tr key={car.id}
-                onClick={() => handleItemClick(car.id)}
-              >
-                <td>
-                  <div className="cell-with-icon">
-                    <div className="cell-content">
-                      <div className="cell-primary">{car.name}</div>
-                      <div className="cell-secondary">
-                        {car.year} · {car.options}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div className="cell-text">{car.type}</div>
-                </td>
-                <td>
-                  <div className="cell-text">{car.location}</div>
-                </td>
-                <td>
-                  <div className="cell-amount">{car.dailyRate}</div>
-                </td>
-                <td>
-                  <div className="cell-text">{car.reservations}건</div>
-                </td>
-                <td>
-                  <span className={`badge ${getStatusBadge(car.status)}`}>{car.status}</span>
-                </td>
-                <td>
-                  <button className="menu-button">⋮</button>
+            {filteredCars.length === 0 ? (
+              <tr>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '50px' }}>
+                  등록된 차량이 없습니다.
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredCars.map((car) => (
+                <tr key={car.carId}
+                  onClick={() => handleItemClick(car.carId)}
+                >
+                  <td>
+                    <div className="cell-with-icon">
+                      <div className="cell-content">
+                        <div className="cell-primary">{car.brand} {car.modelName}</div>
+                        <div className="cell-secondary">
+                          {getFuelTypeText(car.fuelType)}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="cell-text">-</div>
+                  </td>
+                  <td>
+                    <div className="cell-text">-</div>
+                  </td>
+                  <td>
+                    <div className="cell-amount">-</div>
+                  </td>
+                  <td>
+                    <div className="cell-text">-</div>
+                  </td>
+                  <td>
+                    <span className={`badge ${getStatusBadge(car.status)}`}>
+                      {getStatusText(car.status)}
+                    </span>
+                  </td>
+                  <td>
+                    <button className="menu-button">⋮</button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

@@ -92,6 +92,31 @@ class AuthService {
       console.log('저장된 token:', localStorage.getItem('token'))
       console.log('저장된 companyId:', localStorage.getItem('companyId'))
 
+      // 로그인 성공 후 회사 정보 가져오기
+      try {
+        console.log('회사 정보 조회 중...')
+        const companyInfoResponse = await api.get('/companies/me')
+        console.log('회사 정보 응답:', companyInfoResponse.data)
+
+        if (companyInfoResponse.data) {
+          const { name, email: companyEmail } = companyInfoResponse.data
+
+          if (name) {
+            localStorage.setItem('companyName', name)
+            console.log('저장된 companyName:', name)
+          }
+
+          if (companyEmail) {
+            localStorage.setItem('companyEmail', companyEmail)
+            console.log('저장된 companyEmail:', companyEmail)
+          }
+        }
+      } catch (companyInfoError) {
+        console.error('회사 정보 조회 실패:', companyInfoError)
+        // 회사 정보 조회 실패해도 로그인은 성공으로 처리
+        localStorage.setItem('companyName', '회사 정보 없음')
+      }
+
       return {
         success: true,
         data: response.data
@@ -109,6 +134,8 @@ class AuthService {
     localStorage.removeItem('token')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('companyId')
+    localStorage.removeItem('companyName')
+    localStorage.removeItem('companyEmail')
     window.location.href = '/login'
   }
 

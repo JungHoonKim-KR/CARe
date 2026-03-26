@@ -23,6 +23,8 @@ public class RenterNotification extends BaseEntity {
 
     private static final String DISPUTE_CREATED_TYPE = "DISPUTE_CREATED";
     private static final String DISPUTE_CREATED_TITLE = "분쟁이 접수되었습니다.";
+    private static final String SETTLEMENT_REQUESTED_TYPE = "SETTLEMENT_REQUESTED";
+    private static final String SETTLEMENT_COMPLETED_TYPE = "SETTLEMENT_COMPLETED";
 
     @Id
     @Column(name = "notification_id", length = 100)
@@ -73,6 +75,63 @@ public class RenterNotification extends BaseEntity {
         notification.notificationType = DISPUTE_CREATED_TYPE;
         notification.title = DISPUTE_CREATED_TITLE;
         notification.message = buildDisputeCreatedMessage(reservationId, reason);
+        notification.disputeId = disputeId;
+        notification.reservationId = reservationId;
+        notification.read = false;
+        notification.readAt = null;
+        return notification;
+    }
+
+    public static RenterNotification settlementRequested(Renter renter,
+                                                         String reservationId,
+                                                         String disputeId,
+                                                         long finalAmount) {
+        if (renter == null) {
+            throw new IllegalArgumentException("renter는 필수입니다.");
+        }
+        if (reservationId == null || reservationId.isBlank()) {
+            throw new IllegalArgumentException("reservationId는 필수입니다.");
+        }
+        if (disputeId == null || disputeId.isBlank()) {
+            throw new IllegalArgumentException("disputeId는 필수입니다.");
+        }
+
+        RenterNotification notification = new RenterNotification();
+        notification.notificationId = UUID.randomUUID().toString();
+        notification.renter = renter;
+        notification.notificationType = SETTLEMENT_REQUESTED_TYPE;
+        notification.title = "업체가 정산에 동의했습니다.";
+        notification.message = "예약 " + reservationId + " 분쟁 정산 금액 " + finalAmount
+                + "원에 업체 동의가 완료되었습니다. 최종 동의 여부를 확인해주세요.";
+        notification.disputeId = disputeId;
+        notification.reservationId = reservationId;
+        notification.read = false;
+        notification.readAt = null;
+        return notification;
+    }
+
+    public static RenterNotification settlementCompleted(Renter renter,
+                                                         String reservationId,
+                                                         String disputeId,
+                                                         String settlementStatus,
+                                                         long finalAmount) {
+        if (renter == null) {
+            throw new IllegalArgumentException("renter는 필수입니다.");
+        }
+        if (reservationId == null || reservationId.isBlank()) {
+            throw new IllegalArgumentException("reservationId는 필수입니다.");
+        }
+        if (disputeId == null || disputeId.isBlank()) {
+            throw new IllegalArgumentException("disputeId는 필수입니다.");
+        }
+
+        RenterNotification notification = new RenterNotification();
+        notification.notificationId = UUID.randomUUID().toString();
+        notification.renter = renter;
+        notification.notificationType = SETTLEMENT_COMPLETED_TYPE;
+        notification.title = "분쟁 정산이 완료되었습니다.";
+        notification.message = "예약 " + reservationId + " 분쟁 정산이 완료되었습니다. 상태: "
+                + settlementStatus + ", 금액: " + finalAmount + "원";
         notification.disputeId = disputeId;
         notification.reservationId = reservationId;
         notification.read = false;

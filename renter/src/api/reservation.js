@@ -44,7 +44,9 @@ export const getReservationDetail = async (reservationId) => {
 
 // 차량 흠집 내역 조회
 export const getCarScratches = async (reservationId) => {
-  const response = await api.get(`/api/scratch/reservation/${reservationId}`)
+  // const response = await api.get(`/api/scratch/reservation/${reservationId}`)
+  const response = await api.get(`/api/reservations/${reservationId}/disputes/scratch-logs`)
+  // /reservations/{reservationId}/disputes//scratch-logs
   return response.data
 }
 

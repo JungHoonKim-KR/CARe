@@ -58,8 +58,6 @@ export default function App() {
         <Route path="/disputes" element={<DisputesList />} />
         <Route path="/disputes/:id" element={<DisputePage />} />
 
-        <Route path="/profile" element={<div>내 정보 페이지</div>} />
-        <Route path="/settings" element={<div>설정 페이지</div>} />
         <Route path="/logout" element={<div>로그아웃</div>} />
       </Route>
 

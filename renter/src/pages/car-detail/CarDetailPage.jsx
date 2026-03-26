@@ -81,7 +81,12 @@ export default function CarDetailPage() {
   }, [car.companyId])
 
   const selectedPlan = insurancePlans.find((p) => p.insuranceId === insurance) || insurancePlans[0]
-  const basePrice    = car.pricePerDay || 1033
+  const days = (() => {
+    if (!searchInfo.pickupDate || !searchInfo.returnDate) return 1
+    const d = Math.floor((new Date(searchInfo.returnDate) - new Date(searchInfo.pickupDate)) / (1000 * 60 * 60 * 24))
+    return d < 1 ? 1 : d
+  })()
+  const basePrice    = (car.pricePerDay || 1033) * days
   const totalPrice   = basePrice + (selectedPlan?.price || 0)
 
   const toggleAll = () => {

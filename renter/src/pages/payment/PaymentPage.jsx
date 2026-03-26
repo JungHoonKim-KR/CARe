@@ -10,13 +10,15 @@ export default function PaymentPage() {
   const navigate = useNavigate()
   const { state } = useLocation()
 
+  const DEPOSIT = 10000
+
   const car         = state?.car         || {}
   const carId       = state?.carId       || car.id || car.carId || ''
   const insuranceId = state?.insuranceId || ''
   const searchInfo  = state?.searchInfo  || {}
   const insurance   = state?.insurance   || { label: '스탠다드', price: 80 }
   const rentalPrice = state?.rentalPrice || 0
-  const total       = rentalPrice + (insurance.price || 0)
+  const total       = rentalPrice + (insurance.price || 0) + DEPOSIT
 
   const [walletBalance, setWalletBalance] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -45,7 +47,7 @@ export default function PaymentPage() {
           total,
           rentalPrice,
           insurance,
-          deposit,
+          deposit: DEPOSIT,
           reservationId: result.reservationId || result.data?.reservationId,
           paymentTxHash: result.paymentTxHash || result.data?.paymentTxHash,
         },
@@ -133,6 +135,10 @@ export default function PaymentPage() {
           <div className="pay-row">
             <span className="pay-row-lbl">{insurance.label} 보험료</span>
             <span className="pay-row-val">{insurance.price.toLocaleString()} CARE</span>
+          </div>
+          <div className="pay-row">
+            <span className="pay-row-lbl">예치 보증금</span>
+            <span className="pay-row-val">{DEPOSIT.toLocaleString()} CARE</span>
           </div>
           <div className="pay-total-line" />
           <div className="pay-row pay-row-last pay-row-total">

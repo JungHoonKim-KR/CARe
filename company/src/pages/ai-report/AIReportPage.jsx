@@ -50,20 +50,10 @@ export default function AIReportPage() {
     setError('')
     setCreateError('')
 
-    let mode = 'reservation'
-    let dispute = null
-    let reservationId = id
+    const mode = 'reservation'
+    const dispute = null
+    const reservationId = id
 
-    const detailResult = await DisputeService.getDisputeDetail(id)
-    if (detailResult.success && detailResult.data) {
-      mode = 'dispute'
-      dispute = detailResult.data
-      reservationId = detailResult.data.reservationId
-    }
-
-    const aiResult = mode === 'dispute'
-      ? await DisputeService.getAiAnalysis(id)
-      : { success: false, data: null }
     const reservationResult = await ReservationService.getReservationDetail(reservationId)
 
     if (!reservationResult.success || !reservationResult.data) {
@@ -90,27 +80,7 @@ export default function AIReportPage() {
     const returnReport = returnReportResult.data
     const threshold = returnReport.similarityThreshold ?? DEFAULT_THRESHOLD
 
-    const comparisonFromReturnReport = Array.isArray(returnReport.comparisons)
-      ? returnReport.comparisons
-      : []
-    const comparisonFromAi = aiResult.success && Array.isArray(aiResult.data?.comparisons)
-      ? aiResult.data.comparisons.map((item) => {
-          const similarity = toPercent(item.similarity)
-          return {
-            beforeLogId: item.beforeLogId,
-            afterLogId: item.afterLogId,
-            beforeCropS3Url: item.beforeCropS3Url,
-            afterCropS3Url: item.afterCropS3Url,
-            similarity,
-            diffScore: item.diffScore,
-            warning: similarity < threshold
-          }
-        })
-      : []
-
-    const comparisons = comparisonFromReturnReport.length > 0
-      ? comparisonFromReturnReport
-      : comparisonFromAi
+    const comparisons = Array.isArray(returnReport.comparisons) ? returnReport.comparisons : []
 
     const scratches = Array.isArray(returnReport.scratches) ? returnReport.scratches : []
     const afterScratchMap = new Map(
@@ -132,8 +102,8 @@ export default function AIReportPage() {
       scratches,
       comparisons,
       warningCount,
-      beforeCount: aiResult.success ? aiResult.data?.beforeCount ?? 0 : 0,
-      afterCount: aiResult.success ? aiResult.data?.afterCount ?? 0 : 0,
+      beforeCount: 0,
+      afterCount: 0,
       afterScratchMap
     })
 

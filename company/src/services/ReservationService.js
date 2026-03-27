@@ -164,8 +164,13 @@ class ReservationService {
    */
   async getReturnReport(carId, reservationId) {
     try {
-      const query = reservationId ? `?reservationId=${reservationId}` : ''
-      const response = await api.get(`/api/cars/${carId}/return-report${query}`)
+      let response
+      if (reservationId) {
+        response = await api.get(`/api/reservations/${reservationId}/return-report`)
+      } else {
+        const query = ''
+        response = await api.get(`/api/cars/${carId}/return-report${query}`)
+      }
 
       return {
         success: true,

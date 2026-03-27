@@ -280,7 +280,9 @@ public class CarService {
         }
 
         if (afterScratch.getAiSimilarity() != null) {
-            String cachedBeforeUrl = candidates.stream()
+            String cachedBeforeUrl = afterScratch.getAiBeforeCropS3Url() != null
+                    ? afterScratch.getAiBeforeCropS3Url()
+                    : candidates.stream()
                     .filter(b -> b.getLogId().equals(afterScratch.getAiBeforeLogId()))
                     .findFirst()
                     .map(com.care.domain.reservation.entity.Scratch::getCropS3Url)
@@ -333,7 +335,7 @@ public class CarService {
             );
         }
 
-        afterScratch.cacheAiComparison(bestBefore.getLogId(), bestSimilarity, bestDiffScore);
+        afterScratch.cacheAiComparison(bestBefore.getLogId(), bestSimilarity, bestDiffScore, bestBefore.getCropS3Url());
 
         boolean warning = bestSimilarity < similarityThreshold;
         return new ReturnReportResponse.ComparisonDetail(

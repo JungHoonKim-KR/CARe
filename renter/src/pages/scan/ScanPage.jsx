@@ -46,9 +46,10 @@ export default function ScanPage() {
   const currentZone = ZONES[zoneIndex]
   const history     = allScratches.filter(s => s.carPart === currentZone?.id)
 
-  const isWaitingRef   = useRef(false)
-  const timeoutRef     = useRef(null)
-  const matchStatusRef = useRef(matchStatus)
+  const isWaitingRef    = useRef(false)
+  const timeoutRef      = useRef(null)
+  const matchStatusRef  = useRef(matchStatus)
+  const isCapturingRef  = useRef(false)
   useEffect(() => { matchStatusRef.current = matchStatus }, [matchStatus])
   useEffect(() => { setActiveCard(null) }, [zoneIndex])
 
@@ -183,6 +184,7 @@ export default function ScanPage() {
 
     const interval = setInterval(() => {
       if (matchStatusRef.current === 'captured') return
+      if (isCapturingRef.current) return
       if (isWaitingRef.current) return
 
       const video = videoRef.current, ws = wsRef.current
@@ -327,7 +329,12 @@ export default function ScanPage() {
   async function handleCapture() {
     if (!scannerRef.current || !canCapture || isCapturing) return
     setIsCapturing(true); setCanCapture(false)
-    await scannerRef.current.capture()
+    isCapturingRef.current = true
+    try {
+      await scannerRef.current.capture()
+    } finally {
+      isCapturingRef.current = false
+    }
   }
   function handleNext() {
     if (autoNextTimerRef.current) { clearInterval(autoNextTimerRef.current); autoNextTimerRef.current = null }

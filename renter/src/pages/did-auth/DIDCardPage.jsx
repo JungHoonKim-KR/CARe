@@ -10,8 +10,6 @@ export default function DIDCardPage() {
 
   const [userName, setUserName] = useState('')
   const [revealed, setRevealed] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const docId = localStorage.getItem('did_id') || ''
 
   useEffect(() => {
     const timer = setTimeout(() => setRevealed(true), 100)
@@ -26,23 +24,6 @@ export default function DIDCardPage() {
     ? `${expiryDate.slice(0, 4)}.${expiryDate.slice(4, 6)}.${expiryDate.slice(6, 8)}`
     : expiryDate
 
-  const copyDID = () => {
-    try {
-      const ta = document.createElement('textarea')
-      ta.value = docId
-      ta.style.position = 'absolute'
-      ta.style.left = '-9999px'
-      document.body.appendChild(ta)
-      ta.focus()
-      ta.select()
-      const ok = document.execCommand('copy')
-      document.body.removeChild(ta)
-      if (ok) {
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-      }
-    } catch (e) {}
-  }
 
   return (
     <div className="dcp-page">

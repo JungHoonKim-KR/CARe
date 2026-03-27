@@ -142,7 +142,12 @@ export default function ReservationListPage() {
                   <span className="rl-status" style={{ color: status.color }}>{status.text}</span>
                 </div>
               </div>
-              <p className="rl-plate">{r.plateNumber}</p>
+              <p className="rl-plate">
+                {r.plateNumber}
+                {r.reservationId && (
+                  <span className="rl-reservation-id"> · {String(r.reservationId).slice(0, 8).toUpperCase()}</span>
+                )}
+              </p>
               <div className="rl-dates">
                 <span>{formatDate(r.pickupDate)}</span>
                 <span className="rl-arrow">→</span>

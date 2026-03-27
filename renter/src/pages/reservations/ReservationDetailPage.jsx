@@ -174,6 +174,11 @@ export default function ReservationDetailPage() {
               <span className="rd-nft-text">NFT #{reservation.nftTokenId}</span>
             </div>
           )}
+          {reservation.reservationId && (
+            <div className="rd-reservation-id">
+              {t('reservationDetail.reservationId', '예약번호')} · {String(reservation.reservationId).slice(0, 8).toUpperCase()}
+            </div>
+          )}
         </div>
 
         {/* 차량 이미지 */}

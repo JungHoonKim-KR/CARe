@@ -59,7 +59,57 @@
       "confirm": "確認する",
       "cancel": "後で"
     },
-    "unverified": "未認証"
+    "unverified": "未認証",
+    "countries": {
+      "KR": "韓国, KR",
+      "KR_sub": "Republic of Korea",
+      "JP": "日本, JP",
+      "JP_sub": "Japan",
+      "US": "アメリカ, US",
+      "US_sub": "United States of America",
+      "FR": "フランス, FR",
+      "FR_sub": "France",
+      "DE": "ドイツ, DE",
+      "DE_sub": "Germany",
+      "IT": "イタリア, IT",
+      "IT_sub": "Italy",
+      "ES": "スペイン, ES",
+      "ES_sub": "Spain",
+      "TH": "タイ, TH",
+      "TH_sub": "Thailand"
+    },
+    "airports": {
+      "ICN": "仁川国際空港, ICN",
+      "ICN_sub": "Incheon Int. Airport",
+      "GMP": "金浦国際空港, GMP",
+      "GMP_sub": "Gimpo Int. Airport",
+      "NRT": "成田, 東京 NRT",
+      "NRT_sub": "Narita Int. Airport",
+      "HND": "羽田, 東京 HND",
+      "HND_sub": "Haneda Int. Airport",
+      "KIX": "関西, 大阪 KIX",
+      "KIX_sub": "Kansai Int. Airport",
+      "DEFAULT1": "国際空港 1",
+      "DEFAULT1_sub": "International Airport",
+      "DEFAULT2": "国際空港 2",
+      "DEFAULT2_sub": "International Airport"
+    },
+    "datePicker": {
+      "days": ["日", "月", "火", "水", "木", "金", "土"],
+      "year": "年",
+      "month": "月"
+    }
+  },
+  "wallet": {
+    "title": "マイウォレット",
+    "didAuth": "本人確認",
+    "didAction": "認証する",
+    "didVerified": "認証済み ✓",
+    "tokenBalance": "トークン残高",
+    "myCare": "保有 CARE",
+    "loading": "照会中...",
+    "error": "照会失敗",
+    "historyLink": "利用履歴を見る ›"
   },
   "common": {
     "signIn": "ログイン",
@@ -181,7 +231,11 @@
     "statusReserved": "予約完了",
     "statusInUse": "利用中",
     "statusCompleted": "返却完了",
-    "statusCancelled": "キャンセル済み"
+    "statusCancelled": "キャンセル済み",
+    "statusAfterScan": "スキャン完了",
+    "monthDay": "{{month}}月{{day}}日",
+    "reservationCount": "{{n}}件の予約",
+    "noCarInfo": "車両情報なし"
   },
   "carList": {
     "filterAll": "すべて",
@@ -251,6 +305,23 @@
     "doneTitle": "返却が完了しました",
     "doneDesc": "写真はブロックチェーンに安全に保存されました。\nご利用ありがとうございました。",
     "goHome": "ホームに戻る"
+  },
+  "reservationList": {
+    "title": "予約履歴",
+    "loading": "読み込み中...",
+    "empty": "該当する予約がありません。",
+    "tabAll": "すべて",
+    "tabActive": "予約完了",
+    "tabDone": "返却完了",
+    "tabDispute": "紛争中",
+    "depositLocked": "紛争中",
+    "depositDeducted": "精算完了",
+    "disputeBtn": "紛争詳細を見る →"
+  },
+  "reservationDetail": {
+    "title": "予約詳細",
+    "notFound": "予約情報が見つかりません",
+    "backToList": "予約一覧へ"
   },
   "dispute": {
     "title": "紛争詳細",

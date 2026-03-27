@@ -52,6 +52,21 @@ public class Scratch extends BaseEntity {
     @Column(name = "is_disputed", nullable = false)
     private boolean isDisputed;
 
+    @Column(name = "ai_before_log_id", length = 100)
+    private String aiBeforeLogId;
+
+    @Column(name = "ai_similarity")
+    private Double aiSimilarity;
+
+    @Column(name = "ai_diff_score")
+    private Double aiDiffScore;
+
+    public void cacheAiComparison(String beforeLogId, double similarity, double diffScore) {
+        this.aiBeforeLogId = beforeLogId;
+        this.aiSimilarity = similarity;
+        this.aiDiffScore = diffScore;
+    }
+
     public void markDisputed() {
         this.isDisputed = true;
     }

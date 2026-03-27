@@ -50,7 +50,8 @@ public record ReturnReportResponse(
             String afterCropS3Url,
             double similarity,
             double diffScore,
-            boolean warning
+            boolean warning,
+            boolean isNewScratch
         ) {
         }
 

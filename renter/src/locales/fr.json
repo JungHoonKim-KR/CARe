@@ -156,5 +156,25 @@
     "pickupToday": "Prise en charge disponible aujourd'hui !",
     "returnDday": "Retour dans {{n}} jours",
     "returnDue": "Date de retour"
+  },
+  "didCard": {
+    "headerTitle": "Identité vérifiée",
+    "nameFallback": "Vérifié",
+    "verified": "Passeport et permis vérifiés",
+    "shareTitle": "Identité vérifiée",
+    "shareText": "L'identité de {{name}} a été vérifiée."
+  },
+  "tokenHistory": {
+    "title": "Historique des jetons",
+    "balanceLabel": "Solde CARE",
+    "loading": "Chargement...",
+    "charge": "Recharger",
+    "exchange": "Échanger",
+    "exchangeAlert": "Fonction d échange bientôt disponible.",
+    "listTitle": "Historique",
+    "empty": "Aucune transaction pour le moment.",
+    "error": "Erreur",
+    "chargeLabel": "Recharge",
+    "paymentLabel": "Paiement"
   }
 }

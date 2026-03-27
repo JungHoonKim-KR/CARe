@@ -1,307 +1,227 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import ReservationService from '../../services/ReservationService'
+import { shortId } from '../../utils/formatId'
 import './ReservationDetailPage.css'
 
+const STATUS_MAP = {
+  RESERVED:   { label: '예약완료', cls: 'reserved' },
+  IN_USE:     { label: '이용중',   cls: 'in-use'   },
+  AFTER_SCAN: { label: '반납대기', cls: 'after-scan'},
+  COMPLETED:  { label: '반납완료', cls: 'completed' },
+  DISPUTE:    { label: '분쟁중',   cls: 'dispute'  },
+}
+
+const formatDate = (iso) => {
+  if (!iso) return '-'
+  const d = new Date(iso)
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+}
+
 export default function ReservationDetailPage() {
-  const navigate = useNavigate()
-  const { id } = useParams()
-  const [reservationData, setReservationData] = useState(null)
+  const navigate  = useNavigate()
+  const { id }    = useParams()
+  const [data,    setData]    = useState(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error,   setError]   = useState('')
 
-  useEffect(() => {
-    fetchReservationDetail()
-  }, [id])
+  useEffect(() => { fetchDetail() }, [id])
 
-  const formatDateTime = (isoDate) => {
-    if (!isoDate) return '-'
-    return new Date(isoDate).toLocaleString('ko-KR')
-  }
-
-  const getStatusLabel = (status) => {
-    const statusMap = {
-      RESERVED: '예약완료',
-      IN_USE: '이용중',
-      AFTER_SCAN: '반납대기',
-      COMPLETED: '반납완료',
-      DISPUTE: '분쟁중'
-    }
-    return statusMap[status] || status || '-'
-  }
-
-  const fetchReservationDetail = async () => {
+  const fetchDetail = async () => {
     setLoading(true)
     setError('')
-
     const result = await ReservationService.getReservationDetail(id)
     if (!result.success) {
       setError(result.message)
       setLoading(false)
       return
     }
-
-    const data = result.data
-    const statusLabel = getStatusLabel(data.status)
-
-    setReservationData({
-      carName: `${data.car?.brand || '-'} ${data.car?.modelName || ''}`.trim(),
-      carType: '-',
-      plateNumber: data.car?.plateNumber || '-',
-      status: statusLabel,
-      pickup: {
-        date: formatDateTime(data.pickupDate),
-        location: '-',
-        completed: ['IN_USE', 'AFTER_SCAN', 'COMPLETED', 'DISPUTE'].includes(data.status),
-      },
-      dropoff: {
-        date: formatDateTime(data.returnDate),
-        location: '-',
-        completed: ['COMPLETED', 'DISPUTE'].includes(data.status),
-      },
-      renter: {
-        name: data.renter?.name || '-',
-        country: '-',
-        email: data.renter?.email || '-',
-      },
-      payment: {
-        rentalFee: null,
-        insurance: data.insurance?.price ?? null,
-        deposit: null,
-        total: null,
-      },
-      defects: {
-        pickup: 0,
-        dropoff: 0,
-        newDefects: 0,
-      },
-      dispute: data.status === 'DISPUTE' ? {
-        reason: '-',
-        claimAmount: null,
-      } : null,
-      reservationId: data.reservationId,
+    const r = result.data
+    const pickupDone = ['IN_USE', 'AFTER_SCAN', 'COMPLETED', 'DISPUTE'].includes(r.status)
+    const returnDone = ['COMPLETED', 'DISPUTE'].includes(r.status)
+    setData({
+      reservationId: r.reservationId,
+      status:        r.status,
+      carName:       `${r.car?.brand || ''} ${r.car?.modelName || ''}`.trim() || '-',
+      plateNumber:   r.car?.plateNumber || '-',
+      pickupDate:    formatDate(r.pickupDate),
+      returnDate:    formatDate(r.returnDate),
+      pickupDone,
+      returnDone,
+      renterName:    r.renter?.name  || '-',
+      renterEmail:   r.renter?.email || '-',
+      insurance:     r.insurance?.price ?? null,
+      insuranceName: r.insurance?.name  || '-',
+      totalPrice:    r.totalPrice ?? null,
+      isDispute:     r.status === 'DISPUTE',
     })
     setLoading(false)
   }
 
-  if (loading) {
-    return (
-      <div className="reservation-detail-page">
-        <div className="empty-container">
-          <p>예약 상세 정보를 불러오는 중...</p>
-        </div>
+  if (loading) return (
+    <div className="rdp-page">
+      <div className="rdp-center">
+        <div className="rdp-spinner" />
+        <span>예약 정보를 불러오는 중...</span>
       </div>
-    )
-  }
+    </div>
+  )
 
-  if (error || !reservationData) {
-    return (
-      <div className="reservation-detail-page">
-        <div className="empty-container">
-          <p>{error || '예약 상세 정보를 불러오지 못했습니다.'}</p>
-        </div>
+  if (error || !data) return (
+    <div className="rdp-page">
+      <div className="rdp-center">
+        <span className="rdp-error-icon">⚠️</span>
+        <span>{error || '예약 정보를 불러오지 못했습니다.'}</span>
       </div>
-    )
-  }
+    </div>
+  )
+
+  const statusInfo = STATUS_MAP[data.status] || { label: data.status, cls: '' }
 
   return (
-    <div className="reservation-detail-page">
-      <div className="page-header">
-        <button className="back-button" onClick={() => navigate(-1)}>
-          ←
-        </button>
-        <h1 className="page-title">예약 상세</h1>
-        {reservationData.status && (
-          <span className={`status-badge ${reservationData.status === '분쟁중' ? 'dispute' : ''}`}>
-            ⚠️ {reservationData.status}
-          </span>
-        )}
+    <div className="rdp-page">
+
+      {/* ── 헤더 카드 ── */}
+      <div className="rdp-header-card">
+        <button className="rdp-back-btn" onClick={() => navigate(-1)}>← 뒤로</button>
+        <div className="rdp-header-info">
+          <div className="rdp-header-meta">예약 관리 · {shortId(data.reservationId)}</div>
+          <h1 className="rdp-car-title">{data.carName}</h1>
+        </div>
+        <span className={`rdp-status-badge ${statusInfo.cls}`}>{statusInfo.label}</span>
       </div>
 
-      <h2 className="car-title">{reservationData.carName}</h2>
+      {/* ── 본문 그리드 ── */}
+      <div className="rdp-grid">
 
-      <div className="detail-content">
-        <div className="left-column">
+        {/* ── 왼쪽 컬럼 ── */}
+        <div className="rdp-main-col">
+
           {/* 차량 정보 */}
-          <div className="info-card">
-            <h3 className="card-title"> 차량 정보
-            </h3>
-            <div className="info-row">
-              <span className="info-label">차량명</span>
-              <span className="info-value">{reservationData.carName}</span>
-            </div>
-            <div className="info-row">
-              <span className="info-label">차종</span>
-              <span className="info-value">{reservationData.carType}</span>
-            </div>
-            <div className="info-row">
-              <span className="info-label">차량번호</span>
-              <span className="info-value">{reservationData.plateNumber}</span>
+          <div className="rdp-card">
+            <h2 className="rdp-card-title">🚗 차량 정보</h2>
+            <div className="rdp-info-list">
+              <div className="rdp-info-row">
+                <span className="rdp-info-label">차량명</span>
+                <span className="rdp-info-value">{data.carName}</span>
+              </div>
+              <div className="rdp-info-row">
+                <span className="rdp-info-label">차량번호</span>
+                <span className="rdp-info-value rdp-mono">{data.plateNumber}</span>
+              </div>
             </div>
           </div>
 
           {/* 대여 일정 */}
-          <div className="info-card">
-            <h3 className="card-title">대여 일정</h3>
-            <div className="schedule-section">
-              <div className="schedule-item">
-                <span className="schedule-label">픽업</span>
-                <div className="schedule-details">
-                  <div className="schedule-date">{reservationData.pickup.date}</div>
-                  <div className="schedule-location">{reservationData.pickup.location}</div>
+          <div className="rdp-card">
+            <h2 className="rdp-card-title">📅 대여 일정</h2>
+            <div className="rdp-schedule-row">
+              <div className="rdp-schedule-item rdp-pickup">
+                <div className="rdp-schedule-dot" />
+                <div>
+                  <div className="rdp-schedule-label">픽업</div>
+                  <div className="rdp-schedule-date">{data.pickupDate}</div>
                 </div>
               </div>
-              <div className="schedule-divider"></div>
-              <div className="schedule-item">
-                <span className="schedule-label">반납</span>
-                <div className="schedule-details">
-                  <div className="schedule-date">{reservationData.dropoff.date}</div>
-                  <div className="schedule-location">{reservationData.dropoff.location}</div>
+              <div className="rdp-schedule-arrow">→</div>
+              <div className="rdp-schedule-item rdp-return">
+                <div className="rdp-schedule-dot" />
+                <div>
+                  <div className="rdp-schedule-label">반납</div>
+                  <div className="rdp-schedule-date">{data.returnDate}</div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* 이용 상태 */}
-          <div className="info-card">
-            <h3 className="card-title">
-              <span className="title-icon">📋</span> 이용 상태
-            </h3>
-
-            {/* 픽업/반납 상태 박스 */}
-            <div className="usage-status-grid">
-              {/* 픽업 정보 */}
-              <div className={`status-box pickup ${reservationData.pickup.completed ? 'completed' : ''}`}>
-                <div className="status-header">
-                  <span className="status-check">
-                    {reservationData.pickup.completed && <span className="check-icon">✓</span>} 픽업
-                  </span>
-                  {reservationData.pickup.completed && (
-                    <button className="view-photos-btn">
-                      <span className="camera-icon">📷</span> 사진 보기
-                    </button>
-                  )}
+          <div className="rdp-card">
+            <h2 className="rdp-card-title">📋 이용 상태</h2>
+            <div className="rdp-status-boxes">
+              <div className={`rdp-status-box ${data.pickupDone ? 'done' : 'pending'}`}>
+                <div className="rdp-status-box-top">
+                  <span className="rdp-check-icon">{data.pickupDone ? '✓' : '○'}</span>
+                  <span className="rdp-status-box-label">픽업 확인</span>
                 </div>
-                {reservationData.pickup.completed && (
-                  <>
-                    <div className="status-datetime">{reservationData.pickup.date}</div>
-                    <div className="status-detail">
-                      기존 결함: {reservationData.defects.pickup}건 (AI 탐지)
-                    </div>
-                  </>
-                )}
+                <div className="rdp-status-box-date">
+                  {data.pickupDone ? data.pickupDate : '미완료'}
+                </div>
               </div>
-
-              {/* 반납 정보 */}
-              <div className={`status-box return ${reservationData.dropoff.completed ? 'completed' : ''}`}>
-                <div className="status-header">
-                  <span className="status-check">
-                    {reservationData.dropoff.completed && <span className="check-icon">✓</span>} 반납
-                  </span>
-                  {reservationData.dropoff.completed && (
-                    <button className="view-photos-btn">
-                      <span className="camera-icon">📷</span> 사진 보기
-                    </button>
-                  )}
+              <div className={`rdp-status-box ${data.returnDone ? 'done' : 'pending'}`}>
+                <div className="rdp-status-box-top">
+                  <span className="rdp-check-icon">{data.returnDone ? '✓' : '○'}</span>
+                  <span className="rdp-status-box-label">반납 확인</span>
                 </div>
-                {reservationData.dropoff.completed && (
-                  <>
-                    <div className="status-datetime">{reservationData.dropoff.date}</div>
-                    <div className="status-detail">
-                      결함: {reservationData.defects.dropoff}건 (AI 탐지)
-                    </div>
-                  </>
-                )}
+                <div className="rdp-status-box-date">
+                  {data.returnDone ? data.returnDate : '미완료'}
+                </div>
               </div>
             </div>
 
-            {/* 새로운 결함 강조 표시 */}
-            {reservationData.defects.newDefects > 0 && (
-              <div className="defect-alert-banner">
-                ⚠️ 새로운 결함 {reservationData.defects.newDefects}건 발견
+            {data.isDispute && (
+              <div className="rdp-dispute-alert">
+                ⚠️ 이 예약은 현재 분쟁이 접수된 상태입니다.
               </div>
             )}
 
-            {/* 액션 버튼 그룹 */}
-            <div className="action-buttons-group">
-              {/* 분쟁 정보 버튼 */}
-              {reservationData.dispute && (
-                <button
-                  className="dispute-button"
-                  onClick={() => navigate(`/disputes/${id}`)}
-                >
+            <div className="rdp-action-row">
+              {data.isDispute && (
+                <button className="rdp-btn-dispute" onClick={() => navigate(`/disputes/${id}`)}>
                   분쟁 정보 확인하기
                 </button>
               )}
-
-              {/* AI 리포트 버튼 */}
               <button
-                className="ai-report-button"
+                className="rdp-btn-ai"
                 onClick={() => navigate(`/ai-report/${id}`)}
               >
-                AI 리포트 확인하기
+                🤖 AI 리포트 확인하기
               </button>
             </div>
           </div>
         </div>
 
-        <div className="right-column">
+        {/* ── 오른쪽 컬럼 ── */}
+        <div className="rdp-side-col">
+
           {/* 대여자 정보 */}
-          <div className="info-card">
-            <h3 className="card-title">대여자 정보
-            </h3>
-            <div className="info-row">
-              <span className="info-label">이름</span>
-              <span className="info-value">{reservationData.renter.name}</span>
-            </div>
-            <div className="info-row">
-              <span className="info-label">국가</span>
-              <span className="info-value">{reservationData.renter.country}</span>
-            </div>
-            <div className="info-row">
-              <span className="info-label">이메일</span>
-              <span className="info-value">{reservationData.renter.email}</span>
+          <div className="rdp-card">
+            <h2 className="rdp-card-title">👤 대여자 정보</h2>
+            <div className="rdp-info-list">
+              <div className="rdp-info-row">
+                <span className="rdp-info-label">이름</span>
+                <span className="rdp-info-value">{data.renterName}</span>
+              </div>
+              <div className="rdp-info-row">
+                <span className="rdp-info-label">이메일</span>
+                <span className="rdp-info-value rdp-email">{data.renterEmail}</span>
+              </div>
+              <div className="rdp-info-row">
+                <span className="rdp-info-label">보험</span>
+                <span className="rdp-info-value">{data.insuranceName}</span>
+              </div>
             </div>
           </div>
 
           {/* 결제 정보 */}
-          <div className="info-card payment-card">
-            <h3 className="card-title">결제 정보
-            </h3>
-            <div className="payment-row">
-              <span className="payment-label">대여료</span>
-              <span className="payment-value">
-                {reservationData.payment.rentalFee === null ? '-' : `${reservationData.payment.rentalFee.toLocaleString()}원`}
-              </span>
-            </div>
-            <div className="payment-row">
-              <span className="payment-label">보험료</span>
-              <span className="payment-value">
-                {reservationData.payment.insurance === null ? '-' : `${reservationData.payment.insurance.toLocaleString()}원`}
-              </span>
-            </div>
-            <div className="payment-row">
-              <span className="payment-label">보증금</span>
-              <span className="payment-value">
-                {reservationData.payment.deposit === null ? '-' : `${reservationData.payment.deposit.toLocaleString()}원`}
-              </span>
-            </div>
-            <div className="payment-divider"></div>
-            <div className="payment-row total-row">
-              <span className="payment-label">총 결제 금액</span>
-              <span className="payment-total">
-                {reservationData.payment.total === null ? '-' : `${reservationData.payment.total.toLocaleString()}원`}
-              </span>
+          <div className="rdp-card">
+            <h2 className="rdp-card-title">💳 결제 정보</h2>
+            <div className="rdp-payment-list">
+              <div className="rdp-payment-row">
+                <span className="rdp-payment-label">보험료</span>
+                <span className="rdp-payment-value">
+                  {data.insurance !== null ? `${data.insurance.toLocaleString()}원` : '-'}
+                </span>
+              </div>
+              <div className="rdp-payment-divider" />
+              <div className="rdp-payment-row rdp-total-row">
+                <span className="rdp-payment-label">총 결제 금액</span>
+                <span className="rdp-payment-total">
+                  {data.totalPrice !== null ? `${data.totalPrice.toLocaleString()}원` : '-'}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* 액션 버튼 */}
-          <button className="settle-button">
-            ⚠️ 정산 요청
-          </button>
-          <button className="chat-button">
-            대여자와 채팅
-          </button>
         </div>
       </div>
     </div>

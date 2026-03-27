@@ -99,6 +99,9 @@ ai:
   scratch:
     similarity-threshold: ${AI_SCRATCH_SIMILARITY_THRESHOLD:60.0}
 
+gms:
+  api-key: ${GMS_KEY:}
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

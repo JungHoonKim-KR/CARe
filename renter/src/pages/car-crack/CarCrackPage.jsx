@@ -478,7 +478,7 @@ export default function CarCrackPage() {
               if (logType === 'AFTER') {
                 try {
                   await completeReservation(reservation?.reservationId)
-                  navigate('/my-car')
+                  navigate('/car-return', { state: { reservation, done: true } })
                 } catch (e) {
                   alert('반납 처리 중 오류가 발생했습니다.')
                 }

@@ -27,10 +27,12 @@ export default function CarReturnPage() {
   const { state } = useLocation()
   const reservation = state?.reservation
   const fromScan = state?.fromScan || false
+  const showDone = state?.done || false
 
   // intro → select → camera → submitting → done
   // fromScan=true 일 때는 바로 confirm 단계로 진입
-  const [step, setStep] = useState(fromScan ? 'confirm' : 'intro')
+  // done=true 일 때는 바로 완료 화면으로 진입
+  const [step, setStep] = useState(showDone ? 'done' : fromScan ? 'confirm' : 'intro')
   const [currentPanel, setCurrentPanel] = useState(null)
   const [photos, setPhotos] = useState({})
 
@@ -304,7 +306,14 @@ export default function CarReturnPage() {
           이용해 주셔서 감사합니다.
         </p>
       </div>
-        <button className="cr-done-btn" onClick={() => navigate('/landing')}>{t('carReturn.goHome')}</button>
+        <button className="cr-done-btn" onClick={() => {
+          const completedReservation = { ...reservation, status: 'COMPLETED' }
+          if (reservation?.reservationId) {
+            navigate(`/reservations/${reservation.reservationId}`, { state: { reservation: completedReservation } })
+          } else {
+            navigate('/home')
+          }
+        }}>{t('carReturn.goHome')}</button>
     </div>
   )
 

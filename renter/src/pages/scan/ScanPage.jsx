@@ -306,7 +306,8 @@ export default function ScanPage() {
   async function handleCapture() {
     if (!scannerRef.current || !canCapture || isCapturing) return
     setIsCapturing(true); setCanCapture(false)
-    await scannerRef.current.capture()
+    const isLast = zoneIndex === ZONES.length - 1
+    await scannerRef.current.capture(isLast)
   }
   function handleNext() {
     if (autoNextTimerRef.current) { clearInterval(autoNextTimerRef.current); autoNextTimerRef.current = null }

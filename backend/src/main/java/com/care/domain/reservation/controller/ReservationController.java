@@ -4,6 +4,7 @@ import com.care.domain.reservation.controller.dto.request.ReservationCreateReque
 import com.care.domain.reservation.controller.dto.response.ReservationCreateResponse;
 import com.care.domain.reservation.controller.dto.response.ReservationDetailResponse;
 import com.care.domain.reservation.controller.dto.response.ReservationReturnResponse;
+import com.care.domain.car.controller.dto.response.ReturnReportResponse;
 import com.care.domain.reservation.service.ReservationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -57,5 +58,17 @@ public class ReservationController {
             @PathVariable String reservationId
     ) {
         return ResponseEntity.ok(reservationService.completeReservation(userId, reservationId));
+    }
+
+    /**
+     * GET /reservations/{reservationId}/return-report
+     * 예약 단위 반납 리포트 조회
+     */
+    @GetMapping("/{reservationId}/return-report")
+    public ResponseEntity<ReturnReportResponse> getReturnReport(
+            @PathVariable String reservationId,
+            @RequestParam(required = false, defaultValue = "false") boolean fresh
+    ) {
+        return ResponseEntity.ok(reservationService.getReturnReportByReservation(reservationId, fresh));
     }
 }

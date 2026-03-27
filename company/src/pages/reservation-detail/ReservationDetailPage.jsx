@@ -174,7 +174,7 @@ export default function ReservationDetailPage() {
                 className="rdp-btn-ai"
                 onClick={() => navigate(`/ai-report/${id}`)}
               >
-                🤖 AI 리포트 확인하기
+                AI 반납 리포트
               </button>
             </div>
           </div>

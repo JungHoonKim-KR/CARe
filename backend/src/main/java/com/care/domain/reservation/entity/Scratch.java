@@ -61,10 +61,20 @@ public class Scratch extends BaseEntity {
     @Column(name = "ai_diff_score")
     private Double aiDiffScore;
 
+    @Column(name = "ai_before_crop_s3_url", length = 255)
+    private String aiBeforeCropS3Url;
+
     public void cacheAiComparison(String beforeLogId, double similarity, double diffScore) {
         this.aiBeforeLogId = beforeLogId;
         this.aiSimilarity = similarity;
         this.aiDiffScore = diffScore;
+    }
+
+    public void cacheAiComparison(String beforeLogId, double similarity, double diffScore, String beforeCropS3Url) {
+        this.aiBeforeLogId = beforeLogId;
+        this.aiSimilarity = similarity;
+        this.aiDiffScore = diffScore;
+        this.aiBeforeCropS3Url = beforeCropS3Url;
     }
 
     public void markDisputed() {

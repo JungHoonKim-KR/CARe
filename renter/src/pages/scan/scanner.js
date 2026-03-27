@@ -70,13 +70,15 @@ export class Scanner {
     const base64  = dataUrl.split(',')[1]
 
     let boxes = []
+    let saveError = null
     try {
       boxes = await this._saveToSpringBoot(base64)
     } catch (err) {
       console.warn('[Scanner] 저장 실패:', err)
+      saveError = err
     }
     this.captures[this.zone.id] = { base64, dataUrl, boxes }
-    if (this.onCapture) this.onCapture(this.zone.id, dataUrl, boxes)
+    if (this.onCapture) this.onCapture(this.zone.id, dataUrl, boxes, saveError)
   }
 
   // ── Spring Boot API 호출 → DB 저장

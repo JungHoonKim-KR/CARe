@@ -111,21 +111,21 @@ public class ScanService {
         try {
             org.springframework.util.LinkedMultiValueMap<String, Object> body =
                     new org.springframework.util.LinkedMultiValueMap<>();
+            String filename = image.getOriginalFilename();
+            if (filename == null || filename.isBlank()) filename = "image.jpg";
+            final String finalFilename = filename;
             body.add("image", new org.springframework.core.io.ByteArrayResource(
                     image.getBytes()) {
                 @Override
-                public String getFilename() { return image.getOriginalFilename(); }
+                public String getFilename() { return finalFilename; }
             });
             body.add("zone", zone);
             body.add("log_type", logType);
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-
             ResponseEntity<Map> res = restTemplate.exchange(
                     aiServerUrl + "/api/v1/scratches/detect",
                     HttpMethod.POST,
-                    new HttpEntity<>(body, headers),
+                    new HttpEntity<>(body),
                     Map.class
             );
 

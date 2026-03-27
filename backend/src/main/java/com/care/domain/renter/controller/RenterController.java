@@ -66,6 +66,17 @@ public class RenterController {
     }
 
     /**
+     * POST /renters/me/token/exchange
+     * CARE 토큰 환전 (토큰 → 원화)
+     */
+    @PostMapping("/token/exchange")
+    public ResponseEntity<TokenChargeResponse> exchangeToken(
+            @AuthenticationPrincipal String userId,
+            @Valid @RequestBody TokenChargeRequest request) {
+        return ResponseEntity.ok(renterTokenService.exchange(userId, request.amount()));
+    }
+
+    /**
      * GET /renters/me/cars
      * 렌터 소유 차량 목록 조회
      */

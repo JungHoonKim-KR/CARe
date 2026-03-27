@@ -86,8 +86,7 @@ export default function MyCarPage() {
   const navigate = useNavigate()
   const { state } = useLocation()
   const [reservations, setReservations] = useState(state?.reservation ? [state.reservation] : [])
-  const [selectedIdx, setSelectedIdx] = useState(0)
-  const [showCircles, setShowCircles] = useState(false)
+  const [selectedIdx, setSelectedIdx] = useState(state?.reservation ? 0 : null)
   const [loading, setLoading] = useState(!state?.reservation)
   const reservation = reservations[selectedIdx] || null
   const [showDisputeModal, setShowDisputeModal] = useState(false)
@@ -114,6 +113,8 @@ export default function MyCarPage() {
           .filter(r => ACTIVE_STATUSES.has(r.status))
           .sort((a, b) => new Date(b.pickupDate || 0) - new Date(a.pickupDate || 0))
         setReservations(activeList)
+        if (activeList.length === 1) setSelectedIdx(0)
+        // 2개 이상이면 null 유지 → 선택 화면 표시
 
         const notificationList = Array.isArray(notificationData) ? notificationData : (notificationData?.data ?? [])
         const unreadDispute = notificationList.find(
@@ -181,6 +182,74 @@ export default function MyCarPage() {
     )
   }
 
+  // 예약 여러개이고 아직 선택 안 한 경우 → 선택 화면
+  if (reservations.length > 1 && selectedIdx === null) {
+    const parseDT = (v) => {
+      if (!v) return null
+      if (Array.isArray(v)) return new Date(v[0], v[1]-1, v[2], v[3]||0, v[4]||0)
+      return new Date(v)
+    }
+    const fmtDate = (v) => {
+      const d = parseDT(v)
+      if (!d || isNaN(d)) return ''
+      const wd = ['일','월','화','수','목','금','토'][d.getDay()]
+      return `${d.getMonth()+1}.${d.getDate()}(${wd}) ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+    }
+    const fmtCreatedAt = (v) => {
+      const d = parseDT(v)
+      if (!d || isNaN(d)) return null
+      return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} 예약`
+    }
+    const STATUS_CLS = { RESERVED: 'reserved', IN_USE: 'inuse', AFTER_SCAN: 'afterscan' }
+    const STATUS_KO  = { RESERVED: '예약 확정', IN_USE: '이용 중', AFTER_SCAN: '반납 대기' }
+    return (
+      <div className="mc-page">
+        <div className="mc-scroll">
+          <div className="mc-sel-top">
+            <p className="mc-sel-title">이용 중인 예약</p>
+          </div>
+          <div className="mc-sel-list">
+            {reservations.map((r, i) => {
+              const carLabel = r.brand && r.modelName
+                ? `${r.brand} ${r.modelName}`
+                : r.carName || '차량 정보 없음'
+              const statusCls = STATUS_CLS[r.status] || 'reserved'
+              const statusKo  = STATUS_KO[r.status]  || r.status
+              const pickup    = fmtDate(r.pickupDate || r.startDate)
+              const ret       = fmtDate(r.returnDate || r.endDate)
+              const createdAt = fmtCreatedAt(r.createdAt)
+              const country   = r.airportCode || r.countryCode || null
+              return (
+                <button key={r.reservationId} className="mc-sel-item" onClick={() => setSelectedIdx(i)}>
+                  <div className="mc-sel-icon">🚗</div>
+                  <div className="mc-sel-info">
+                    <div className="mc-sel-car-row">
+                      <p className="mc-sel-car">{carLabel}</p>
+                      {country && <span className="mc-sel-country">{country}</span>}
+                    </div>
+                    {pickup && <p className="mc-sel-date"><span className="mc-sel-dt-label">픽업</span>{pickup}</p>}
+                    {ret    && <p className="mc-sel-date"><span className="mc-sel-dt-label">반납</span>{ret}</p>}
+                    <div className="mc-sel-meta-row">
+                      {r.plateNumber && <span className="mc-sel-plate">{r.plateNumber}</span>}
+                      {createdAt && <span className="mc-sel-created">{createdAt}</span>}
+                    </div>
+                  </div>
+                  <div className="mc-sel-right">
+                    <span className={`mc-sel-badge ${statusCls}`}>{statusKo}</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="mc-sel-chevron">
+                      <path d="M9 18l6-6-6-6" stroke="#ccc" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        <BottomNav />
+      </div>
+    )
+  }
+
   const isCompleted = reservation.status === 'COMPLETED'
 
   const crackDone    = reservation
@@ -233,35 +302,31 @@ export default function MyCarPage() {
   return (
     <div className="mc-page">
       <div className="mc-scroll">
-        {/* 예약 목록 토글 버튼 */}
+        {/* 뒤로가기 + 예약 전환 pill 탭 — 여러 예약 시 상단 고정 */}
         {reservations.length > 1 && (
-          <button className="mc-res-toggle-btn" onClick={() => setShowCircles(v => !v)}>
-            <span>{t('myCar.reservationCount', { n: reservations.length })}</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-              style={{ transform: showCircles ? 'rotate(180deg)' : '', transition: 'transform 0.2s' }}>
-              <path d="M6 9l6 6 6-6" stroke="#F7A633" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        )}
-
-        {/* 예약 선택 circles */}
-        {reservations.length > 1 && showCircles && (
-          <div className="mc-res-circles-strip">
-            {reservations.map((r, i) => (
-              <button
-                key={r.reservationId}
-                className={`mc-res-circle-btn${i === selectedIdx ? ' active' : ''}`}
-                onClick={() => { setSelectedIdx(i); setShowCircles(false) }}
-              >
-                <div className="mc-res-circle-dot">
-                  {(() => {
-                    const d = r.pickupDate ? new Date(Array.isArray(r.pickupDate) ? r.pickupDate[0]+'-'+String(r.pickupDate[1]).padStart(2,'0')+'-'+String(r.pickupDate[2]).padStart(2,'0') : r.pickupDate) : null
-                    return d ? <span style={{fontSize:13,fontWeight:900}}>{d.getMonth()+1}/{d.getDate()}</span> : <span>-</span>
-                  })()}
-                </div>
-                <p className="mc-res-circle-name">{r.airportCode || r.countryCode || '---'}</p>
-              </button>
-            ))}
+          <div className="mc-res-tabs">
+            <button className="mc-res-tab-back" onClick={() => setSelectedIdx(null)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M15 18l-6-6 6-6" stroke="#888" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {reservations.map((r, i) => {
+              const raw = r.pickupDate || r.startDate
+              const d = raw ? (Array.isArray(raw) ? new Date(raw[0], raw[1]-1, raw[2]) : new Date(raw)) : null
+              const dateStr = d && !isNaN(d) ? `${d.getMonth()+1}/${d.getDate()}` : '-'
+              const carShort = r.brand && r.modelName
+                ? r.modelName
+                : (r.carName || '---').split(' ').slice(-1)[0]
+              return (
+                <button
+                  key={r.reservationId}
+                  className={`mc-res-tab${i === selectedIdx ? ' active' : ''}`}
+                  onClick={() => setSelectedIdx(i)}
+                >
+                  {carShort} · {dateStr}
+                </button>
+              )
+            })}
           </div>
         )}
 
@@ -290,6 +355,11 @@ export default function MyCarPage() {
                 <path d="M3 12L12 17L21 12" stroke="#F7A633" strokeWidth="2" strokeLinejoin="round"/>
               </svg>
               <span className="rd-nft-text">NFT #{reservation.nftTokenId}</span>
+            </div>
+          )}
+          {reservation.reservationId && (
+            <div className="rd-reservation-id">
+              {t('reservationDetail.reservationId', '예약번호')} · {String(reservation.reservationId).slice(0, 8).toUpperCase()}
             </div>
           )}
         </div>

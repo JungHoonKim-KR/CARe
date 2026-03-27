@@ -5,6 +5,17 @@ import DisputeService from '../../services/DisputeService'
 import { shortId } from '../../utils/formatId'
 import './DisputePage.css'
 
+const CAR_PART_LABEL = {
+  front:    '전면',
+  rear:     '후면',
+  back:     '후면',
+  left:     '좌측',
+  right:    '우측',
+  roof:     '지붕',
+  interior: '내부',
+}
+const carPartLabel = (part) => CAR_PART_LABEL[part?.toLowerCase()] ?? part ?? '-'
+
 const formatDate = (iso) => {
   if (!iso) return '-'
   const d = new Date(iso)
@@ -113,6 +124,12 @@ export default function DisputePage() {
         <div className="dp-header-info">
           <div className="dp-header-meta">분쟁 관리 · 예약 {shortId(dispute.reservationId)}</div>
           <h1 className="dp-title">분쟁 {shortId(dispute.disputeId)}</h1>
+          {dispute.targetCarPart && (
+            <div className="dp-part-row">
+              <span className="dp-part-badge">📍 손상 부위</span>
+              <span className="dp-part-value">{carPartLabel(dispute.targetCarPart)}</span>
+            </div>
+          )}
         </div>
         <span className={`dp-status-mega ${isCompleted ? 'completed' : 'open'}`}>
           {isCompleted ? '✓ 처리 완료' : '⏳ 처리 대기중'}
@@ -132,11 +149,32 @@ export default function DisputePage() {
               <div className="dp-amount-label">청구 금액</div>
               <div className="dp-amount-value">
                 {(dispute.claimAmount || 0).toLocaleString()}
-                <span className="dp-amount-unit">원</span>
+                <span className="dp-amount-unit">CARE</span>
               </div>
               <div className="dp-amount-desc">파손·수리로 인해 업체가 청구한 보상 금액</div>
             </div>
           </div>
+
+          {/* 손상 부위 이미지 */}
+          {(dispute.targetCropS3Url || dispute.targetOriginalS3Url) && (
+            <div className="dp-card dp-scratch-card">
+              <h2 className="dp-card-title">손상 부위 이미지</h2>
+              <div className="dp-scratch-imgs">
+                {dispute.targetCropS3Url && (
+                  <div className="dp-scratch-img-wrap">
+                    <div className="dp-scratch-img-label">클로즈업</div>
+                    <img src={dispute.targetCropS3Url} alt="손상 클로즈업" className="dp-scratch-img" />
+                  </div>
+                )}
+                {dispute.targetOriginalS3Url && (
+                  <div className="dp-scratch-img-wrap">
+                    <div className="dp-scratch-img-label">전체 사진</div>
+                    <img src={dispute.targetOriginalS3Url} alt="손상 전체 사진" className="dp-scratch-img" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* 분쟁 상세 */}
           <div className="dp-card">
@@ -286,7 +324,7 @@ export default function DisputePage() {
         onClose={() => setIsResolveModal(false)}
         onConfirm={handleResolve}
         title="강제 청구 진행"
-        message={`렌터의 이의를 인정하지 않고 청구금액 ${(dispute.claimAmount || 0).toLocaleString()}원을 청구합니다.`}
+        message={`렌터의 이의를 인정하지 않고 청구금액 ${(dispute.claimAmount || 0).toLocaleString()} CARE를 청구합니다.`}
         confirmText={actionLoading ? '처리 중...' : '확인'}
       />
 

@@ -269,6 +269,14 @@
   color: #F7A633;
 }
 
+.rd-reservation-id {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #bbb;
+  letter-spacing: 0.3px;
+}
+
 /* 차량 이미지 */
 .mc-car-image-wrap {
   background: white;
@@ -942,6 +950,198 @@
 }
 
 /* ─── 예약 토글 버튼 ─────────────────────────────────── */
+/* ─── 예약 선택 화면 (토스 스타일) ─────────────────── */
+.mc-sel-top {
+  padding: 40px 20px 20px;
+}
+
+
+.mc-sel-title {
+  font-size: 24px;
+  font-weight: 900;
+  color: #111;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.mc-sel-list {
+  background: white;
+  border-radius: 18px;
+  margin: 0 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.mc-sel-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #f5f5f7;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.mc-sel-item:last-child { border-bottom: none; }
+.mc-sel-item:active { background: #fafafa; }
+
+.mc-sel-icon {
+  font-size: 28px;
+  width: 48px;
+  height: 48px;
+  background: #fff8ee;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mc-sel-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mc-sel-car-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.mc-sel-car {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.mc-sel-country {
+  font-size: 11px;
+  font-weight: 700;
+  color: #F7A633;
+  background: #fff8ee;
+  padding: 2px 7px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.mc-sel-date {
+  font-size: 13px;
+  color: #555;
+  margin: 0 0 2px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mc-sel-dt-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #aaa;
+  background: #f5f5f7;
+  padding: 1px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.mc-sel-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.mc-sel-plate {
+  font-size: 12px;
+  color: #bbb;
+  margin: 0;
+  font-weight: 600;
+}
+
+.mc-sel-created {
+  font-size: 12px;
+  color: #ccc;
+  margin: 0;
+  font-weight: 500;
+}
+
+.mc-sel-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mc-sel-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.mc-sel-badge.reserved  { background: #fff8ee; color: #F7A633; }
+.mc-sel-badge.inuse     { background: #edf4ff; color: #4A90E2; }
+.mc-sel-badge.afterscan { background: #fff0f0; color: #FF4D4F; }
+
+.mc-sel-chevron { flex-shrink: 0; }
+
+/* ─── 예약 전환 pill 탭 ─────────────────────────────── */
+.mc-res-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: white;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.mc-res-tabs::-webkit-scrollbar { display: none; }
+
+.mc-res-tab {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #f5f5f7;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.mc-res-tab.active {
+  background: #F7A633;
+  color: white;
+}
+
+.mc-res-tab-back {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f7;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+}
+
 .mc-res-toggle-btn {
   display: flex;
   align-items: center;

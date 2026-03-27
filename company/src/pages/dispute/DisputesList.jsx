@@ -115,7 +115,7 @@ export default function DisputesList() {
         <div className="disp-kpi-card" data-delay="3" style={{ '--ka': '#F5A623' }}>
           <div className="disp-kpi-icon">💰</div>
           <div>
-            <div className="disp-kpi-value">{(stats.totalAmount / 10000).toFixed(0)}<span className="disp-kpi-unit">만원</span></div>
+            <div className="disp-kpi-value">{stats.totalAmount.toLocaleString()}<span className="disp-kpi-unit">CARE</span></div>
             <div className="disp-kpi-label">누적 청구 금액</div>
           </div>
         </div>
@@ -167,7 +167,7 @@ export default function DisputesList() {
                     <td>
                       <span className="disp-issue-badge damage">{dispute.issueType}</span>
                     </td>
-                    <td className="disp-amount">{dispute.amount.toLocaleString()}원</td>
+                    <td className="disp-amount">{dispute.amount.toLocaleString()} CARE</td>
                     <td>
                       <span className={`disp-status-badge ${dispute.status}`}>
                         {dispute.status === 'open' ? '접수됨' : '해결완료'}

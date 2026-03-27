@@ -10,6 +10,8 @@ export default function DIDCardPage() {
 
   const [userName, setUserName] = useState('')
   const [revealed, setRevealed] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const docId = localStorage.getItem('did_id') || ''
 
   useEffect(() => {
     const timer = setTimeout(() => setRevealed(true), 100)

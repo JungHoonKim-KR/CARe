@@ -156,5 +156,25 @@
     "pickupToday": "今天可以取车！",
     "returnDday": "还车还有{{n}}天",
     "returnDue": "还车日期"
+  },
+  "didCard": {
+    "headerTitle": "身份验证完成",
+    "nameFallback": "已验证",
+    "verified": "护照及驾照验证完成",
+    "shareTitle": "身份验证完成",
+    "shareText": "{{name}} 的身份已通过验证。"
+  },
+  "tokenHistory": {
+    "title": "代币记录",
+    "balanceLabel": "持有 CARE",
+    "loading": "查询中...",
+    "charge": "充值",
+    "exchange": "兑换",
+    "exchangeAlert": "兑换功能即将推出。",
+    "listTitle": "使用记录",
+    "empty": "暂无使用记录。",
+    "error": "错误",
+    "chargeLabel": "充值",
+    "paymentLabel": "付款"
   }
 }

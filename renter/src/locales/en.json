@@ -95,7 +95,15 @@
       "DEFAULT2_sub": "International Airport"
     },
     "datePicker": {
-      "days": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+      "days": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
       "year": "",
       "month": ""
     }
@@ -260,9 +268,15 @@
     "year": "Year",
     "mileage": "Mileage",
     "fuel": "Fuel Type",
-    "brand": "Brand", "size": "Size",
-    "fuelGasoline": "Gasoline", "fuelElectric": "Electric", "fuelDiesel": "Diesel", "fuelHybrid": "Hybrid",
-    "sizeSmall": "Compact", "sizeMedium": "Midsize", "sizeLarge": "Full-size",
+    "brand": "Brand",
+    "size": "Size",
+    "fuelGasoline": "Gasoline",
+    "fuelElectric": "Electric",
+    "fuelDiesel": "Diesel",
+    "fuelHybrid": "Hybrid",
+    "sizeSmall": "Compact",
+    "sizeMedium": "Midsize",
+    "sizeLarge": "Full-size",
     "insurance": "Insurance",
     "includedServices": "Included Services",
     "companyInfo": "View Company Info",
@@ -286,7 +300,7 @@
     "completeBtn": "Complete Return",
     "introTitle": "Please photograph the vehicle\nbefore returning it",
     "introDesc": "Photos will be stored on the blockchain\nand the rental company will be notified.",
-    "introNotice": "All 4 sides must be photographed to proceed",
+    "introNotice": "All 6 sides must be photographed to proceed",
     "goCamera": "Start Photographing",
     "selectTitle": "Return Exterior Photography",
     "panelFront": "Front",
@@ -295,7 +309,7 @@
     "panelRight": "Right Side",
     "taken": "Captured",
     "notTaken": "Not taken",
-    "shootHint": "Photograph all 4 sides to complete return",
+    "shootHint": "Photograph all 6 sides to complete return",
     "cameraTitle": "{{panel}} Shot",
     "cameraGuide": "Align the vehicle within the guide lines",
     "cameraPermission": "Camera access permission is required",
@@ -364,5 +378,25 @@
     "loading": "Loading dispute info...",
     "loadError": "Failed to load dispute info.",
     "verified": "Verified"
+  },
+  "didCard": {
+    "headerTitle": "Identity Verified",
+    "nameFallback": "Verified",
+    "verified": "Passport & License Verified",
+    "shareTitle": "Identity Verified",
+    "shareText": "{{name}} identity has been verified."
+  },
+  "tokenHistory": {
+    "title": "Token History",
+    "balanceLabel": "CARE Balance",
+    "loading": "Loading...",
+    "charge": "Charge",
+    "exchange": "Exchange",
+    "exchangeAlert": "Exchange feature coming soon.",
+    "listTitle": "Transaction History",
+    "empty": "No transactions yet.",
+    "error": "Error",
+    "chargeLabel": "Charge",
+    "paymentLabel": "Payment"
   }
 }

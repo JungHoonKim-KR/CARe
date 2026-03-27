@@ -231,6 +231,44 @@
   letter-spacing: -0.5px;
 }
 
+.rd-car-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.rd-meta-item {
+  font-size: 13px;
+  color: #888;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.rd-meta-dot {
+  font-size: 13px;
+  color: #ccc;
+}
+
+.rd-nft-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #F7A633;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(247, 166, 51, 0.35);
+}
+
+.rd-nft-text {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #F7A633;
+}
+
 /* 차량 이미지 */
 .mc-car-image-wrap {
   background: white;

@@ -17,9 +17,10 @@ export class Scanner {
     this._matchValue   = 0
     this._isMatching   = false
 
-    this.onMatching  = null
-    this.onMatched   = null
-    this.onCapture   = null
+    this.onMatching      = null
+    this.onMatched       = null
+    this.onCapture       = null
+    this.onSaveComplete  = null
   }
   setZone(zone) {
     this.zone        = zone
@@ -83,8 +84,10 @@ export class Scanner {
       // 중간 구역: 먼저 넘어가고 백그라운드 저장
       this.captures[this.zone.id] = { base64, dataUrl, boxes: [] }
       if (this.onCapture) this.onCapture(this.zone.id, dataUrl, [])
+      const zoneId = this.zone.id
       this._saveToSpringBoot(base64).then(boxes => {
-        this.captures[this.zone.id].boxes = boxes
+        this.captures[zoneId].boxes = boxes
+        if (this.onSaveComplete) this.onSaveComplete(zoneId, boxes)
       }).catch(err => {
         console.warn('[Scanner] 저장 실패:', err)
       })

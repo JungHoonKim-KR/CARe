@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import BottomNav from '../../components/BottomNav'
 import { getMyReservations } from '../../api/reservation'
+import carIconCute from '../../assets/car_icon_cute.png'
 import '../my-car/MyCarPage.css'
 import './ReservationDetailPage.css'
 
@@ -149,18 +150,39 @@ export default function ReservationDetailPage() {
         {/* 차량 헤더 */}
         <div className="mc-car-header">
           <div className="mc-plate-row">
-            <span className="mc-plate">{reservation.plateNumber}</span>
             <span className={`mc-nft-badge${isCompleted ? ' completed' : ''}`}>
               {statusLabel[reservation.status] || reservation.status}
             </span>
           </div>
           <h1 className="mc-car-name">{carName}</h1>
+          <div className="rd-car-meta">
+            <span className="rd-meta-item">{reservation.plateNumber}</span>
+            {reservation.insuranceName && (
+              <>
+                <span className="rd-meta-dot">·</span>
+                <span className="rd-meta-item">{reservation.insuranceName}</span>
+              </>
+            )}
+          </div>
+          {reservation.nftTokenId && (
+            <div className="rd-nft-row">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L3 7L12 12L21 7L12 2Z" stroke="#F7A633" strokeWidth="2" strokeLinejoin="round"/>
+                <path d="M3 17L12 22L21 17" stroke="#F7A633" strokeWidth="2" strokeLinejoin="round"/>
+                <path d="M3 12L12 17L21 12" stroke="#F7A633" strokeWidth="2" strokeLinejoin="round"/>
+              </svg>
+              <span className="rd-nft-text">NFT #{reservation.nftTokenId}</span>
+            </div>
+          )}
         </div>
 
         {/* 차량 이미지 */}
         <div className="mc-car-image-wrap">
           <div className="mc-car-emoji-wrap">
-            <span className="mc-car-emoji">🚗</span>
+            {reservation.thumbnailUrl
+              ? <img src={reservation.thumbnailUrl} alt={carName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 16 }} />
+              : <img src={carIconCute} alt={carName} style={{ width: '70%', objectFit: 'contain' }} />
+            }
           </div>
         </div>
 
@@ -192,7 +214,14 @@ export default function ReservationDetailPage() {
             </div>
           </div>
 
-          {pickupStatus && (
+          {isCompleted ? (
+            <div className="rd-completed-banner">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M20 6L9 17L4 12" stroke="#4CAF50" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span>{t('myCar.returnCompleted')}</span>
+            </div>
+          ) : pickupStatus && (
             <div className="mc-schedule-progress-wrap">
               <div className="mc-schedule-bar-bg">
                 <div
@@ -210,20 +239,7 @@ export default function ReservationDetailPage() {
             </div>
           )}
 
-          <div className="mc-schedule-location">
-            <svg width="13" height="13" viewBox="0 0 24 24">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" fill="#F7A633"/>
-            </svg>
-            <span>{reservation.insuranceName} | {reservation.plateNumber}</span>
-          </div>
         </div>
-
-        {/* 반납 완료 표시 */}
-        {isCompleted && (
-          <div className="mc-action-card mc-completed-card">
-            <p className="mc-action-card-title">{t('myCar.returnCompleted')}</p>
-          </div>
-        )}
 
         <div style={{ height: 40 }} />
       </div>

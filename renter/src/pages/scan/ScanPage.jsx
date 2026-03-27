@@ -126,40 +126,60 @@ export default function ScanPage() {
     const protocol  = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const AI_WS_URL = import.meta.env.VITE_AI_WS_URL || `${protocol}//${window.location.hostname}:8000`
     const wsUrl     = `${AI_WS_URL}/api/v1/scratches/ws/detect`
-    wsRef.current   = new WebSocket(wsUrl)
-    wsRef.current.onopen = () => {
-      console.log('🟢 [WS] 연결 성공!')
-    }
+    let destroyed   = false
 
-    wsRef.current.onmessage = (event) => {
-      isWaitingRef.current = false
-      clearTimeout(timeoutRef.current)
-      if (matchStatusRef.current === 'captured') return
-      const data = JSON.parse(event.data)
+    function connectWS() {
+      if (destroyed) return
+      const ws = new WebSocket(wsUrl)
+      wsRef.current = ws
 
-      if (data.boxes) {
-        const video = videoRef.current
-        const vw = video?.videoWidth  || 640
-        const vh = video?.videoHeight || 360
-        const isPortrait  = window.innerHeight > window.innerWidth
-        const needsRotate = isPortrait && vw > vh
-        let capW, capH
-        if (needsRotate) {
-          const scale = 640 / Math.max(vh, vw)
-          capW = Math.round(vh * scale)
-          capH = Math.round(vw * scale)
-        } else if (isPortrait) {
-          const scale = 640 / vw
-          capW = 640
-          capH = Math.round(vh * scale)
-        } else {
-          const scale = 640 / Math.max(vw, vh)
-          capW = Math.round(vw * scale)
-          capH = Math.round(vh * scale)
+      ws.onopen = () => {
+        console.log('🟢 [WS] 연결 성공!')
+        isWaitingRef.current = false
+      }
+
+      ws.onmessage = (event) => {
+        isWaitingRef.current = false
+        clearTimeout(timeoutRef.current)
+        if (matchStatusRef.current === 'captured') return
+        const data = JSON.parse(event.data)
+
+        if (data.boxes) {
+          const video = videoRef.current
+          const vw = video?.videoWidth  || 640
+          const vh = video?.videoHeight || 360
+          const isPortrait  = window.innerHeight > window.innerWidth
+          const needsRotate = isPortrait && vw > vh
+          let capW, capH
+          if (needsRotate) {
+            const scale = 640 / Math.max(vh, vw)
+            capW = Math.round(vh * scale)
+            capH = Math.round(vw * scale)
+          } else if (isPortrait) {
+            const scale = 640 / vw
+            capW = 640
+            capH = Math.round(vh * scale)
+          } else {
+            const scale = 640 / Math.max(vw, vh)
+            capW = Math.round(vw * scale)
+            capH = Math.round(vh * scale)
+          }
+          updateARBoxes(data.boxes, capW, capH)
         }
-        updateARBoxes(data.boxes, capW, capH)
+      }
+
+      ws.onclose = (e) => {
+        console.log(`🟡 WS 끊김 (code: ${e.code}) — 2초 후 재연결`)
+        isWaitingRef.current = false
+        if (!destroyed) setTimeout(connectWS, 2000)
+      }
+
+      ws.onerror = () => {
+        isWaitingRef.current = false
       }
     }
+
+    connectWS()
 
     const interval = setInterval(() => {
       if (matchStatusRef.current === 'captured') return
@@ -215,7 +235,7 @@ export default function ScanPage() {
         }
       }, 'image/jpeg', 0.6)
     }, 200)
-    return () => { clearInterval(interval); stopARLoop(); if (wsRef.current) wsRef.current.close() }
+    return () => { destroyed = true; clearInterval(interval); stopARLoop(); if (wsRef.current) wsRef.current.close() }
   }, [])
 
   // 카메라

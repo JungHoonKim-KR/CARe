@@ -25,7 +25,11 @@ export const getCarReviews = async (carId) => {
 
 // 차량 반납 리포트 조회
 export const getReturnReport = async (carId, reservationId) => {
-  const params = reservationId ? `?reservationId=${reservationId}` : ''
+  if (reservationId) {
+    const response = await api.get(`/api/reservations/${reservationId}/return-report`)
+    return response.data
+  }
+  const params = ''
   const response = await api.get(`/api/cars/${carId}/return-report${params}`)
   return response.data
 }

@@ -95,7 +95,15 @@
       "DEFAULT2_sub": "International Airport"
     },
     "datePicker": {
-      "days": ["日", "月", "火", "水", "木", "金", "土"],
+      "days": [
+        "日",
+        "月",
+        "火",
+        "水",
+        "木",
+        "金",
+        "土"
+      ],
       "year": "年",
       "month": "月"
     }
@@ -260,9 +268,15 @@
     "year": "製造年",
     "mileage": "走行距離",
     "fuel": "燃料タイプ",
-    "brand": "ブランド", "size": "車種",
-    "fuelGasoline": "ガソリン", "fuelElectric": "電気", "fuelDiesel": "ディーゼル", "fuelHybrid": "ハイブリッド",
-    "sizeSmall": "コンパクト", "sizeMedium": "ミドルサイズ", "sizeLarge": "フルサイズ",
+    "brand": "ブランド",
+    "size": "車種",
+    "fuelGasoline": "ガソリン",
+    "fuelElectric": "電気",
+    "fuelDiesel": "ディーゼル",
+    "fuelHybrid": "ハイブリッド",
+    "sizeSmall": "コンパクト",
+    "sizeMedium": "ミドルサイズ",
+    "sizeLarge": "フルサイズ",
     "insurance": "保険",
     "includedServices": "含まれるサービス",
     "companyInfo": "会社情報を見る",
@@ -286,7 +300,7 @@
     "completeBtn": "返却を完了する",
     "introTitle": "返却前に車両外観を\n撮影してください",
     "introDesc": "撮影した写真はブロックチェーンに保存され\n業者に返却通知が送信されます",
-    "introNotice": "4方向すべて撮影しないと返却できません",
+    "introNotice": "6方向すべて撮影しないと返却できません",
     "goCamera": "撮影する",
     "selectTitle": "返却外観撮影",
     "panelFront": "前面",
@@ -295,7 +309,7 @@
     "panelRight": "右側面",
     "taken": "撮影完了",
     "notTaken": "未撮影",
-    "shootHint": "4方向すべて撮影後に返却できます",
+    "shootHint": "6方向すべて撮影後に返却できます",
     "cameraTitle": "{{panel}}の撮影",
     "cameraGuide": "ガイドラインに車両を合わせてください",
     "cameraPermission": "カメラへのアクセス許可が必要です",
@@ -364,5 +378,25 @@
     "loading": "紛争情報を読み込み中...",
     "loadError": "紛争情報を読み込めませんでした。",
     "verified": "検証済み"
+  },
+  "didCard": {
+    "headerTitle": "本人確認完了",
+    "nameFallback": "認証済み",
+    "verified": "パスポート・免許証の認証完了",
+    "shareTitle": "本人確認完了",
+    "shareText": "{{name}} さんの本人確認が完了しました。"
+  },
+  "tokenHistory": {
+    "title": "トークン履歴",
+    "balanceLabel": "保有 CARE",
+    "loading": "照会中...",
+    "charge": "チャージ",
+    "exchange": "交換",
+    "exchangeAlert": "交換機能は準備中です。",
+    "listTitle": "利用履歴",
+    "empty": "まだ利用履歴がありません。",
+    "error": "エラー",
+    "chargeLabel": "チャージ",
+    "paymentLabel": "決済"
   }
 }

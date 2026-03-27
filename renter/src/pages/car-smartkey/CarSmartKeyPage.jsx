@@ -49,7 +49,9 @@ export default function CarSmartKeyPage() {
     }
   }
 
-  const carName = reservation?.carName || '내 차량'
+  const carName = reservation?.brand && reservation?.modelName
+    ? `${reservation.brand} ${reservation.modelName}`
+    : reservation?.carName || '내 차량'
   const plateNumber = reservation?.plateNumber || '---'
   const batteryLevel = reservation?.batteryLevel ?? null
 
@@ -107,7 +109,6 @@ export default function CarSmartKeyPage() {
       {/* 차량 카드 */}
       <div className="sk-car-card">
         <div className="sk-car-info">
-          <p className="sk-car-label">내 차량</p>
           <p className="sk-car-name">{carName}</p>
           <p className="sk-car-plate">{plateNumber}</p>
         </div>

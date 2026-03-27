@@ -167,7 +167,7 @@ export default function DisputePage() {
               {dispute.claimAmount != null && (
                 <div className="dp-info-row">
                   <span className="dp-info-label">{t('dispute.claimAmount')}</span>
-                  <span className="dp-info-value">{dispute.claimAmount.toLocaleString('ko-KR')}원</span>
+                  <span className="dp-info-value">{dispute.claimAmount.toLocaleString('ko-KR')} CARE</span>
                 </div>
               )}
               {dispute.createdAt && (
@@ -188,49 +188,67 @@ export default function DisputePage() {
 
         {/* AI 유사도 판별 결과 */}
         <div className="dp-section">
-          <p className="dp-section-title">{t('dispute.aiTitle')}</p>
-          <div className="dp-compare-row">
-            {/* Before */}
-            <div className="dp-compare-card">
-              <div className="dp-compare-img before">
-                {dispute?.snapshotBeforeCropS3Url
-                  ? <img src={dispute.snapshotBeforeCropS3Url} alt="before" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
-                  : <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                      <rect x="3" y="5" width="18" height="14" rx="2" stroke="#ccc" strokeWidth="1.5"/>
-                      <circle cx="12" cy="12" r="3" stroke="#ccc" strokeWidth="1.5"/>
-                      <circle cx="17.5" cy="7.5" r="1" fill="#ccc"/>
-                    </svg>
-                }
-              </div>
-              <p className="dp-compare-label">Before</p>
-              {dispute?.snapshotCapturedAt && (
-                <p className="dp-compare-date">{formatDateTime(dispute.snapshotCapturedAt)}</p>
-              )}
-              <span className="dp-compare-tag normal">기존 상태</span>
-            </div>
+          {dispute?.snapshotBeforeCropS3Url ? (
+            /* ── 기존 흠집과 비교 가능한 경우 ── */
+            <>
+              <p className="dp-section-title">AI 유사도 비교</p>
+              <div className="dp-compare-row">
+                {/* 픽업 전 */}
+                <div className="dp-compare-card">
+                  <div className="dp-compare-img before">
+                    <img src={dispute.snapshotBeforeCropS3Url} alt="픽업 전" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                  </div>
+                  <p className="dp-compare-label">픽업 전</p>
+                  {dispute?.snapshotCapturedAt && (
+                    <p className="dp-compare-date">{formatDateTime(dispute.snapshotCapturedAt)}</p>
+                  )}
+                  <span className="dp-compare-tag normal">픽업 전 상태</span>
+                </div>
 
-            {/* After */}
-            <div className="dp-compare-card">
-              <div className="dp-compare-img after">
-                {dispute?.snapshotAfterCropS3Url
-                  ? <img src={dispute.snapshotAfterCropS3Url} alt="after" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
-                  : <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                      <rect x="3" y="5" width="18" height="14" rx="2" stroke="#ccc" strokeWidth="1.5"/>
-                      <circle cx="12" cy="12" r="3" stroke="#ccc" strokeWidth="1.5"/>
-                      <circle cx="17.5" cy="7.5" r="1" fill="#ccc"/>
-                      <path d="M5 9l3 3M7 7l4 4" stroke="#FF4D4F" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                }
+                {/* 반납 후 */}
+                <div className="dp-compare-card">
+                  <div className="dp-compare-img after">
+                    {dispute?.snapshotAfterCropS3Url
+                      ? <img src={dispute.snapshotAfterCropS3Url} alt="반납 후" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                      : <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                          <rect x="3" y="5" width="18" height="14" rx="2" stroke="#ccc" strokeWidth="1.5"/>
+                          <circle cx="12" cy="12" r="3" stroke="#ccc" strokeWidth="1.5"/>
+                          <circle cx="17.5" cy="7.5" r="1" fill="#ccc"/>
+                          <path d="M5 9l3 3M7 7l4 4" stroke="#FF4D4F" strokeWidth="1.5" strokeLinecap="round"/>
+                        </svg>
+                    }
+                  </div>
+                  <p className="dp-compare-label">반납 후</p>
+                  {dispute?.createdAt && (
+                    <p className="dp-compare-date">{formatDateTime(dispute.createdAt)}</p>
+                  )}
+                  <span className={`dp-compare-tag${dispute?.snapshotWarning ? ' attention' : ' normal'}`}>
+                    {dispute?.snapshotWarning ? '주의 필요' : '유사도 정상'}
+                  </span>
+                </div>
               </div>
-              <p className="dp-compare-label">After</p>
-              {dispute?.createdAt && (
-                <p className="dp-compare-date">{formatDateTime(dispute.createdAt)}</p>
-              )}
-              <span className={`dp-compare-tag${dispute?.snapshotWarning ? ' attention' : ' normal'}`}>
-                {dispute?.snapshotWarning ? '주의 필요' : '정상'}
-              </span>
-            </div>
-          </div>
+            </>
+          ) : (
+            /* ── 픽업 전 스캔에 없던 새 흠집 ── */
+            <>
+              <p className="dp-section-title">새 흠집 감지</p>
+              <div className="dp-new-scratch-card">
+                <div className="dp-new-scratch-badge">🆕 새로운 손상</div>
+                <p className="dp-new-scratch-desc">
+                  픽업 전 스캔에서 이 부위에 흠집이 없었습니다.<br/>
+                  반납 후 새로운 손상이 감지되었습니다.
+                </p>
+                {dispute?.snapshotAfterCropS3Url && (
+                  <div className="dp-new-scratch-img-wrap">
+                    <p className="dp-new-scratch-img-label">반납 후 촬영</p>
+                    <div className="dp-compare-img after" style={{ width: '100%', maxWidth: 240, margin: '0 auto' }}>
+                      <img src={dispute.snapshotAfterCropS3Url} alt="반납 후" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           {/* 부위 표시 + 이력 버튼 */}
           {scratchZone && (

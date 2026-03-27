@@ -91,21 +91,30 @@ export default function CarReturnPage() {
     setStep('select')
   }
 
-  const submitReturn = () => {
+  const submitReturn = async () => {
     const rid = reservation?.reservationId
     if (rid) {
       localStorage.setItem(`disputePending_${rid}`, 'true')
       localStorage.setItem(`disputeDate_${rid}`, reservation.endDate || '')
     }
-    setStep('done')
+    setStep('submitting')
     if (rid) {
-      // 스마트키 반납 + 반납 완료 상태 변경 + 사진 업로드 백그라운드 처리
-      lockSmartKey(rid).catch(e => console.error('[Return] 스마트키 반납 실패:', e))
-      completeReservation(rid).catch(e => console.error('[Return] 반납 완료 API 실패:', e))
-      if (!fromScan) {
-        Promise.all(PANELS.map(p => scanAfter(rid, p.id, photos[p.id])))
-          .catch(e => console.error('[Return] 스캔 업로드 실패:', e))
+      try {
+        // 스캔 업로드를 먼저 완료한 후 반납 처리
+        if (!fromScan) {
+          await Promise.all(PANELS.filter(p => photos[p.id]).map(p => scanAfter(rid, p.id, photos[p.id])))
+        }
+        await Promise.all([
+          lockSmartKey(rid).catch(e => console.error('[Return] 스마트키 반납 실패:', e)),
+          completeReservation(rid),
+        ])
+        setStep('done')
+      } catch (e) {
+        console.error('[Return] 반납 처리 실패:', e)
+        setStep('done')
       }
+    } else {
+      setStep('done')
     }
   }
 

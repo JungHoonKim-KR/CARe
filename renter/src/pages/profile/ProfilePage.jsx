@@ -43,7 +43,6 @@ export default function ProfilePage() {
         <li className="profile-menu-item" onClick={() => navigate('/wallet')}>
           {t('profile.wallet')}
         </li>
-        <li className="profile-menu-item">{t('profile.editInfo')}</li>
         <li className="profile-menu-item" onClick={() => navigate('/reservations')}>{t('profile.reservations')}</li>
         <li
           className="profile-menu-item"
@@ -51,7 +50,6 @@ export default function ProfilePage() {
         >
           {t('profile.languageSettings')}
         </li>
-        <li className="profile-menu-item">{t('profile.customerSupport')}</li>
         <li className="profile-menu-item logout" onClick={handleLogout}>
           {t('profile.logout')}
         </li>

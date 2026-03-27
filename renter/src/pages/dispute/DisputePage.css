@@ -212,6 +212,48 @@
   color: #FF4D4F;
 }
 
+/* ─── 새 흠집 카드 ─────────────────────────── */
+.dp-new-scratch-card {
+  background: #fff8f0;
+  border: 1.5px solid #ffb347;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.dp-new-scratch-badge {
+  display: inline-block;
+  background: #FF6B35;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 5px 14px;
+  border-radius: 20px;
+  letter-spacing: 0.2px;
+}
+
+.dp-new-scratch-desc {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.dp-new-scratch-img-wrap {
+  width: 100%;
+}
+
+.dp-new-scratch-img-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #aaa;
+  margin-bottom: 6px;
+}
+
 /* ─── 설명 ─────────────────────────────────── */
 .dp-desc-box {
   background: white;

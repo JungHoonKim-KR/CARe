@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { getRenterProfile } from '../../api/auth'
 import './DIDCardPage.css'
 
 export default function DIDCardPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { state } = useLocation()
   const expiryDate = state?.expiryDate || localStorage.getItem('did_expiry') || ''
@@ -35,7 +37,7 @@ export default function DIDCardPage() {
             <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="#111" />
           </svg>
         </button>
-        <span className="dcp-header-title">신원 인증 완료</span>
+        <span className="dcp-header-title">{t('didCard.headerTitle')}</span>
       </div>
 
       {/* 카드 영역 */}
@@ -73,7 +75,7 @@ export default function DIDCardPage() {
 
           {/* 이름 + 만료일 */}
           <div className="dcp-info">
-            <p className="dcp-name">{userName || '인증 완료'}</p>
+            <p className="dcp-name">{userName || t('didCard.nameFallback')}</p>
             {formattedExpiry && (
               <div className="dcp-valid-row">
                 <span className="dcp-valid-label">VALID UNTIL</span>
@@ -86,7 +88,7 @@ export default function DIDCardPage() {
           <div className="dcp-did-box">
             <div className="dcp-did-left">
               <span className="dcp-did-tag">✓</span>
-              <span className="dcp-did-value">여권 및 면허증 인증 완료</span>
+              <span className="dcp-did-value">{t('didCard.verified')}</span>
             </div>
           </div>
         </div>
@@ -95,7 +97,7 @@ export default function DIDCardPage() {
       {/* 하단 액션 */}
       <div className="dcp-actions">
         <button className="dcp-share-btn" onClick={() => {
-          if (navigator.share) navigator.share({ title: '신원 인증 완료', text: `${userName} 님의 신원이 인증되었습니다.` })
+          if (navigator.share) navigator.share({ title: t('didCard.shareTitle'), text: t('didCard.shareText', { name: userName }) })
         }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>

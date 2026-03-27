@@ -24,6 +24,7 @@ def verify(
         enforce_detection=enforce_detection,
         threshold=0.9,
     )
+    
     return {
         "verified": result["verified"],
         "distance": result["distance"],

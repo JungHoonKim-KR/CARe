@@ -128,6 +128,21 @@ public class CareTokenService {
         return mintTxHash;
     }
 
+    /**
+     * 발행처(오너) 지갑 주소 반환
+     */
+    public String getOwnerAddress() {
+        return credentials.getAddress();
+    }
+
+    /**
+     * 토큰 컨트랙트 주소 반환
+     */
+    public String getTokenContractAddress() {
+        return careTokenAddress;
+    }
+
+
     // ── 트랜잭션 채굴 대기 (최대 60초) ───────────────────────────────────────
     private TransactionReceipt waitForReceipt(String txHash) throws Exception {
         PollingTransactionReceiptProcessor processor =

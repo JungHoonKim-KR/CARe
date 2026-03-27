@@ -2,48 +2,53 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import ConfirmModal from '../../components/ConfirmModal'
 import DisputeService from '../../services/DisputeService'
+import { shortId } from '../../utils/formatId'
 import './DisputePage.css'
 
-export default function DisputePage() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const [isResolveModalOpen, setIsResolveModalOpen] = useState(false)
-  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
-  const [isDefenseModalOpen, setIsDefenseModalOpen] = useState(false)
-  const [dispute, setDispute] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [actionLoading, setActionLoading] = useState(false)
+const formatDate = (iso) => {
+  if (!iso) return '-'
+  const d = new Date(iso)
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+}
 
-  // 여기는 하드코딩 — API 실패 시 폴백
-  const MOCK_DETAIL = {
-    disputeId: id.includes('DSP') ? id : 'DSP-2603-01',
-    reservationId: 'RES-2603-05',
-    claimAmount: 350000,
-    status: 'OPEN',
-    createdAt: '2026-03-26T10:30:00Z',
-    reason: '고객 반납 후 차량 우측 범퍼 하단에 심각한 긁힘 및 도장 벗겨짐이 발견되었습니다.',
-    defenseLogId: 'LOG-9912',
-    defenseOriginalS3Url: 'https://via.placeholder.com/600x400?text=Customer+Proof+1',
-    defenseCropS3Url: 'https://via.placeholder.com/600x400?text=Customer+Proof+2',
+export default function DisputePage() {
+  const { id }      = useParams()
+  const navigate    = useNavigate()
+  const [dispute,        setDispute]        = useState(null)
+  const [loading,        setLoading]        = useState(true)
+  const [actionLoading,  setActionLoading]  = useState(false)
+  const [isResolveModal, setIsResolveModal] = useState(false)
+  const [isRejectModal,  setIsRejectModal]  = useState(false)
+  const [isDefenseModal, setIsDefenseModal] = useState(false)
+
+  // API 실패 시 폴백 — 여기는 하드코딩
+  const MOCK = {
+    disputeId:            id,
+    reservationId:        '-',
+    claimAmount:          350000,
+    status:               'OPEN',
+    createdAt:            '2026-03-26T10:30:00Z',
+    reason:               '고객 반납 후 차량 우측 범퍼 하단에 심각한 긁힘 및 도장 벗겨짐이 발견되었습니다.',
+    defenseLogId:         null,
+    defenseOriginalS3Url: null,
+    defenseCropS3Url:     null,
   }
 
-  useEffect(() => {
-    fetchDisputeDetail()
-  }, [id])
+  useEffect(() => { fetchDetail() }, [id])
 
-  const fetchDisputeDetail = async () => {
+  const fetchDetail = async () => {
     setLoading(true)
     try {
       const result = await DisputeService.getDisputeDetail(id)
-      setDispute(result.success && result.data ? result.data : MOCK_DETAIL)
+      setDispute(result.success && result.data ? result.data : MOCK)
     } catch {
-      setDispute(MOCK_DETAIL)
+      setDispute(MOCK)
     } finally {
       setLoading(false)
     }
   }
 
-  // 불인정 — 청구금액 전액 청구 (COMPLETED)
+  /* 불인정 — 전액 청구 */
   const handleResolve = async () => {
     setActionLoading(true)
     try {
@@ -51,101 +56,127 @@ export default function DisputePage() {
         finalAmount: dispute.claimAmount,
         status: 'COMPLETED',
       })
-      if (result.success) {
-        navigate('/disputes')
-      } else {
-        alert(result.message || '정산 처리에 실패했습니다.')
-      }
+      if (result.success) navigate('/disputes')
+      else alert(result.message || '정산 처리에 실패했습니다.')
     } catch {
       alert('정산 처리 중 오류가 발생했습니다.')
     } finally {
       setActionLoading(false)
-      setIsResolveModalOpen(false)
+      setIsResolveModal(false)
     }
   }
 
-  // 무과실 인정 — 청구 취소 (REFUNDED, 0원)
+  /* 무과실 인정 — 청구 취소 */
   const handleReject = async () => {
     setActionLoading(true)
     try {
       const result = await DisputeService.rejectDispute(id, '')
-      if (result.success) {
-        navigate('/disputes')
-      } else {
-        alert(result.message || '처리에 실패했습니다.')
-      }
+      if (result.success) navigate('/disputes')
+      else alert(result.message || '처리에 실패했습니다.')
     } catch {
       alert('처리 중 오류가 발생했습니다.')
     } finally {
       setActionLoading(false)
-      setIsRejectModalOpen(false)
+      setIsRejectModal(false)
     }
   }
 
-  const formatDateTime = (iso) => iso ? new Date(iso).toLocaleString('ko-KR') : '-'
-  const uiStatus = dispute?.status === 'COMPLETED' || dispute?.status === 'RESOLVED' ? 'completed' : 'open'
-  const defenseImages = [dispute?.defenseOriginalS3Url, dispute?.defenseCropS3Url].filter(Boolean)
+  if (loading || !dispute) return (
+    <div className="dp-page">
+      <div className="dp-center">
+        <div className="dp-spinner" />
+        <span>분쟁 정보를 불러오는 중...</span>
+      </div>
+    </div>
+  )
 
-  const timeline = dispute ? [
-    { date: formatDateTime(dispute.createdAt), action: '분쟁 접수 (업체)', user: '시스템' },
-    ...(dispute.defenseLogId ? [{ date: formatDateTime(dispute.createdAt), action: '반납 증거 제출 (렌터)', user: '렌터' }] : []),
-    { date: '진행 중', action: '업체 확인 대기', user: '업체' }, // 여기는 하드코딩 — 타임라인 마지막 항목 고정
-  ] : []
+  const isCompleted    = dispute.status === 'COMPLETED' || dispute.status === 'RESOLVED'
+  const hasDefense     = !!dispute.defenseLogId
+  const defenseImages  = [dispute.defenseOriginalS3Url, dispute.defenseCropS3Url].filter(Boolean)
 
-  if (loading || !dispute) return <div className="dp-page"><div className="loading-spinner"></div></div>
+  const timeline = [
+    { date: formatDate(dispute.createdAt), action: '분쟁 접수', user: '업체' },
+    ...(hasDefense
+      ? [{ date: formatDate(dispute.createdAt), action: '렌터 이의 제기 수신', user: '렌터' }]
+      : []),
+    isCompleted
+      ? { date: '-', action: '분쟁 처리 완료', user: '업체' }
+      : { date: '진행 중', action: '업체 확인 대기', user: '-' },
+  ]
 
   return (
     <div className="dp-page">
+
+      {/* ── 헤더 카드 ── */}
       <div className="dp-header-card">
         <button className="dp-back-btn" onClick={() => navigate(-1)}>← 뒤로</button>
         <div className="dp-header-info">
-          <div className="dp-header-meta">분쟁 제어 패널 • {dispute.reservationId}</div>
-          <h1 className="dp-title">{dispute.disputeId}</h1>
+          <div className="dp-header-meta">분쟁 관리 · 예약 {shortId(dispute.reservationId)}</div>
+          <h1 className="dp-title">분쟁 {shortId(dispute.disputeId)}</h1>
         </div>
-        <div className={`dp-status-mega ${uiStatus}`}>
-          {uiStatus === 'open' ? '처리 대기중' : '해결 완료됨'}
-        </div>
+        <span className={`dp-status-mega ${isCompleted ? 'completed' : 'open'}`}>
+          {isCompleted ? '✓ 처리 완료' : '⏳ 처리 대기중'}
+        </span>
       </div>
 
+      {/* ── 본문 그리드 ── */}
       <div className="dp-grid">
+
+        {/* ── 왼쪽 ── */}
         <div className="dp-main-col">
+
+          {/* 청구 금액 */}
           <div className="dp-card dp-amount-card">
-            <div className="dp-amount-label">청구 금액</div>
-            <div className="dp-amount-value">{(dispute.claimAmount || 0).toLocaleString()}<span className="unit">원</span></div>
-            <p className="dp-amount-desc">파손/수리로 인해 업체가 청구한 보상 금액입니다.</p>
+            <div className="dp-amount-icon">💰</div>
+            <div>
+              <div className="dp-amount-label">청구 금액</div>
+              <div className="dp-amount-value">
+                {(dispute.claimAmount || 0).toLocaleString()}
+                <span className="dp-amount-unit">원</span>
+              </div>
+              <div className="dp-amount-desc">파손·수리로 인해 업체가 청구한 보상 금액</div>
+            </div>
           </div>
 
+          {/* 분쟁 상세 */}
           <div className="dp-card">
             <div className="dp-card-header">
               <h2 className="dp-card-title">분쟁 상세 내용</h2>
-              <button className="dp-btn-outline" onClick={() => navigate(`/ai-report/${dispute.disputeId}`)}>🤖 AI 리포트 보기</button>
+              <button
+                className="dp-btn-outline"
+                onClick={() => navigate(`/ai-report/${dispute.reservationId}`)}
+              >
+                🤖 AI 리포트 보기
+              </button>
             </div>
             <div className="dp-reason-box">
               {dispute.reason || '입력된 상세 내용이 없습니다.'}
             </div>
           </div>
 
-          {dispute.defenseLogId && (
+          {/* 렌터 이의 제기 */}
+          {hasDefense && (
             <div className="dp-card dp-action-card">
-              <h2 className="dp-card-title text-red">🚨 렌터 이의 제기 수신</h2>
-              <p className="dp-desc">렌터가 본인의 과실이 아님을 증명하는 반납 전 이미지를 제출했습니다. 이미지를 확인하고 정산 진행 여부를 결정하세요.</p>
-
-              <button className="dp-btn-block" onClick={() => setIsDefenseModalOpen(true)}>
+              <h2 className="dp-card-title dp-text-red">🚨 렌터 이의 제기 수신</h2>
+              <p className="dp-desc">
+                렌터가 본인의 과실이 아님을 증명하는 반납 전 이미지를 제출했습니다.
+                이미지를 확인하고 정산 진행 여부를 결정하세요.
+              </p>
+              <button className="dp-btn-block" onClick={() => setIsDefenseModal(true)}>
                 📸 제출된 증거 이미지 확인
               </button>
-
-              {uiStatus !== 'completed' && (
+              {!isCompleted && (
                 <div className="dp-action-row">
                   <button
                     className="dp-btn-danger"
-                    onClick={() => setIsRejectModalOpen(true)}
+                    onClick={() => setIsRejectModal(true)}
                     disabled={actionLoading}
                   >
                     렌터 무과실 인정 (청구 취소)
                   </button>
                   <button
                     className="dp-btn-primary"
-                    onClick={() => setIsResolveModalOpen(true)}
+                    onClick={() => setIsResolveModal(true)}
                     disabled={actionLoading}
                   >
                     불인정 (강제 청구 진행)
@@ -154,43 +185,105 @@ export default function DisputePage() {
               )}
             </div>
           )}
+
+          {/* 이의 없는 경우 처리 버튼 */}
+          {!hasDefense && !isCompleted && (
+            <div className="dp-card">
+              <h2 className="dp-card-title">분쟁 처리</h2>
+              <p className="dp-desc">렌터의 이의 제기가 없습니다. 분쟁 처리 방향을 선택하세요.</p>
+              <div className="dp-action-row">
+                <button
+                  className="dp-btn-danger"
+                  onClick={() => setIsRejectModal(true)}
+                  disabled={actionLoading}
+                >
+                  청구 취소
+                </button>
+                <button
+                  className="dp-btn-primary"
+                  onClick={() => setIsResolveModal(true)}
+                  disabled={actionLoading}
+                >
+                  청구 진행
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* ── 오른쪽 ── */}
         <div className="dp-side-col">
+
+          {/* 타임라인 */}
           <div className="dp-card">
             <h2 className="dp-card-title">진행 타임라인</h2>
             <div className="dp-timeline">
               {timeline.map((item, idx) => (
                 <div key={idx} className="dp-tl-item">
-                  <div className="dp-tl-dot"></div>
+                  <div className="dp-tl-track">
+                    <div className={`dp-tl-dot ${idx === 0 ? 'first' : ''}`} />
+                    {idx < timeline.length - 1 && <div className="dp-tl-line" />}
+                  </div>
                   <div className="dp-tl-content">
                     <div className="dp-tl-action">{item.action}</div>
-                    <div className="dp-tl-meta">{item.date} • {item.user}</div>
+                    <div className="dp-tl-meta">{item.date} · {item.user}</div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
+
+          {/* 분쟁 정보 요약 */}
+          <div className="dp-card">
+            <h2 className="dp-card-title">분쟁 정보</h2>
+            <div className="dp-info-list">
+              <div className="dp-info-row">
+                <span className="dp-info-label">분쟁 ID</span>
+                <span className="dp-info-value dp-mono">{shortId(dispute.disputeId)}</span>
+              </div>
+              <div className="dp-info-row">
+                <span className="dp-info-label">예약 ID</span>
+                <span className="dp-info-value dp-mono">{shortId(dispute.reservationId)}</span>
+              </div>
+              <div className="dp-info-row">
+                <span className="dp-info-label">접수일</span>
+                <span className="dp-info-value">{formatDate(dispute.createdAt)}</span>
+              </div>
+              <div className="dp-info-row">
+                <span className="dp-info-label">상태</span>
+                <span className={`dp-inline-badge ${isCompleted ? 'completed' : 'open'}`}>
+                  {isCompleted ? '처리 완료' : '처리 대기'}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {isDefenseModalOpen && (
-        <div className="dp-modal-overlay" onClick={() => setIsDefenseModalOpen(false)}>
+      {/* ── 증거 이미지 모달 ── */}
+      {isDefenseModal && (
+        <div className="dp-modal-overlay" onClick={() => setIsDefenseModal(false)}>
           <div className="dp-modal" onClick={e => e.stopPropagation()}>
-            <h3 className="dp-modal-title">렌터 제출 증거</h3>
-            <div className="dp-modal-grid">
-              {defenseImages.map((url, i) => (
-                <img key={i} src={url} alt="증거" className="dp-proof-img" />
-              ))}
-            </div>
-            <button className="dp-btn-block" onClick={() => setIsDefenseModalOpen(false)}>닫기</button>
+            <h3 className="dp-modal-title">렌터 제출 증거 이미지</h3>
+            {defenseImages.length > 0 ? (
+              <div className="dp-modal-grid">
+                {defenseImages.map((url, i) => (
+                  <img key={i} src={url} alt="증거" className="dp-proof-img" />
+                ))}
+              </div>
+            ) : (
+              <p className="dp-modal-empty">제출된 이미지가 없습니다.</p>
+            )}
+            <button className="dp-btn-block dp-btn-close" onClick={() => setIsDefenseModal(false)}>
+              닫기
+            </button>
           </div>
         </div>
       )}
 
       <ConfirmModal
-        isOpen={isResolveModalOpen}
-        onClose={() => setIsResolveModalOpen(false)}
+        isOpen={isResolveModal}
+        onClose={() => setIsResolveModal(false)}
         onConfirm={handleResolve}
         title="강제 청구 진행"
         message={`렌터의 이의를 인정하지 않고 청구금액 ${(dispute.claimAmount || 0).toLocaleString()}원을 청구합니다.`}
@@ -198,12 +291,13 @@ export default function DisputePage() {
       />
 
       <ConfirmModal
-        isOpen={isRejectModalOpen}
-        onClose={() => setIsRejectModalOpen(false)}
+        isOpen={isRejectModal}
+        onClose={() => setIsRejectModal(false)}
         onConfirm={handleReject}
         title="청구 취소"
         message="렌터의 무과실을 인정하고 청구를 취소합니다."
         confirmText={actionLoading ? '처리 중...' : '확인'}
+        confirmButtonStyle="danger"
       />
     </div>
   )

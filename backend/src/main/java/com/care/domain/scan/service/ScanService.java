@@ -80,7 +80,6 @@ public class ScanService {
             body.add("log_type", logType);
 
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
             ResponseEntity<Map> res = restTemplate.exchange(
                     aiServerUrl + "/api/v1/scratches/detect",

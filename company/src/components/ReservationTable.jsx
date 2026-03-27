@@ -1,4 +1,5 @@
-import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import { shortId } from '../utils/formatId'
 import './ReservationTable.css'
 
 /* 상태 문자열 → badge 클래스명 + 표시 텍스트 */
@@ -16,6 +17,7 @@ function StatusBadge({ status }) {
 }
 
 export default function ReservationTable({ reservations = [] }) {
+  const navigate = useNavigate()
 
   /* 빈 상태 */
   if (reservations.length === 0) {
@@ -38,16 +40,15 @@ export default function ReservationTable({ reservations = [] }) {
           <th>대여 기간</th>
           <th>금액</th>
           <th>상태</th>
-          <th></th>
         </tr>
       </thead>
       <tbody>
         {reservations.map((r) => (
-          <tr key={r.id}>
+          <tr key={r.id} className="res-table-row" onClick={() => navigate(`/reservations/${r.id}`)}>
 
             {/* 예약번호 */}
             <td>
-              <span className="res-id-text">{r.id}</span>
+              <span className="res-id-text">{shortId(r.id)}</span>
             </td>
 
             {/* 차량 */}
@@ -85,10 +86,6 @@ export default function ReservationTable({ reservations = [] }) {
               <StatusBadge status={r.status} />
             </td>
 
-            {/* 메뉴 */}
-            <td>
-              <button className="res-menu-button" title="더보기">⋯</button>
-            </td>
 
           </tr>
         ))}

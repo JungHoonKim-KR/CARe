@@ -180,6 +180,13 @@
 
 .cr-panel.done .cr-panel-icon { opacity: 1; }
 
+.cr-panel-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
 .cr-rotate-180 { transform: rotate(180deg); }
 .cr-side { transform: rotate(-15deg); width: 68px; }
 .cr-flip { transform: rotate(-15deg) scaleX(-1); width: 68px; }

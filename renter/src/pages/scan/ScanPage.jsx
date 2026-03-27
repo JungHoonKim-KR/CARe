@@ -287,6 +287,12 @@ export default function ScanPage() {
       })
     }
     scanner.onMatched = () => { setMatchStatus('matched'); setCanCapture(true) }
+    scanner.onSaveComplete = (zoneId, boxes) => {
+      setCaptures(prev => ({
+        ...prev,
+        [zoneId]: { ...prev[zoneId], boxes }
+      }))
+    }
     scanner.onCapture = (zoneId, dataUrl, boxes) => {
       setCaptures(prev => ({ ...prev, [zoneId]: { dataUrl, boxes } }))
       setMatchStatus('captured'); setCanCapture(false); setIsCapturing(false)

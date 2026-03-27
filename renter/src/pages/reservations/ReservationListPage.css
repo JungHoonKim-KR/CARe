@@ -119,6 +119,13 @@
   color: #666;
 }
 
+.rl-reservation-id {
+  font-size: 11px;
+  font-weight: 500;
+  color: #bbb;
+  letter-spacing: 0.3px;
+}
+
 .rl-dates {
   display: flex;
   align-items: center;

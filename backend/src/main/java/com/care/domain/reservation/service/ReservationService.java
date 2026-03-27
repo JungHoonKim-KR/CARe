@@ -2,7 +2,6 @@ package com.care.domain.reservation.service;
 
 import com.care.domain.car.entity.OwnedCar;
 import com.care.domain.car.repository.OwnedCarRepository;
-import com.care.domain.company.entity.Company;
 import com.care.domain.company.entity.Insurance;
 import com.care.domain.company.repository.InsuranceRepository;
 import com.care.domain.renter.entity.Renter;
@@ -50,25 +49,21 @@ public class ReservationService {
                 .orElseThrow(() -> new BusinessException(ReservationErrorCode.INSURANCE_NOT_FOUND));
 
         String renterWallet = renter.getWalletAddress();
-        Company company = car.getCompany();
-        String companyWallet = company.getWalletAddress();
 
         if (renterWallet == null || renterWallet.isBlank()) {
             throw new BusinessException(ReservationErrorCode.WALLET_NOT_REGISTERED);
         }
-        if (companyWallet == null || companyWallet.isBlank()) {
-            throw new BusinessException(ReservationErrorCode.WALLET_NOT_REGISTERED);
-        }
 
         int totalPrice = request.totalPrice();
+        String contractAddress = careTokenService.getTokenContractAddress();
 
-        // 블록체인 결제
+        // 블록체인 결제 (렌터 → 컨트랙트 주소)
         String txHash;
         try {
-            txHash = careTokenService.transfer(renterWallet, companyWallet, totalPrice);
+            txHash = careTokenService.transfer(renterWallet, contractAddress, totalPrice);
         } catch (Exception e) {
-            log.error("[Reservation] 결제 실패 | renter={}, company={}, amount={}, error={}",
-                    userId, company.getCompanyId(), totalPrice, e.getMessage());
+            log.error("[Reservation] 결제 실패 | renter={}, amount={}, error={}",
+                    userId, totalPrice, e.getMessage());
             throw new BusinessException(ReservationErrorCode.PAYMENT_FAILED);
         }
 

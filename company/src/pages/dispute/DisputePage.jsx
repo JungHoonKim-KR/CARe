@@ -144,7 +144,7 @@ export default function DisputePage() {
               <h2 className="dp-card-title">분쟁 상세 내용</h2>
               <button
                 className="dp-btn-outline"
-                onClick={() => navigate(`/ai-report/${dispute.reservationId}`)}
+                onClick={() => navigate(`/ai-report/${dispute.disputeId}?mode=dispute`)}
               >
                 🤖 AI 리포트 보기
               </button>

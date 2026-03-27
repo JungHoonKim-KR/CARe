@@ -254,19 +254,21 @@ public class CarService {
                 .toList();
 
         return afterScratches.stream()
-                .map(after -> compareWithBestBefore(beforeScratches, after))
+                .map(after -> compareWithBefore(beforeScratches, after))
                 .toList();
     }
 
-    private ReturnReportResponse.ComparisonDetail compareWithBestBefore(
+    private ReturnReportResponse.ComparisonDetail compareWithBefore(
             List<com.care.domain.reservation.entity.Scratch> beforeScratches,
             com.care.domain.reservation.entity.Scratch afterScratch
     ) {
-        List<com.care.domain.reservation.entity.Scratch> candidates = beforeScratches.stream()
-                .filter(before -> before.getCarPart().equalsIgnoreCase(afterScratch.getCarPart()))
-                .toList();
+        // 같은 예약의 같은 부위 BEFORE scratch 탐색 (없으면 BEFORE 없음으로 처리)
+        com.care.domain.reservation.entity.Scratch beforeScratch = beforeScratches.stream()
+                .filter(b -> b.getCarPart().equalsIgnoreCase(afterScratch.getCarPart()))
+                .findFirst()
+                .orElse(null);
 
-        if (candidates.isEmpty()) {
+        if (beforeScratch == null) {
             return new ReturnReportResponse.ComparisonDetail(
                     null,
                     afterScratch.getLogId(),
@@ -279,17 +281,14 @@ public class CarService {
             );
         }
 
-        if (afterScratch.getAiSimilarity() != null) {
-            String cachedBeforeUrl = candidates.stream()
-                    .filter(b -> b.getLogId().equals(afterScratch.getAiBeforeLogId()))
-                    .findFirst()
-                    .map(com.care.domain.reservation.entity.Scratch::getCropS3Url)
-                    .orElse(null);
+        // 캐시 hit — 동일한 BEFORE scratch에 대한 결과가 이미 있으면 재사용
+        if (afterScratch.getAiSimilarity() != null
+                && beforeScratch.getLogId().equals(afterScratch.getAiBeforeLogId())) {
             boolean warning = afterScratch.getAiSimilarity() < similarityThreshold;
             return new ReturnReportResponse.ComparisonDetail(
-                    afterScratch.getAiBeforeLogId(),
+                    beforeScratch.getLogId(),
                     afterScratch.getLogId(),
-                    cachedBeforeUrl,
+                    beforeScratch.getCropS3Url(),
                     afterScratch.getCropS3Url(),
                     afterScratch.getAiSimilarity(),
                     afterScratch.getAiDiffScore(),
@@ -298,33 +297,32 @@ public class CarService {
             );
         }
 
-        com.care.domain.reservation.entity.Scratch bestBefore = null;
-        double bestSimilarity = -1.0;
-        double bestDiffScore = 100.0;
-
-        for (com.care.domain.reservation.entity.Scratch before : candidates) {
-            try {
-                AiScratchSimilarityResult result = aiScratchSimilarityClient.compareByUrls(
-                        before.getCropS3Url(),
-                        afterScratch.getCropS3Url()
-                );
-                double similarityPercent = normalizeToPercent(result.similarity());
-                if (similarityPercent > bestSimilarity) {
-                    bestSimilarity = similarityPercent;
-                    bestDiffScore = result.diffScore();
-                    bestBefore = before;
-                }
-            } catch (Exception e) {
-                log.warn("[ReturnReport] AI 유사도 비교 실패 | beforeLogId: {}, afterLogId: {}, reason: {}",
-                        before.getLogId(), afterScratch.getLogId(), e.getMessage());
-            }
-        }
-
-        if (bestBefore == null) {
+        // AI 유사도 비교
+        try {
+            AiScratchSimilarityResult result = aiScratchSimilarityClient.compareByUrls(
+                    beforeScratch.getCropS3Url(),
+                    afterScratch.getCropS3Url()
+            );
+            double similarityPercent = normalizeToPercent(result.similarity());
+            afterScratch.cacheAiComparison(beforeScratch.getLogId(), similarityPercent, result.diffScore());
+            boolean warning = similarityPercent < similarityThreshold;
             return new ReturnReportResponse.ComparisonDetail(
-                    null,
+                    beforeScratch.getLogId(),
                     afterScratch.getLogId(),
-                    null,
+                    beforeScratch.getCropS3Url(),
+                    afterScratch.getCropS3Url(),
+                    similarityPercent,
+                    result.diffScore(),
+                    warning,
+                    false
+            );
+        } catch (Exception e) {
+            log.warn("[ReturnReport] AI 유사도 비교 실패 | beforeLogId: {}, afterLogId: {}, reason: {}",
+                    beforeScratch.getLogId(), afterScratch.getLogId(), e.getMessage());
+            return new ReturnReportResponse.ComparisonDetail(
+                    beforeScratch.getLogId(),
+                    afterScratch.getLogId(),
+                    beforeScratch.getCropS3Url(),
                     afterScratch.getCropS3Url(),
                     0.0,
                     100.0,
@@ -332,20 +330,6 @@ public class CarService {
                     false
             );
         }
-
-        afterScratch.cacheAiComparison(bestBefore.getLogId(), bestSimilarity, bestDiffScore);
-
-        boolean warning = bestSimilarity < similarityThreshold;
-        return new ReturnReportResponse.ComparisonDetail(
-                bestBefore.getLogId(),
-                afterScratch.getLogId(),
-                bestBefore.getCropS3Url(),
-                afterScratch.getCropS3Url(),
-                bestSimilarity,
-                bestDiffScore,
-                warning,
-                false
-        );
     }
 
     private double normalizeToPercent(double similarity) {

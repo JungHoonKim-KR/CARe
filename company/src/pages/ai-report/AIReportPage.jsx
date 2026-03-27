@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import DisputeService from '../../services/DisputeService'
 import ReservationService from '../../services/ReservationService'
 import { carPartLabel } from '../../utils/formatId'
@@ -32,6 +32,7 @@ const formatDateTime = (value) => {
 export default function AIReportPage() {
   const navigate = useNavigate()
   const { id } = useParams()
+  const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [reportData, setReportData] = useState(null)
@@ -50,18 +51,26 @@ export default function AIReportPage() {
     setError('')
     setCreateError('')
 
-    let mode = 'reservation'
+    const modeParam = searchParams.get('mode')
+    const isDisputeMode = modeParam === 'dispute'
+
+    let mode = isDisputeMode ? 'dispute' : 'reservation'
     let dispute = null
     let reservationId = id
 
-    const detailResult = await DisputeService.getDisputeDetail(id)
-    if (detailResult.success && detailResult.data) {
-      mode = 'dispute'
-      dispute = detailResult.data
-      reservationId = detailResult.data.reservationId
+    if (isDisputeMode) {
+      const detailResult = await DisputeService.getDisputeDetail(id)
+      if (detailResult.success && detailResult.data) {
+        dispute = detailResult.data
+        reservationId = detailResult.data.reservationId
+      } else {
+        setError(detailResult.message || '분쟁 정보를 불러오지 못했습니다.')
+        setLoading(false)
+        return
+      }
     }
 
-    const aiResult = mode === 'dispute'
+    const aiResult = isDisputeMode
       ? await DisputeService.getAiAnalysis(id)
       : { success: false, data: null }
     const reservationResult = await ReservationService.getReservationDetail(reservationId)
@@ -193,7 +202,7 @@ export default function AIReportPage() {
     }
 
     alert('분쟁이 생성되었습니다.')
-    navigate(`/disputes/${result.data.disputeId}`)
+    navigate(`reservations/${result.data.reservationId}/disputes/${result.data.disputeId}`)
   }
 
   if (loading) {

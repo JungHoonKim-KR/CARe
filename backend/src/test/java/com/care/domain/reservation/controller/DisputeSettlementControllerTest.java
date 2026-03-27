@@ -44,18 +44,25 @@ class DisputeSettlementControllerTest {
                 "dispute-1",
                 "reservation-1",
                 "after-log-1",
-                null,
+                null,   // defenseLogId
+                null,   // defenseOriginalS3Url
+                null,   // defenseCropS3Url
                 "OPEN",
                 "문콕 흔적 확인",
                 120000,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                false,
-                null,
+                null,   // settlementFinalAmount
+                null,   // settlementStatus
+                false,  // companySettlementAgreed
+                false,  // renterSettlementAgreed
+                null,   // settlementAgreedAt
+                null,   // snapshotBeforeLogId
+                null,   // snapshotBeforeCropS3Url
+                null,   // snapshotAfterCropS3Url
+                null,   // snapshotSimilarity
+                null,   // snapshotDiffScore
+                null,   // snapshotThreshold
+                false,  // snapshotWarning
+                null,   // snapshotCapturedAt
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );

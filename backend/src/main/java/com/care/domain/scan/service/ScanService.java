@@ -1,6 +1,8 @@
 package com.care.domain.scan.service;
 
+import com.care.domain.reservation.entity.Reservation;
 import com.care.domain.reservation.entity.Scratch;
+import com.care.domain.reservation.repository.ReservationRepository;
 import com.care.domain.scan.dto.ScanResponseDto;
 import com.care.domain.scan.repository.ScratchRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,18 +22,20 @@ import java.util.*;
 public class ScanService {
 
     private final ScratchRepository scratchRepository;
-    private final ScanPersistService scanPersistService;
+    private final ReservationRepository reservationRepository;
     private final RestTemplate restTemplate;
 
     @Value("${AI_YOLO_URL:http://localhost:8000}")
     private String aiServerUrl;
 
     // ── 픽업 전 스캔
+    @Transactional
     public List<ScanResponseDto> scanBefore(String reservationId, String zone, MultipartFile image) {
         return detect(reservationId, zone, "BEFORE", image);
     }
 
     // ── 반납 후 스캔
+    @Transactional
     public List<ScanResponseDto> scanAfter(String reservationId, String zone, MultipartFile image) {
         return detect(reservationId, zone, "AFTER", image);
     }
@@ -44,10 +48,14 @@ public class ScanService {
         return ScanResponseDto.fromList(scratches);
     }
 
-    // ── FastAPI 호출 (트랜잭션 밖) + DB 저장 (트랜잭션 안, 별도 서비스)
+    // ── FastAPI 호출 + DB 저장
     private List<ScanResponseDto> detect(String reservationId, String zone,
                                          String logType, MultipartFile image) {
-        // 1) AI 서버 호출 — 트랜잭션 밖에서 (S3 업로드 포함)
+        // 예약 조회
+        Reservation reservation = reservationRepository.findByReservationId(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
+
+        // FastAPI 호출 (AI 서버 미기동 시 빈 결과로 처리)
         Map<String, Object> response;
         try {
             response = callFastApi(image, zone, logType);
@@ -58,8 +66,43 @@ public class ScanService {
         List<Map<String, Object>> defects =
                 (List<Map<String, Object>>) response.get("defects");
 
-        // 2) DB 저장 — 별도 서비스의 @Transactional 메서드로 호출
-        return scanPersistService.saveDetectResult(reservationId, zone, logType, defects);
+        if (logType.equals("BEFORE")) {
+            reservation.updateStatusToInUse();
+        } else {
+            reservation.updateStatusToAfterScan();
+        }
+
+        if (defects == null || defects.isEmpty()) {
+            log.info("[Scan] 흠집 없음 - reservationId: {}, zone: {}", reservationId, zone);
+            return Collections.emptyList();
+        }
+
+        // DB 저장
+        List<Scratch> scratches = new ArrayList<>();
+        for (Map<String, Object> defect : defects) {
+            Map<String, Object> bbox = (Map<String, Object>) defect.get("bbox");
+
+            Scratch scratch = Scratch.builder()
+                    .logId(UUID.randomUUID().toString())
+                    .reservation(reservation)
+                    .ownedCar(reservation.getOwnedCar())
+                    .logType(logType)
+                    .carPart(zone)
+                    .coordX(((Number) bbox.get("x")).floatValue())
+                    .coordY(((Number) bbox.get("y")).floatValue())
+                    .originalS3Url((String) defect.get("original_s3_url"))
+                    .cropS3Url((String) defect.get("crop_s3_url"))
+                    .proofIpfsCid((String) defect.get("proof_ipfs_cid"))
+                    .isManual(false)
+                    .isDisputed(false)
+                    .build();
+
+            scratches.add(scratchRepository.save(scratch));
+        }
+
+        log.info("[Scan] 흠집 {}개 저장 - reservationId: {}, zone: {}",
+                scratches.size(), reservationId, zone);
+        return ScanResponseDto.fromList(scratches);
     }
 
     // ── FastAPI /detect 호출
@@ -79,12 +122,10 @@ public class ScanService {
             body.add("zone", zone);
             body.add("log_type", logType);
 
-            HttpHeaders headers = new HttpHeaders();
-
             ResponseEntity<Map> res = restTemplate.exchange(
                     aiServerUrl + "/api/v1/scratches/detect",
                     HttpMethod.POST,
-                    new HttpEntity<>(body, headers),
+                    new HttpEntity<>(body),
                     Map.class
             );
 
@@ -94,7 +135,6 @@ public class ScanService {
             throw new RuntimeException("흠집 감지 서버 호출 실패: " + e.getMessage());
         }
     }
-
     @Transactional(readOnly = true)
     public List<ScanResponseDto> getScanResultByZone(String reservationId, String logType, String zone) {
         List<Scratch> scratches = scratchRepository

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import DisputeService from '../../services/DisputeService'
 import ReservationService from '../../services/ReservationService'
+import { carPartLabel } from '../../utils/formatId'
 import './AIReportPage.css'
 
 const DEFAULT_THRESHOLD = 60
@@ -151,10 +152,6 @@ export default function AIReportPage() {
     return reportData.afterScratchMap.get(selectedComparison.afterLogId) || null
   }, [reportData, selectedComparison])
 
-  const handleApprove = () => {
-    alert('정상 승인 API는 다음 단계에서 연결 예정입니다.')
-  }
-
   const handleDispute = () => {
     if (reportData?.mode === 'dispute') {
       navigate(`/disputes/${id}`)
@@ -197,15 +194,6 @@ export default function AIReportPage() {
 
     alert('분쟁이 생성되었습니다.')
     navigate(`/disputes/${result.data.disputeId}`)
-  }
-
-  const handleDownloadIPFS = () => {
-    if (!selectedAfterScratch?.proofIpfsCid) {
-      alert('IPFS CID가 없습니다.')
-      return
-    }
-    navigator.clipboard.writeText(selectedAfterScratch.proofIpfsCid)
-    alert('IPFS CID를 클립보드에 복사했습니다.')
   }
 
   if (loading) {
@@ -298,18 +286,12 @@ export default function AIReportPage() {
                   >
                     <div className="comparison-item-title-row">
                       <span className="comparison-item-title">
-                        {index + 1}. {afterScratch?.carPart || '위치 미상'}
+                        {index + 1}. {carPartLabel(afterScratch?.carPart) || '위치 미상'}
                       </span>
                       <span className={`comparison-item-badge ${item.isNewScratch ? 'new-scratch' : item.warning ? 'warn' : 'safe'}`}>
                         {item.isNewScratch ? '신규 흠집' : item.warning ? '주의' : '정상'}
                       </span>
                     </div>
-                    <p className="comparison-item-meta">
-                      AFTER: {item.afterLogId}
-                    </p>
-                    <p className="comparison-item-meta">
-                      {item.isNewScratch ? '사전 스캔 없음 — 비교 불가' : `유사도 ${toPercent(item.similarity).toFixed(1)}% / diff ${Number(item.diffScore || 0).toFixed(3)}`}
-                    </p>
                   </button>
                 )
               })}
@@ -335,23 +317,20 @@ export default function AIReportPage() {
             <div className="detail-header">
               <h3 className="section-title">
                 <span className="warning-icon">{selectedComparison?.warning ? '⚠️' : '✅'}</span>
-                {selectedAfterScratch?.carPart || '선택된 비교 없음'} 상세
+                {carPartLabel(selectedAfterScratch?.carPart) || '선택된 비교 없음'} 상세
               </h3>
-              <button className="ipfs-download-btn" onClick={handleDownloadIPFS}>
-                IPFS CID 복사
-              </button>
             </div>
 
             <div className="comparison-images">
               <div className="image-container">
-                <p className="image-label">대여 전 (BEFORE)</p>
+                <p className="image-label">BEFORE</p>
                 {selectedComparison?.isNewScratch || !selectedComparison?.beforeCropS3Url ? (
                   <div className="no-before-placeholder">
                     <span className="no-before-icon">🚫</span>
                     <p>{selectedComparison?.isNewScratch ? '사전 스캔 없음' : 'BEFORE 이미지 없음'}</p>
                     <p className="no-before-sub">
                       {selectedComparison?.isNewScratch
-                        ? '임차인이 픽업 전 스캔을 건너뛰었습니다.'
+                        ? '고객님께서 스캔을 건너뛰었습니다.'
                         : '해당 흠집에 대한 사전 이미지가 존재하지 않습니다.'}
                     </p>
                   </div>
@@ -364,7 +343,7 @@ export default function AIReportPage() {
                 )}
               </div>
               <div className="image-container highlighted">
-                <p className="image-label">반납 후 (AFTER)</p>
+                <p className="image-label">AFTER</p>
                 <img
                   src={selectedComparison?.afterCropS3Url || 'https://via.placeholder.com/400x300?text=No+After'}
                   alt="After"
@@ -376,10 +355,9 @@ export default function AIReportPage() {
             <div className="similarity-section">
               {selectedComparison?.isNewScratch ? (
                 <div className="new-scratch-notice">
-                  <span className="new-scratch-icon">🆕</span>
                   <p className="new-scratch-title">새로운 흠집으로 분류됨</p>
                   <p className="new-scratch-desc">
-                    비교할 사전 스캔 이미지가 없습니다. 반납 후 발견된 신규 손상입니다.
+                    반납 후 발견된 신규 손상입니다.
                   </p>
                 </div>
               ) : (
@@ -405,9 +383,6 @@ export default function AIReportPage() {
             </div>
 
             <div className="action-buttons">
-              <button className="approve-btn" onClick={handleApprove}>
-                ✓ 정상 승인 (완전성)
-              </button>
               <button className="dispute-btn" onClick={handleDispute}>
                 {isReservationMode ? '🛠️ 선택 항목으로 분쟁 생성' : '🛠️ 수리비 청구 (분쟁 상세 이동)'}
               </button>
@@ -415,9 +390,6 @@ export default function AIReportPage() {
             {isReservationMode && (
               <div className="dispute-create-box">
                 <p className="dispute-create-title">분쟁 생성 정보</p>
-                <p className="dispute-create-meta">
-                  대상 AFTER 로그: {selectedComparison?.afterLogId || '-'}
-                </p>
                 <textarea
                   className="dispute-input dispute-reason"
                   placeholder="분쟁 사유를 입력해 주세요."

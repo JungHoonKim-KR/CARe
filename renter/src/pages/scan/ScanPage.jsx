@@ -287,13 +287,14 @@ export default function ScanPage() {
       })
     }
     scanner.onMatched = () => { setMatchStatus('matched'); setCanCapture(true) }
-    scanner.onCapture = (zoneId, dataUrl, boxes) => {
+    scanner.onCapture = (zoneId, dataUrl, boxes, saveError) => {
       setCaptures(prev => ({ ...prev, [zoneId]: { dataUrl, boxes } }))
       setMatchStatus('captured'); setCanCapture(false); setIsCapturing(false)
       if (boxes.length > 0 && navigator.vibrate) navigator.vibrate(200)
       stopARLoop()
       clearOverlay(arCanvasRef.current)
-      if (boxes.length > 0) { setShowToast(true); setTimeout(() => setShowToast(false), 2000) }
+      if (saveError) { setShowToast(true); setTimeout(() => setShowToast(false), 3000) }
+      else if (boxes.length > 0) { setShowToast(true); setTimeout(() => setShowToast(false), 2000) }
 
       // 1.5초 후 자동으로 다음 구역 이동
       setAutoNextCountdown(2)

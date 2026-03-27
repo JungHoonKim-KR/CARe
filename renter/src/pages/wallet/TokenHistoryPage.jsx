@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { getTokenBalance } from '../../api/auth'
 import { getTokenHistory } from '../../utils/careToken'
 import './TokenHistoryPage.css'
 
 export default function TokenHistoryPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [balance, setBalance] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -14,7 +16,7 @@ export default function TokenHistoryPage() {
     setLoading(true)
     getTokenBalance()
       .then((data) => setBalance(data.balance))
-      .catch(() => setBalance('오류'))
+      .catch(() => setBalance(t('tokenHistory.error')))
       .finally(() => setLoading(false))
 
     setHistory(getTokenHistory())
@@ -37,14 +39,14 @@ export default function TokenHistoryPage() {
             <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="#111" />
           </svg>
         </button>
-        <h1 className="token-history-title">토큰 내역</h1>
+        <h1 className="token-history-title">{t('tokenHistory.title')}</h1>
       </div>
 
       {/* 잔액 카드 */}
       <div className="token-history-balance-card">
-        <p className="token-history-balance-label">보유 CARE</p>
+        <p className="token-history-balance-label">{t('tokenHistory.balanceLabel')}</p>
         {loading ? (
-          <p className="token-history-balance-value loading">조회 중...</p>
+          <p className="token-history-balance-value loading">{t('tokenHistory.loading')}</p>
         ) : (
           <p className="token-history-balance-value">
             {balance != null ? Number(balance).toLocaleString() : '--'} <span>CARE</span>
@@ -55,25 +57,25 @@ export default function TokenHistoryPage() {
             className="token-history-btn charge"
             onClick={() => navigate('/wallet/charge')}
           >
-            충전
+            {t('tokenHistory.charge')}
           </button>
           <button
             className="token-history-btn exchange"
-            onClick={() => alert('환전 기능은 준비 중입니다.')}
+            onClick={() => alert(t('tokenHistory.exchangeAlert'))}
           >
-            환전
+            {t('tokenHistory.exchange')}
           </button>
         </div>
       </div>
 
       {/* 사용 내역 */}
       <div className="token-history-list-card">
-        <p className="token-history-list-title">사용 내역</p>
+        <p className="token-history-list-title">{t('tokenHistory.listTitle')}</p>
 
         {history.length === 0 ? (
           <div className="token-history-empty">
             <div className="token-history-empty-icon">🪙</div>
-            <p>아직 사용 내역이 없습니다.</p>
+            <p>{t('tokenHistory.empty')}</p>
           </div>
         ) : (
           <ul className="token-history-list">
@@ -81,7 +83,7 @@ export default function TokenHistoryPage() {
               <li key={i} className="token-history-item">
                 <div className="token-history-item-left">
                   <span className={`token-history-item-badge ${item.type}`}>
-                    {item.type === 'charge' ? '충전' : '결제'}
+                    {item.type === 'charge' ? t('tokenHistory.chargeLabel') : t('tokenHistory.paymentLabel')}
                   </span>
                   <div>
                     <p className="token-history-item-desc">{item.desc}</p>

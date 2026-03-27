@@ -7,7 +7,7 @@ import zh from './locales/zh.json'
 import ja from './locales/ja.json'
 import fr from './locales/fr.json'
 
-const savedLang = localStorage.getItem('language') || 'en'
+const savedLang = localStorage.getItem('language') || 'ko'
 
 i18n.use(initReactI18next).init({
   resources: {

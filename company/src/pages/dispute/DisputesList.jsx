@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DisputeService from '../../services/DisputeService'
+import { shortId } from '../../utils/formatId'
 import './DisputesList.css'
 
 // 여기는 하드코딩 — API 실패 또는 데이터 없을 때 사용하는 폴백
@@ -157,7 +158,7 @@ export default function DisputesList() {
               <tbody>
                 {filteredDisputes.map((dispute) => (
                   <tr key={dispute.id}>
-                    <td className="font-mono text-primary">{dispute.disputeId}</td>
+                    <td className="font-mono text-primary">{shortId(dispute.disputeId)}</td>
                     <td>
                       <div className="disp-car-name">{dispute.carName}</div>
                       <div className="disp-car-num">{dispute.carNumber}</div>

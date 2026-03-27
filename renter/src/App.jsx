@@ -34,7 +34,7 @@ import ReservationListPage from './pages/reservations/ReservationListPage'
 import ReservationDetailPage from './pages/reservations/ReservationDetailPage'
 import ReturnGuidePage from './pages/car-return/ReturnGuidePage'
 import CarReturnPage from './pages/car-return/CarReturnPage'
-import CarCrackPage from './pages/car-crack/CarCrackPage'
+import CarReportPage from './pages/car-report/CarReportPage'
 
 function App() {
   return (
@@ -75,7 +75,7 @@ function App() {
           <Route path="/reservations/:reservationId" element={<ReservationDetailPage />} />
           <Route path="/return-guide" element={<ReturnGuidePage />} />
           <Route path="/car-return" element={<CarReturnPage />} />
-          <Route path="/car-crack" element={<CarCrackPage />} />
+          <Route path="/car-report" element={<CarReportPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

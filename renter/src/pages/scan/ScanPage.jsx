@@ -465,7 +465,7 @@ export default function ScanPage() {
               count: captures[z.id].boxes.length,
               crops: captures[z.id].boxes.map(b => b.cropS3Url).filter(Boolean),
             }))
-          navigate('/car-crack', {
+          navigate('/car-report', {
             state: { reservation: location.state?.reservation, scanResult: { cracks, totalDefects }, logType }
           })
         }}>

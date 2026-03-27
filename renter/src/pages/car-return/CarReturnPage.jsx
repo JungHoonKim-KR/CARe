@@ -102,7 +102,7 @@ export default function CarReturnPage() {
       try {
         // 스캔 업로드를 먼저 완료한 후 반납 처리
         if (!fromScan) {
-          await Promise.all(PANELS.map(p => scanAfter(rid, p.id, photos[p.id])))
+          await Promise.all(PANELS.filter(p => photos[p.id]).map(p => scanAfter(rid, p.id, photos[p.id])))
         }
         await Promise.all([
           lockSmartKey(rid).catch(e => console.error('[Return] 스마트키 반납 실패:', e)),

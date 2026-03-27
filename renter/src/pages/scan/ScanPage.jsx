@@ -42,7 +42,6 @@ export default function ScanPage() {
   const [autoNextCountdown,  setAutoNextCountdown]  = useState(0)
   const autoNextTimerRef = useRef(null)
   const [modalImg, setModalImg] = useState(null)  // 확대 모달용
-  const [pendingSaves,    setPendingSaves]    = useState(0)
 
   const currentZone = ZONES[zoneIndex]
   const history     = allScratches.filter(s => s.carPart === currentZone?.id)
@@ -288,13 +287,6 @@ export default function ScanPage() {
       })
     }
     scanner.onMatched = () => { setMatchStatus('matched'); setCanCapture(true) }
-    scanner.onSaveComplete = (zoneId, boxes) => {
-      setCaptures(prev => ({
-        ...prev,
-        [zoneId]: { ...prev[zoneId], boxes }
-      }))
-      setPendingSaves(prev => Math.max(0, prev - 1))
-    }
     scanner.onCapture = (zoneId, dataUrl, boxes) => {
       setCaptures(prev => ({ ...prev, [zoneId]: { dataUrl, boxes } }))
       setMatchStatus('captured'); setCanCapture(false); setIsCapturing(false)
@@ -334,9 +326,7 @@ export default function ScanPage() {
   async function handleCapture() {
     if (!scannerRef.current || !canCapture || isCapturing) return
     setIsCapturing(true); setCanCapture(false)
-    const isLast = zoneIndex === ZONES.length - 1
-    if (!isLast) setPendingSaves(prev => prev + 1)
-    await scannerRef.current.capture(isLast)
+    await scannerRef.current.capture()
   }
   function handleNext() {
     if (autoNextTimerRef.current) { clearInterval(autoNextTimerRef.current); autoNextTimerRef.current = null }
@@ -459,7 +449,7 @@ export default function ScanPage() {
           </div>
         )}
 
-        <button className={styles.btnDone} disabled={pendingSaves > 0} onClick={() => {
+        <button className={styles.btnDone} onClick={() => {
           const cracks = ZONES
             .filter(z => captures[z.id]?.boxes?.length > 0)
             .map(z => ({
@@ -472,7 +462,7 @@ export default function ScanPage() {
             state: { reservation: location.state?.reservation, scanResult: { cracks, totalDefects }, logType }
           })
         }}>
-          {pendingSaves > 0 ? `저장 중... (${pendingSaves})` : '리포트 확인'}
+          리포트 확인
         </button>
       </div>
     </div>

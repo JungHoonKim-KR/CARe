@@ -20,7 +20,6 @@ export class Scanner {
     this.onMatching      = null
     this.onMatched       = null
     this.onCapture       = null
-    this.onSaveComplete  = null
   }
   setZone(zone) {
     this.zone        = zone
@@ -59,7 +58,7 @@ export class Scanner {
   }
 
   // ── 촬영 버튼 클릭 시 호출
-  async capture(isLast = false) {
+  async capture() {
     if (!this.video || !this.zone) return
 
     const snap = document.createElement('canvas')
@@ -70,28 +69,14 @@ export class Scanner {
     const dataUrl = snap.toDataURL('image/jpeg', 0.88)
     const base64  = dataUrl.split(',')[1]
 
-    if (isLast) {
-      // 마지막 구역: 저장 완료 후 넘어감
-      let boxes = []
-      try {
-        boxes = await this._saveToSpringBoot(base64)
-      } catch (err) {
-        console.warn('[Scanner] 저장 실패:', err)
-      }
-      this.captures[this.zone.id] = { base64, dataUrl, boxes }
-      if (this.onCapture) this.onCapture(this.zone.id, dataUrl, boxes)
-    } else {
-      // 중간 구역: 먼저 넘어가고 백그라운드 저장
-      this.captures[this.zone.id] = { base64, dataUrl, boxes: [] }
-      if (this.onCapture) this.onCapture(this.zone.id, dataUrl, [])
-      const zoneId = this.zone.id
-      this._saveToSpringBoot(base64).then(boxes => {
-        this.captures[zoneId].boxes = boxes
-        if (this.onSaveComplete) this.onSaveComplete(zoneId, boxes)
-      }).catch(err => {
-        console.warn('[Scanner] 저장 실패:', err)
-      })
+    let boxes = []
+    try {
+      boxes = await this._saveToSpringBoot(base64)
+    } catch (err) {
+      console.warn('[Scanner] 저장 실패:', err)
     }
+    this.captures[this.zone.id] = { base64, dataUrl, boxes }
+    if (this.onCapture) this.onCapture(this.zone.id, dataUrl, boxes)
   }
 
   // ── Spring Boot API 호출 → DB 저장

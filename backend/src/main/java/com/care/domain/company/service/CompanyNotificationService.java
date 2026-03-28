@@ -7,6 +7,8 @@ import com.care.domain.company.repository.CompanyNotificationRepository;
 import com.care.domain.reservation.entity.Dispute;
 import com.care.domain.reservation.entity.Scratch;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -17,6 +19,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CompanyNotificationService {
@@ -28,17 +31,36 @@ public class CompanyNotificationService {
 
     public SseEmitter subscribe(String companyId) {
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MILLIS);
-        CopyOnWriteArrayList<SseEmitter> emitters = emitterStore.computeIfAbsent(companyId, key -> new CopyOnWriteArrayList<>());
-        emitters.add(emitter);
 
-        emitter.onCompletion(() -> removeEmitter(companyId, emitter));
+        // compute()로 원자적 처리 — race condition 방지
+        emitterStore.compute(companyId, (key, existing) -> {
+            if (existing != null && !existing.isEmpty()) {
+                log.info("[SSE-COMPANY] 기존 연결 강제 종료 | companyId={} | 연결 수={}", companyId, existing.size());
+                for (SseEmitter old : existing) {
+                    try { old.complete(); } catch (Exception ignored) {}
+                }
+            }
+            CopyOnWriteArrayList<SseEmitter> newList = new CopyOnWriteArrayList<>();
+            newList.add(emitter);
+            return newList;
+        });
+
+        log.info("[SSE-COMPANY] 구독 시작 | companyId={} | 현재 연결 수=1", companyId);
+        logActiveSubscribers();
+
+        emitter.onCompletion(() -> {
+            removeEmitter(companyId, emitter);
+            log.info("[SSE-COMPANY] 연결 종료(completion) | companyId={}", companyId);
+        });
         emitter.onTimeout(() -> {
             removeEmitter(companyId, emitter);
             emitter.complete();
+            log.info("[SSE-COMPANY] 연결 타임아웃 | companyId={}", companyId);
         });
         emitter.onError(throwable -> {
             removeEmitter(companyId, emitter);
             emitter.completeWithError(throwable);
+            log.warn("[SSE-COMPANY] 연결 에러 | companyId={} | error={}", companyId, throwable.getMessage());
         });
 
         sendEvent(companyId, emitter, "CONNECTED", Map.of("message", "company notification stream connected"));
@@ -88,6 +110,29 @@ public class CompanyNotificationService {
 
         notification.markAsRead();
         return CompanyNotificationResponse.from(notification);
+    }
+
+    @Scheduled(fixedRate = 15000)
+    public void sendHeartbeat() {
+        int totalConnections = emitterStore.values().stream().mapToInt(List::size).sum();
+        if (totalConnections == 0) return;
+
+        log.debug("[SSE-COMPANY] Heartbeat 전송 | 구독자 수={} | 연결 수={}", emitterStore.size(), totalConnections);
+        emitterStore.forEach((companyId, emitters) -> {
+            for (SseEmitter emitter : emitters) {
+                sendEvent(companyId, emitter, "HEARTBEAT", Map.of("message", "ping"));
+            }
+        });
+    }
+
+    private void logActiveSubscribers() {
+        if (emitterStore.isEmpty()) {
+            log.info("[SSE-COMPANY] 현재 구독자 없음");
+            return;
+        }
+        emitterStore.forEach((companyId, emitters) ->
+            log.info("[SSE-COMPANY] 구독 중 | companyId={} | 연결 수={}", companyId, emitters.size())
+        );
     }
 
     private void pushNotification(String companyId, CompanyNotificationResponse response) {

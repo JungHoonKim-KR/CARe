@@ -321,7 +321,7 @@ pipeline {
                             cp ${AI_FACE_ENV_PATH} /home/ubuntu/ai-verify/.env
 
                             echo "Building AI-Face Docker image..."
-                            docker build -t ${AI_VERIFY_IMAGE} ai/
+                            docker build -t ${AI_VERIFY_IMAGE} ai/verify/
 
                             echo "Restarting ai-verify container..."
                             docker stop ${AI_VERIFY_CONTAINER} 2>/dev/null || true

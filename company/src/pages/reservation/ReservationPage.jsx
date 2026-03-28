@@ -44,8 +44,8 @@ export default function ReservationPage() {
     return statusMap[status] || status
   }
 
-  const getCategoryFromStatus = (status) => {
-    if (status === 'DISPUTE') return 'dispute'
+  const getCategoryFromStatus = (status, depositStatus) => {
+    if (depositStatus === 'LOCKED') return 'dispute'
     if (status === 'COMPLETED') return 'completed'
     return 'ongoing'
   }
@@ -68,7 +68,7 @@ export default function ReservationPage() {
           location: '-', // 위치 정보 API 미제공
           amount: reservation.totalPrice != null ? `${reservation.totalPrice.toLocaleString()} CARE` : '-',
           status: getStatusLabel(reservation.status),
-          category: getCategoryFromStatus(reservation.status),
+          category: getCategoryFromStatus(reservation.status, reservation.depositStatus),
         }))
         setReservations(formatted.length > 0 ? formatted : MOCK_RESERVATIONS)
       }

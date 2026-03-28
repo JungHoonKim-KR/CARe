@@ -86,6 +86,7 @@ public class DisputeService {
 		captureReturnReportSnapshot(dispute, reservationId, targetScratch);
 
 		targetScratch.markDisputed();
+		reservation.lockDeposit();
 		Dispute saved = disputeRepository.save(dispute);
 		renterNotificationService.createDisputeCreatedNotification(reservation.getRenter(), saved);
 		return DisputeCreateResponse.from(saved);
@@ -355,12 +356,15 @@ public class DisputeService {
 		String renterWallet = reservation.getRenter().getWalletAddress();
 		validateSettlementWallets(companyWallet, renterWallet);
 
-		dispute.validateSettlementProposal(finalAmount, targetStatus);
-		dispute.proposeSettlement(finalAmount, targetStatus);
-
 		String companyId = reservation.getOwnedCar().getCompany().getCompanyId();
 		boolean requesterIsCompany = companyId.equals(requesterId);
 		boolean hadAnyAgreementBefore = dispute.isCompanySettlementAgreed() || dispute.isRenterSettlementAgreed();
+
+		if (dispute.isCounterProposal(finalAmount, targetStatus)) {
+			dispute.resetSettlementAgreements();
+		}
+		dispute.proposeSettlement(finalAmount, targetStatus);
+
 		boolean alreadyAgreedByRequester = requesterIsCompany
 				? dispute.isCompanySettlementAgreed()
 				: dispute.isRenterSettlementAgreed();
@@ -437,6 +441,11 @@ public class DisputeService {
 		}
 		dispute.resolve();
 		dispute.getTargetScratch().clearDisputed();
+		if (targetStatus == SettlementStatus.COMPLETED) {
+			reservation.deductDeposit();
+		} else {
+			reservation.safeDeposit();
+		}
 		renterNotificationService.createSettlementCompletedNotification(
 				reservation.getRenter(),
 				dispute,

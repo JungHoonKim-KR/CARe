@@ -1,23 +1,20 @@
 import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { chargeToken } from '../../api/auth'
+import { useNavigate } from 'react-router-dom'
+import { exchangeToken } from '../../api/auth'
 import { addTokenHistory } from '../../utils/careToken'
 import './ChargePage.css'
 
 const PRESET_AMOUNTS = [10, 100, 1000, 10000]
 
-export default function ChargePage() {
+export default function ExchangePage() {
   const navigate = useNavigate()
-  const { state } = useLocation()
-  const returnTo = state?.returnTo || null
-  const returnState = state?.returnState || null
 
   const [amount, setAmount] = useState('')
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState(null) // { balance, txHash }
+  const [result, setResult] = useState(null)
   const [error, setError] = useState('')
 
-  const handleCharge = async () => {
+  const handleExchange = async () => {
     const parsed = parseFloat(amount)
     if (!parsed || parsed <= 0) {
       setError('올바른 금액을 입력해주세요.')
@@ -26,12 +23,12 @@ export default function ChargePage() {
     setError('')
     setLoading(true)
     try {
-      const data = await chargeToken(parsed)
-      addTokenHistory({ type: 'charge', amount: parsed, desc: 'CARE 토큰 충전' })
-      setResult({ ...data, chargedAmount: parsed })
+      const data = await exchangeToken(parsed)
+      addTokenHistory({ type: 'exchange', amount: parsed, desc: 'CARE 토큰 환전' })
+      setResult({ ...data, exchangedAmount: parsed })
     } catch (e) {
-      console.error('[Charge] 충전 실패:', e)
-      setError(e.response?.data?.message || '충전에 실패했습니다.')
+      console.error('[Exchange] 환전 실패:', e)
+      setError(e.response?.data?.message || '환전에 실패했습니다.')
     } finally {
       setLoading(false)
     }
@@ -46,17 +43,17 @@ export default function ChargePage() {
               <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="#111" />
             </svg>
           </button>
-          <h1 className="charge-title">충전 완료</h1>
+          <h1 className="charge-title">환전 완료</h1>
         </div>
 
         <div className="charge-success-card">
           <div className="charge-success-icon">✓</div>
-          <p className="charge-success-label">충전 완료</p>
-          <p className="charge-success-amount">{result.chargedAmount} <span>CARE</span></p>
+          <p className="charge-success-label">환전 완료</p>
+          <p className="charge-success-amount">{result.exchangedAmount} <span>CARE</span></p>
           <div className="charge-success-divider" />
           <div className="charge-success-row">
-            <span>충전 금액</span>
-            <strong>+{result.chargedAmount} CARE</strong>
+            <span>환전 금액</span>
+            <strong>-{result.exchangedAmount} CARE</strong>
           </div>
           <div className="charge-success-row">
             <span>현재 잔액</span>
@@ -64,20 +61,9 @@ export default function ChargePage() {
           </div>
         </div>
 
-        {returnTo ? (
-          <div className="charge-result-btns">
-            <button className="charge-confirm-btn charge-confirm-btn--secondary" onClick={() => navigate('/wallet')}>
-              내 지갑 보기
-            </button>
-            <button className="charge-confirm-btn" onClick={() => navigate(returnTo, { state: returnState })}>
-              예약으로 돌아가기
-            </button>
-          </div>
-        ) : (
-          <button className="charge-confirm-btn" onClick={() => navigate('/wallet')}>
-            확인
-          </button>
-        )}
+        <button className="charge-confirm-btn" onClick={() => navigate('/wallet')}>
+          확인
+        </button>
       </div>
     )
   }
@@ -90,11 +76,11 @@ export default function ChargePage() {
             <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="#111" />
           </svg>
         </button>
-        <h1 className="charge-title">CARE 충전</h1>
+        <h1 className="charge-title">CARE 환전</h1>
       </div>
 
       <div className="charge-body">
-        <p className="charge-label">충전 금액</p>
+        <p className="charge-label">환전 금액</p>
 
         <div className="charge-input-wrap">
           <input
@@ -122,23 +108,23 @@ export default function ChargePage() {
         </div>
 
         <div className="charge-info-box">
-          <p>• 환전 없이 CARE Token으로 즉시 결제</p>
-          <p>• 충전된 토큰은 렌탈 결제에 바로 사용 가능</p>
+          <p>• CARE 토큰을 현지 통화로 환전합니다</p>
+          <p>• 환전된 금액은 연결된 지갑으로 출금됩니다</p>
         </div>
       </div>
 
       <button
         className="charge-confirm-btn"
-        onClick={handleCharge}
+        onClick={handleExchange}
         disabled={loading || !amount}
       >
-        충전하기
+        환전하기
       </button>
 
       {loading && (
         <div className="charge-loading-overlay">
           <div className="charge-loading-spinner" />
-          <p className="charge-loading-text">충전 중입니다...</p>
+          <p className="charge-loading-text">환전 중입니다...</p>
           <p className="charge-loading-sub">잠시만 기다려주세요</p>
         </div>
       )}

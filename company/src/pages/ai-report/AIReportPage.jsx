@@ -138,7 +138,7 @@ export default function AIReportPage() {
     }
     const claimAmount = Number(createAmount)
     if (!Number.isFinite(claimAmount) || claimAmount <= 0) {
-      alert('청구 금액을 1원 이상 입력해 주세요.')
+      alert('청구 금액을 1 CARE 이상 입력해 주세요.')
       return
     }
 
@@ -370,7 +370,7 @@ export default function AIReportPage() {
                   className="dispute-input"
                   type="number"
                   min="1"
-                  placeholder="청구 금액(원)"
+                  placeholder="청구 금액(CARE)"
                   value={createAmount}
                   onChange={(e) => setCreateAmount(e.target.value)}
                 />

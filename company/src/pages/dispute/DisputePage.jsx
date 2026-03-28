@@ -32,7 +32,7 @@ export default function DisputePage() {
   const [isRejectModal,  setIsRejectModal]  = useState(false)
   const [isDefenseModal, setIsDefenseModal] = useState(false)
 
-  // API 실패 시 폴백 — 여기는 하드코딩
+  // API 실패 시 폴백
   const MOCK = {
     disputeId:            id,
     reservationId:        '-',

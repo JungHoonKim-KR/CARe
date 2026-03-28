@@ -4,7 +4,7 @@ import DisputeService from '../../services/DisputeService'
 import { shortId } from '../../utils/formatId'
 import './DisputesList.css'
 
-// 여기는 하드코딩 — API 실패 또는 데이터 없을 때 사용하는 폴백
+// API 실패 또는 데이터 없을 때 사용하는 폴백
 const MOCK_DISPUTES = [
   { id: '1', disputeId: 'DSP-2603-01', reservationId: 'RES-2603-05', carName: 'Polestar 2', carNumber: '333마 4444', renterName: '정민수', issueType: '차량 파손', status: 'open', createdDate: '2026-03-26', amount: 350000 },
   { id: '2', disputeId: 'DSP-2603-02', reservationId: 'RES-2603-12', carName: 'Tesla Model 3', carNumber: '123가 4567', renterName: '이서연', issueType: '차량 파손', status: 'completed', createdDate: '2026-03-24', amount: 150000 },
@@ -51,7 +51,7 @@ export default function DisputesList() {
           carName: `${item.brand || '-'} ${item.modelName || ''}`.trim(),
           carNumber: item.plateNumber || '-',
           renterName: item.renterName || '-',
-          issueType: '차량 파손', // 여기는 하드코딩 — 분쟁 유형 API 없음
+          issueType: '차량 파손', // 분쟁 유형 API 미제공
           status: toUiStatus(item.status),
           createdDate: formatDate(item.createdAt),
           amount: item.claimAmount || 0

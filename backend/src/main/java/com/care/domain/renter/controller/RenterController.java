@@ -17,6 +17,7 @@ import com.care.domain.renter.service.DocumentService;
 import com.care.domain.renter.service.RenterNotificationService;
 import com.care.domain.renter.service.RenterService;
 import com.care.domain.renter.service.RenterTokenService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -133,7 +134,9 @@ public class RenterController {
      * 렌터 알림 SSE 구독
      */
     @GetMapping(value = "/notifications/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribeNotifications(@AuthenticationPrincipal String userId) {
+    public SseEmitter subscribeNotifications(@AuthenticationPrincipal String userId,
+                                             HttpServletResponse response) {
+        response.addHeader("X-Accel-Buffering", "no");
         return renterNotificationService.subscribe(userId);
     }
 

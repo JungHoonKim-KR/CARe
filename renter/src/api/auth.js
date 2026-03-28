@@ -104,6 +104,10 @@ export const renterLanguage = () =>
 export const chargeToken = (amount) =>
   api.post('/api/renters/me/token/charge', { amount }).then((r) => r.data)
 
+// ── CARE 토큰 환전 ────────────────────────────────────────────
+export const exchangeToken = (amount) =>
+  api.post('/api/renters/me/token/exchange', { amount }).then((r) => r.data)
+
 // ── CARE 토큰 잔액 조회 ───────────────────────────────────────
 export const getTokenBalance = () =>
   api.get('/api/renters/me/token/balance').then((r) => r.data)

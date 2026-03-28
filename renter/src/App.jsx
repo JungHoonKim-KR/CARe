@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { NotificationProvider } from './context/NotificationContext'
+import NotificationToast from './components/NotificationToast'
 import SplashPage from './pages/splash/SplashPage'
 import LandingPage from './pages/landing/LandingPage'
 import LoginPage from './pages/auth/LoginPage'
@@ -17,6 +19,7 @@ import PaymentPage from './pages/payment/PaymentPage'
 import BookingCompletePage from './pages/booking-complete/BookingCompletePage'
 import WalletPage from './pages/wallet/WalletPage'
 import ChargePage from './pages/wallet/ChargePage'
+import ExchangePage from './pages/wallet/ExchangePage'
 import TokenHistoryPage from './pages/wallet/TokenHistoryPage'
 import DIDAuthPage from './pages/did-auth/DIDAuthPage'
 import DIDPassportGuidePage from './pages/did-auth/DIDPassportGuidePage'
@@ -40,7 +43,9 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
+        <NotificationProvider>
+          <NotificationToast />
+          <Routes>
           <Route path="/" element={<SplashPage />} />
           <Route path="/landing" element={<LandingPage />} />
           <Route path="/scan/:reservationId" element={<ScanPage />} />
@@ -60,6 +65,7 @@ function App() {
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/wallet/token" element={<TokenHistoryPage />} />
           <Route path="/wallet/charge" element={<ChargePage />} />
+          <Route path="/wallet/exchange" element={<ExchangePage />} />
           <Route path="/did-auth" element={<DIDAuthPage />} />
           <Route path="/did-guide" element={<DIDPassportGuidePage />} />
           <Route path="/did-camera" element={<DIDCameraPage />} />
@@ -78,6 +84,7 @@ function App() {
           <Route path="/car-report" element={<CarReportPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </NotificationProvider>
       </BrowserRouter>
     </AuthProvider>
   )

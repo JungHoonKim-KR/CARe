@@ -6,6 +6,8 @@ import com.care.domain.renter.entity.RenterNotification;
 import com.care.domain.renter.repository.RenterNotificationRepository;
 import com.care.domain.reservation.entity.Dispute;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -16,6 +18,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RenterNotificationService {
@@ -27,17 +30,36 @@ public class RenterNotificationService {
 
     public SseEmitter subscribe(String userId) {
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MILLIS);
-        CopyOnWriteArrayList<SseEmitter> emitters = emitterStore.computeIfAbsent(userId, key -> new CopyOnWriteArrayList<>());
-        emitters.add(emitter);
 
-        emitter.onCompletion(() -> removeEmitter(userId, emitter));
+        // compute()로 원자적 처리 — race condition 방지
+        emitterStore.compute(userId, (key, existing) -> {
+            if (existing != null && !existing.isEmpty()) {
+                log.info("[SSE-RENTER] 기존 연결 강제 종료 | userId={} | 연결 수={}", userId, existing.size());
+                for (SseEmitter old : existing) {
+                    try { old.complete(); } catch (Exception ignored) {}
+                }
+            }
+            CopyOnWriteArrayList<SseEmitter> newList = new CopyOnWriteArrayList<>();
+            newList.add(emitter);
+            return newList;
+        });
+
+        log.info("[SSE-RENTER] 구독 시작 | userId={} | 현재 연결 수=1", userId);
+        logActiveSubscribers();
+
+        emitter.onCompletion(() -> {
+            removeEmitter(userId, emitter);
+            log.info("[SSE-RENTER] 연결 종료(completion) | userId={}", userId);
+        });
         emitter.onTimeout(() -> {
             removeEmitter(userId, emitter);
             emitter.complete();
+            log.info("[SSE-RENTER] 연결 타임아웃 | userId={}", userId);
         });
         emitter.onError(throwable -> {
             removeEmitter(userId, emitter);
             emitter.completeWithError(throwable);
+            log.warn("[SSE-RENTER] 연결 에러 | userId={} | error={}", userId, throwable.getMessage());
         });
 
         sendEvent(userId, emitter, "CONNECTED", Map.of("message", "notification stream connected"));
@@ -125,11 +147,36 @@ public class RenterNotificationService {
         return RenterNotificationResponse.from(notification);
     }
 
+    @Scheduled(fixedRate = 15000)
+    public void sendHeartbeat() {
+        int totalConnections = emitterStore.values().stream().mapToInt(List::size).sum();
+        if (totalConnections == 0) return;
+
+        log.debug("[SSE-RENTER] Heartbeat 전송 | 구독자 수={} | 연결 수={}", emitterStore.size(), totalConnections);
+        emitterStore.forEach((userId, emitters) -> {
+            for (SseEmitter emitter : emitters) {
+                sendEvent(userId, emitter, "HEARTBEAT", Map.of("message", "ping"));
+            }
+        });
+    }
+
+    private void logActiveSubscribers() {
+        if (emitterStore.isEmpty()) {
+            log.info("[SSE-RENTER] 현재 구독자 없음");
+            return;
+        }
+        emitterStore.forEach((userId, emitters) ->
+            log.info("[SSE-RENTER] 구독 중 | userId={} | 연결 수={}", userId, emitters.size())
+        );
+    }
+
     private void pushNotification(String userId, RenterNotificationResponse response) {
         List<SseEmitter> emitters = emitterStore.get(userId);
         if (emitters == null || emitters.isEmpty()) {
+            log.warn("[SSE-RENTER] push 실패 — 구독 중인 emitter 없음 | userId={} | emitterStore keys={}", userId, emitterStore.keySet());
             return;
         }
+        log.info("[SSE-RENTER] 알림 push | userId={} | type={}", userId, response.notificationType());
         for (SseEmitter emitter : emitters) {
             sendEvent(userId, emitter, "NOTIFICATION", response);
         }
@@ -139,6 +186,7 @@ public class RenterNotificationService {
         try {
             emitter.send(SseEmitter.event().name(eventName).data(data));
         } catch (IOException | IllegalStateException e) {
+            log.warn("[SSE-RENTER] 이벤트 전송 실패, emitter 제거 | userId={} | event={} | error={}", userId, eventName, e.getMessage());
             removeEmitter(userId, emitter);
         }
     }

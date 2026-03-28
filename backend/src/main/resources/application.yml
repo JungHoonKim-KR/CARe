@@ -22,7 +22,8 @@ spring:
 
 logging:
   level:
-    com.sonata.inspection: ${LOGGING_LEVEL_ROOT:debug}
+    root: ${LOGGING_LEVEL_ROOT:info}
+    com.care: debug
     org.springframework.integration: info
 
 ---

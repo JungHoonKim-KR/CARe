@@ -175,8 +175,8 @@ export const subscribeNotifications = ({ token, signal, onNotification, onError 
       }
     },
     onerror(error) {
+      if (error?.name === 'AbortError') throw error
       onError?.(error)
-      throw error
     },
   })
 }

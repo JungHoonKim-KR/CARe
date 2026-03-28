@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import BottomNav from '../../components/BottomNav'
-import { getMyReservations, getMyNotifications } from '../../api/reservation'
+import { getMyReservations } from '../../api/reservation'
 import './ReservationListPage.css'
 
 const STATUS_COLOR = {
@@ -46,7 +46,6 @@ export default function ReservationListPage() {
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('ALL')
-  const [disputeMap, setDisputeMap] = useState({})
 
   const TABS = [
     { key: 'ALL',     label: t('reservationList.tabAll') },
@@ -69,17 +68,9 @@ export default function ReservationListPage() {
   }
 
   useEffect(() => {
-    Promise.all([getMyReservations(), getMyNotifications()])
-      .then(([reservData, notifData]) => {
-        setReservations(Array.isArray(reservData) ? reservData : [])
-        const notifs = Array.isArray(notifData) ? notifData : []
-        const map = {}
-        notifs.forEach(n => {
-          if (n.disputeId && n.reservationId) map[n.reservationId] = n.disputeId
-        })
-        setDisputeMap(map)
-      })
-      .catch(() => { setReservations([]); setDisputeMap({}) })
+    getMyReservations()
+      .then(data => setReservations(Array.isArray(data) ? data : []))
+      .catch(() => setReservations([]))
       .finally(() => setLoading(false))
   }, [])
 
@@ -127,7 +118,7 @@ export default function ReservationListPage() {
                 if (ACTIVE_STATUSES.has(r.status)) {
                   navigate('/my-car', { state: { reservation: r } })
                 } else {
-                  navigate(`/reservations/${r.reservationId}`, { state: { reservation: r, disputeId: disputeMap[r.reservationId] } })
+                  navigate(`/reservations/${r.reservationId}`, { state: { reservation: r, disputeId: r.disputeId } })
                 }
               }}
             >
@@ -159,7 +150,7 @@ export default function ReservationListPage() {
                   className="rl-dispute-btn"
                   onClick={e => {
                     e.stopPropagation()
-                    navigate('/dispute', { state: { reservation: r, disputeId: disputeMap[r.reservationId] } })
+                    navigate('/dispute', { state: { reservation: r, disputeId: r.disputeId } })
                   }}
                 >
                   {t('reservationList.disputeBtn')}

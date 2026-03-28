@@ -31,8 +31,9 @@ export default function DisputesList() {
     return `${year}-${month}-${day}`
   }
 
-  const toUiStatus = (status) => {
+  const toUiStatus = (status, hasDefense) => {
     if (status === 'COMPLETED' || status === 'RESOLVED') return 'completed'
+    if (hasDefense) return 'defended'
     return 'open'
   }
 
@@ -52,7 +53,7 @@ export default function DisputesList() {
           carNumber: item.plateNumber || '-',
           renterName: item.renterName || '-',
           issueType: '차량 파손', // 여기는 하드코딩 — 분쟁 유형 API 없음
-          status: toUiStatus(item.status),
+          status: toUiStatus(item.status, item.hasDefense),
           createdDate: formatDate(item.createdAt),
           amount: item.claimAmount || 0
         }))
@@ -68,6 +69,7 @@ export default function DisputesList() {
   const filteredDisputes = disputes.filter(dispute => {
     if (activeTab === 'all') return true
     if (activeTab === 'open') return dispute.status === 'open'
+    if (activeTab === 'defended') return dispute.status === 'defended'
     if (activeTab === 'completed') return dispute.status === 'completed'
     return true
   })
@@ -75,6 +77,7 @@ export default function DisputesList() {
   const stats = {
     total: disputes.length,
     open: disputes.filter(d => d.status === 'open').length,
+    defended: disputes.filter(d => d.status === 'defended').length,
     completed: disputes.filter(d => d.status === 'completed').length,
     totalAmount: disputes.reduce((sum, d) => sum + d.amount, 0)
   }
@@ -86,6 +89,10 @@ export default function DisputesList() {
         <div className="disp-welcome-text">
           <h1 className="disp-title">분쟁 관리 센터</h1>
           <p className="disp-subtitle">차량 파손 등 렌터카 이용 중 발생한 이슈를 투명하게 해결하세요.</p>
+        </div>
+        <div className="disp-welcome-amount">
+          <div className="disp-welcome-amount-label">누적 청구 금액</div>
+          <div className="disp-welcome-amount-value">{stats.totalAmount.toLocaleString()}<span className="disp-welcome-amount-unit"> CARE</span></div>
         </div>
       </div>
 
@@ -102,21 +109,21 @@ export default function DisputesList() {
           <div className="disp-kpi-icon">🚨</div>
           <div>
             <div className="disp-kpi-value">{stats.open}<span className="disp-kpi-unit">건</span></div>
-            <div className="disp-kpi-label">처리 대기 (접수됨)</div>
+            <div className="disp-kpi-label">처리 대기</div>
           </div>
         </div>
-        <div className="disp-kpi-card" data-delay="2" style={{ '--ka': '#7ED321' }}>
+        <div className="disp-kpi-card" data-delay="2" style={{ '--ka': '#F5A623' }}>
+          <div className="disp-kpi-icon">✋</div>
+          <div>
+            <div className="disp-kpi-value">{stats.defended}<span className="disp-kpi-unit">건</span></div>
+            <div className="disp-kpi-label">이의신청됨</div>
+          </div>
+        </div>
+        <div className="disp-kpi-card" data-delay="3" style={{ '--ka': '#7ED321' }}>
           <div className="disp-kpi-icon">✅</div>
           <div>
             <div className="disp-kpi-value">{stats.completed}<span className="disp-kpi-unit">건</span></div>
             <div className="disp-kpi-label">해결 완료</div>
-          </div>
-        </div>
-        <div className="disp-kpi-card" data-delay="3" style={{ '--ka': '#F5A623' }}>
-          <div className="disp-kpi-icon">💰</div>
-          <div>
-            <div className="disp-kpi-value">{stats.totalAmount.toLocaleString()}<span className="disp-kpi-unit">CARE</span></div>
-            <div className="disp-kpi-label">누적 청구 금액</div>
           </div>
         </div>
       </div>
@@ -124,15 +131,15 @@ export default function DisputesList() {
       {/* 3. 테이블 콘텐츠 영역 */}
       <div className="disp-content-card">
         <div className="disp-tab-filter">
-          {['all', 'open', 'completed'].map((tab) => (
+          {['all', 'open', 'defended', 'completed'].map((tab) => (
             <button
               key={tab}
               className={`disp-tab-button ${activeTab === tab ? 'active' : ''}`}
               onClick={() => setActiveTab(tab)}
             >
-              {tab === 'all' ? '전체' : tab === 'open' ? '접수됨' : '해결완료'}
+              {tab === 'all' ? '전체' : tab === 'open' ? '접수됨' : tab === 'defended' ? '이의신청됨' : '해결완료'}
               <span className="disp-tab-count">
-                ({tab === 'all' ? stats.total : tab === 'open' ? stats.open : stats.completed})
+                ({tab === 'all' ? stats.total : tab === 'open' ? stats.open : tab === 'defended' ? stats.defended : stats.completed})
               </span>
             </button>
           ))}
@@ -170,7 +177,7 @@ export default function DisputesList() {
                     <td className="disp-amount">{dispute.amount.toLocaleString()} CARE</td>
                     <td>
                       <span className={`disp-status-badge ${dispute.status}`}>
-                        {dispute.status === 'open' ? '접수됨' : '해결완료'}
+                        {dispute.status === 'open' ? '접수됨' : dispute.status === 'defended' ? '이의신청됨' : '해결완료'}
                       </span>
                     </td>
                     <td className="text-muted">{dispute.createdDate}</td>

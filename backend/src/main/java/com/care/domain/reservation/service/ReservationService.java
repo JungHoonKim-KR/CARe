@@ -18,6 +18,7 @@ import com.care.domain.car.service.CarService;
 import com.care.domain.car.controller.dto.response.ReturnReportResponse;
 import com.care.domain.reservation.entity.Scratch;
 import com.care.domain.reservation.exception.ReservationErrorCode;
+import com.care.domain.reservation.repository.DisputeRepository;
 import com.care.domain.reservation.repository.ReportRepository;
 import com.care.domain.reservation.repository.ReservationRepository;
 import com.care.domain.scan.repository.ScratchRepository;
@@ -49,6 +50,7 @@ public class ReservationService {
     private final CarService carService;
     private final CareTokenService careTokenService;
     private final ReportRepository reportRepository;
+    private final DisputeRepository disputeRepository;
 
     @Value("${ai.scratch.similarity-threshold:60.0}")
     private double similarityThreshold;
@@ -96,14 +98,24 @@ public class ReservationService {
     @Transactional(readOnly = true)
     public List<ReservationSummaryResponse> getRenterReservations(String renterId) {
         return reservationRepository.findByRenterUserId(renterId).stream()
-                .map(ReservationSummaryResponse::from)
+                .map(r -> {
+                    String disputeId = disputeRepository.findByReservation_ReservationId(r.getReservationId())
+                            .map(d -> d.getDisputeId())
+                            .orElse(null);
+                    return ReservationSummaryResponse.from(r, disputeId);
+                })
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<ReservationSummaryResponse> getCompanyReservations(String companyId) {
         return reservationRepository.findByOwnedCarCompanyCompanyId(companyId).stream()
-                .map(ReservationSummaryResponse::from)
+                .map(r -> {
+                    String disputeId = disputeRepository.findByReservation_ReservationId(r.getReservationId())
+                            .map(d -> d.getDisputeId())
+                            .orElse(null);
+                    return ReservationSummaryResponse.from(r, disputeId);
+                })
                 .toList();
     }
 

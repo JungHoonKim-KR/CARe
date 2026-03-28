@@ -14,6 +14,7 @@ public record DisputeSummaryResponse(
         String renterName,
         int claimAmount,
         String status,
+        boolean hasDefense,
         LocalDateTime createdAt
 ) {
     public static DisputeSummaryResponse from(Dispute dispute) {
@@ -27,6 +28,7 @@ public record DisputeSummaryResponse(
                 dispute.getReservation().getRenter().getName(),
                 dispute.getClaimAmount(),
                 dispute.getStatusEnum().name(),
+                dispute.getDefenseScratch() != null,
                 dispute.getCreatedAt()
         );
     }

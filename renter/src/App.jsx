@@ -17,6 +17,7 @@ import PaymentPage from './pages/payment/PaymentPage'
 import BookingCompletePage from './pages/booking-complete/BookingCompletePage'
 import WalletPage from './pages/wallet/WalletPage'
 import ChargePage from './pages/wallet/ChargePage'
+import ExchangePage from './pages/wallet/ExchangePage'
 import TokenHistoryPage from './pages/wallet/TokenHistoryPage'
 import DIDAuthPage from './pages/did-auth/DIDAuthPage'
 import DIDPassportGuidePage from './pages/did-auth/DIDPassportGuidePage'
@@ -60,6 +61,7 @@ function App() {
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/wallet/token" element={<TokenHistoryPage />} />
           <Route path="/wallet/charge" element={<ChargePage />} />
+          <Route path="/wallet/exchange" element={<ExchangePage />} />
           <Route path="/did-auth" element={<DIDAuthPage />} />
           <Route path="/did-guide" element={<DIDPassportGuidePage />} />
           <Route path="/did-camera" element={<DIDCameraPage />} />

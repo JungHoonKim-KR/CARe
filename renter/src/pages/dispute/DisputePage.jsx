@@ -305,11 +305,9 @@ export default function DisputePage() {
           <button className="dp-dispute-btn" onClick={handleDispute}>
             이의 신청하기
           </button>
-          {dispute?.companySettlementAgreed && (
-            <button className="dp-settle-btn" onClick={handleSettle} disabled={settling}>
-              정산 동의
-            </button>
-          )}
+          <button className="dp-settle-btn" onClick={handleSettle} disabled={settling}>
+            {dispute?.settlementFinalAmount != null ? '정산 동의' : '이의 없음'}
+          </button>
         </div>
       )}
       {dispute && dispute.status !== 'OPEN' && (

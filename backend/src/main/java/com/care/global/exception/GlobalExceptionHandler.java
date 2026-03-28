@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -12,6 +13,12 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    // SSE 연결 끊김 — 클라이언트가 먼저 연결을 끊은 정상 케이스이므로 무시
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleAsyncRequestNotUsable(AsyncRequestNotUsableException e) {
+        log.debug("[SSE] 클라이언트 연결 끊김 (무시): {}", e.getMessage());
+    }
 
     // 예약 없을 때
     @ExceptionHandler(IllegalArgumentException.class)

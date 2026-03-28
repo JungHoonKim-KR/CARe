@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import carIcon from '../../assets/car_icon.png'
@@ -8,8 +8,8 @@ import {
   getMyReservations,
   getMyNotifications,
   markNotificationAsRead,
-  subscribeNotifications,
 } from '../../api/reservation'
+import { useNotification } from '../../context/NotificationContext'
 import './MyCarPage.css'
 
 const MOCK_RESERVATION = {
@@ -85,12 +85,14 @@ export default function MyCarPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { state } = useLocation()
+  const { notifications } = useNotification()
   const [reservations, setReservations] = useState(state?.reservation ? [state.reservation] : [])
   const [selectedIdx, setSelectedIdx] = useState(state?.reservation ? 0 : null)
   const [loading, setLoading] = useState(!state?.reservation)
   const reservation = reservations[selectedIdx] || null
   const [showDisputeModal, setShowDisputeModal] = useState(false)
   const [pendingDisputeNotification, setPendingDisputeNotification] = useState(null)
+  const shownNotificationIds = useRef(new Set())
 
   const applyDisputeNotification = (notification) => {
     if (!notification) return
@@ -131,28 +133,14 @@ export default function MyCarPage() {
   }, [])
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken')
-    if (!token) return
-
-    const abortController = new AbortController()
-    subscribeNotifications({
-      token,
-      signal: abortController.signal,
-      onNotification: (notification) => {
-        applyDisputeNotification(notification)
-      },
-      onError: (error) => {
-        console.error('알림 SSE 연결 오류:', error)
-      },
-    }).catch((error) => {
-      if (abortController.signal.aborted) return
-      console.error('알림 SSE 구독 실패:', error)
-    })
-
-    return () => {
-      abortController.abort()
-    }
-  }, [])
+    notifications
+      .filter(n => IMPORTANT_NOTIFICATION_TYPES.has(n.notificationType) && !n.read)
+      .filter(n => !shownNotificationIds.current.has(n.notificationId))
+      .forEach(n => {
+        shownNotificationIds.current.add(n.notificationId)
+        applyDisputeNotification(n)
+      })
+  }, [notifications])
 
   if (loading) {
     return (

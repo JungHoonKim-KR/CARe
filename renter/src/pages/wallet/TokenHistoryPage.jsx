@@ -61,7 +61,7 @@ export default function TokenHistoryPage() {
           </button>
           <button
             className="token-history-btn exchange"
-            onClick={() => alert(t('tokenHistory.exchangeAlert'))}
+            onClick={() => navigate('/wallet/exchange')}
           >
             {t('tokenHistory.exchange')}
           </button>

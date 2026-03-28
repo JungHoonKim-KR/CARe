@@ -179,13 +179,17 @@ public class Dispute extends BaseEntity {
         this.settlementStatus = settlementStatus.name();
     }
 
-    public void validateSettlementProposal(long finalAmount, SettlementStatus settlementStatus) {
+    public boolean isCounterProposal(long finalAmount, SettlementStatus settlementStatus) {
         if (this.settlementFinalAmount == null || this.settlementStatus == null) {
-            return;
+            return false;
         }
-        if (this.settlementFinalAmount != finalAmount || !this.settlementStatus.equals(settlementStatus.name())) {
-            throw new IllegalArgumentException("이미 다른 정산안으로 합의가 진행 중입니다.");
-        }
+        return this.settlementFinalAmount != finalAmount || !this.settlementStatus.equals(settlementStatus.name());
+    }
+
+    public void resetSettlementAgreements() {
+        this.companySettlementAgreed = false;
+        this.renterSettlementAgreed = false;
+        this.settlementAgreedAt = null;
     }
 
     public void agreeSettlementByCompany() {

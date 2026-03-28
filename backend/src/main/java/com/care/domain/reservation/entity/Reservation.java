@@ -93,4 +93,16 @@ public class Reservation extends BaseEntity {
     public void updateStatusToCompleted() {
         this.status = "COMPLETED";
     }
+
+    public void lockDeposit() {
+        this.depositStatus = DepositStatus.LOCKED;
+    }
+
+    public void deductDeposit() {
+        this.depositStatus = DepositStatus.DEDUCTED;
+    }
+
+    public void safeDeposit() {
+        this.depositStatus = DepositStatus.SAFE;
+    }
 }

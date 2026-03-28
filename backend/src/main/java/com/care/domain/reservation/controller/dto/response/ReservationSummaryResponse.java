@@ -9,6 +9,7 @@ public record ReservationSummaryResponse(
         String reservationId,
         String status,
         String depositStatus,
+        String disputeId,
         String carId,
         String plateNumber,
         String brand,
@@ -21,11 +22,12 @@ public record ReservationSummaryResponse(
         String airportCode,
         String countryCode
 ) {
-    public static ReservationSummaryResponse from(Reservation r) {
+    public static ReservationSummaryResponse from(Reservation r, String disputeId) {
         return new ReservationSummaryResponse(
                 r.getReservationId(),
                 r.getStatus(),
                 r.getDepositStatus() != null ? r.getDepositStatus().name() : null,
+                disputeId,
                 r.getOwnedCar().getCarId(),
                 r.getOwnedCar().getPlateNumber(),
                 r.getOwnedCar().getCarModel().getBrand(),

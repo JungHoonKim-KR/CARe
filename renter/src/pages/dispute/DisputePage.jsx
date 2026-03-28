@@ -83,10 +83,10 @@ export default function DisputePage() {
     try {
       const result = await settleDispute(dispute.disputeId, finalAmount, settlementStatus)
 
-      if (result?.status !== 'COMPLETED') {
-        alert(t('dispute.settlePending'))
-      } else {
+      if (['COMPLETED', 'REFUNDED'].includes(result?.status)) {
         alert(t('dispute.settleComplete'))
+      } else {
+        alert(t('dispute.settlePending'))
       }
 
       if (reservation?.reservationId) {

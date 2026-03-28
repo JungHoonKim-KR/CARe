@@ -76,9 +76,12 @@ export default function DisputePage() {
       return
     }
 
+    const finalAmount = dispute.settlementFinalAmount ?? dispute.claimAmount ?? 0
+    const settlementStatus = dispute.settlementStatus ?? 'COMPLETED'
+
     setSettling(true)
     try {
-      const result = await settleDispute(dispute.disputeId, dispute.claimAmount || 0, 'COMPLETED')
+      const result = await settleDispute(dispute.disputeId, finalAmount, settlementStatus)
 
       if (result?.status !== 'COMPLETED') {
         alert(t('dispute.settlePending'))
@@ -168,6 +171,16 @@ export default function DisputePage() {
                 <div className="dp-info-row">
                   <span className="dp-info-label">{t('dispute.claimAmount')}</span>
                   <span className="dp-info-value">{dispute.claimAmount.toLocaleString('ko-KR')} CARE</span>
+                </div>
+              )}
+              {dispute.companySettlementAgreed && dispute.settlementFinalAmount != null && (
+                <div className="dp-info-row">
+                  <span className="dp-info-label">업체 제안 금액</span>
+                  <span className="dp-info-value" style={{ color: '#1a7a45', fontWeight: 800 }}>
+                    {dispute.settlementStatus === 'REFUNDED'
+                      ? '무과실 인정 (0 CARE)'
+                      : `${dispute.settlementFinalAmount.toLocaleString('ko-KR')} CARE`}
+                  </span>
                 </div>
               )}
               {dispute.createdAt && (
@@ -292,9 +305,11 @@ export default function DisputePage() {
           <button className="dp-dispute-btn" onClick={handleDispute}>
             이의 신청하기
           </button>
-          <button className="dp-settle-btn" onClick={handleSettle} disabled={settling}>
-            이의 없음 (정산 동의)
-          </button>
+          {dispute?.companySettlementAgreed && (
+            <button className="dp-settle-btn" onClick={handleSettle} disabled={settling}>
+              정산 동의
+            </button>
+          )}
         </div>
       )}
       {dispute && dispute.status !== 'OPEN' && (

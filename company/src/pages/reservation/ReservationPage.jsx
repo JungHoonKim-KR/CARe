@@ -57,19 +57,22 @@ export default function ReservationPage() {
       if (!result.success || !result.data || result.data.length === 0) {
         setReservations(MOCK_RESERVATIONS)
       } else {
-        const formatted = result.data.map((reservation) => ({
-          id: reservation.reservationId,
-          carName: `${reservation.brand || '-'} ${reservation.modelName || ''}`.trim(),
-          carType: reservation.plateNumber || '-',
-          renterName: '-', // 예약 목록 API에 임차인 이름 미포함
-          renterCountry: reservation.insuranceName || '-',
-          startDate: formatDate(reservation.pickupDate),
-          endDate: formatDate(reservation.returnDate),
-          location: '-', // 위치 정보 API 미제공
-          amount: reservation.totalPrice != null ? `${reservation.totalPrice.toLocaleString()} CARE` : '-',
-          status: getStatusLabel(reservation.status),
-          category: getCategoryFromStatus(reservation.status, reservation.depositStatus),
-        }))
+        const formatted = result.data
+          .map((reservation) => ({
+            id: reservation.reservationId,
+            carName: `${reservation.brand || '-'} ${reservation.modelName || ''}`.trim(),
+            carType: reservation.plateNumber || '-',
+            renterName: reservation.renterName || '-',
+            renterCountry: reservation.insuranceName || '-',
+            startDate: formatDate(reservation.pickupDate),
+            endDate: formatDate(reservation.returnDate),
+            location: '-',
+            amount: reservation.totalPrice != null ? `${reservation.totalPrice.toLocaleString()} CARE` : '-',
+            status: getStatusLabel(reservation.status),
+            category: getCategoryFromStatus(reservation.status, reservation.depositStatus),
+            _pickupDate: reservation.pickupDate,
+          }))
+          .sort((a, b) => new Date(b._pickupDate || 0) - new Date(a._pickupDate || 0))
         setReservations(formatted.length > 0 ? formatted : MOCK_RESERVATIONS)
       }
     } catch {

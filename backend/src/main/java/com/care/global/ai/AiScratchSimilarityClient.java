@@ -26,7 +26,7 @@ public class AiScratchSimilarityClient {
     @Value("${gms.api-key:}")
     private String gmsApiKey;
 
-    private static final String GMS_URL = "https://gms.ssafy.io/gmsapi/generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+    private static final String GMS_URL = "https://gms.ssafy.io/gmsapi/generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent";
     private static final String PROMPT =
             "두 차량 흠집 이미지를 비교하세요. 첫 번째는 기준(반납 전) 흠집, 두 번째는 대상(반납 후) 흠집입니다. " +
             "흠집의 형태, 크기, 위치, 외관을 분석하여 동일한 흠집인지 판단하세요. " +

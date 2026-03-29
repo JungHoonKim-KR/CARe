@@ -203,11 +203,16 @@ public class DisputeService {
 
 		validateParticipantAccess(requesterId, reservation);
 
+		String targetLogId = disputeRepository.findByReservation_ReservationId(reservationId)
+				.map(d -> d.getTargetScratch().getLogId())
+				.orElse(null);
+
 		List<Scratch> beforeScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "BEFORE");
 		List<Scratch> afterScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "AFTER");
 
 		return Stream.concat(beforeScratches.stream(), afterScratches.stream())
 				.filter(scratch -> !scratch.isManual())
+				.filter(scratch -> !scratch.getLogId().equals(targetLogId))
 				.map(DisputePreviousScratchResponse::from)
 				.toList();
 	}

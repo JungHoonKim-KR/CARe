@@ -26,13 +26,15 @@ public class AiScratchSimilarityClient {
     @Value("${gms.api-key:}")
     private String gmsApiKey;
 
-    private static final String GMS_URL = "https://gms.ssafy.io/gmsapi/generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+    private static final String GMS_URL = "https://gms.ssafy.io/gmsapi/api.anthropic.com/v1/messages";
+    private static final String ANTHROPIC_VERSION = "2023-06-01";
+    private static final String CLAUDE_MODEL = "claude-opus-4-5-20251101";
     private static final String PROMPT =
             "두 차량 흠집 이미지를 비교하세요. 첫 번째는 기준(반납 전) 흠집, 두 번째는 대상(반납 후) 흠집입니다. " +
             "흠집의 형태, 크기, 위치, 외관을 분석하여 동일한 흠집인지 판단하세요. " +
             "반드시 다음 JSON만 반환하세요 (설명 없이): " +
-            "{\"similarity\": <0.0~1.0>, \"diff_score\": <0.0~1.0>} " +
-            "similarity는 동일 흠집일수록 1.0에 가깝고, diff_score는 1.0 - similarity 입니다.";
+            "{\"similarity\": <소수점 넷째 자리까지, 0.0000~1.0000>, \"diff_score\": <소수점 넷째 자리까지, 0.0000~1.0000>} " +
+            "similarity는 동일 흠집일수록 1.0000에 가깝고, diff_score는 1.0000 - similarity 입니다.";
 
     /**
      * 두 흠집 이미지 URL을 GMS(Claude Vision API)로 비교하여 유사도 반환
@@ -50,12 +52,15 @@ public class AiScratchSimilarityClient {
         String targetBase64 = Base64.getEncoder().encodeToString(targetBytes);
 
         Map<String, Object> requestBody = Map.of(
-                "contents", List.of(
+                "model", CLAUDE_MODEL,
+                "max_tokens", 1024,
+                "messages", List.of(
                         Map.of(
-                                "parts", List.of(
-                                        inlineData(refBase64, detectMediaType(refCropS3Url)),
-                                        inlineData(targetBase64, detectMediaType(targetCropS3Url)),
-                                        Map.of("text", PROMPT)
+                                "role", "user",
+                                "content", List.of(
+                                        imageContent(refBase64, detectMediaType(refCropS3Url)),
+                                        imageContent(targetBase64, detectMediaType(targetCropS3Url)),
+                                        Map.of("type", "text", "text", PROMPT)
                                 )
                         )
                 )
@@ -63,7 +68,8 @@ public class AiScratchSimilarityClient {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("x-goog-api-key", gmsApiKey);
+        headers.set("x-api-key", gmsApiKey);
+        headers.set("anthropic-version", ANTHROPIC_VERSION);
 
         Map<String, Object> response = (Map<String, Object>) restTemplate.postForObject(
                 GMS_URL,
@@ -81,21 +87,13 @@ public class AiScratchSimilarityClient {
 
     @SuppressWarnings("unchecked")
     private String extractTextContent(Map<String, Object> response) {
-        List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
-        if (candidates == null || candidates.isEmpty()) {
-            throw new IllegalStateException("GMS 응답에 candidates가 없습니다.");
-        }
-        Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
-        if (content == null) {
+        List<Map<String, Object>> content = (List<Map<String, Object>>) response.get("content");
+        if (content == null || content.isEmpty()) {
             throw new IllegalStateException("GMS 응답에 content가 없습니다.");
         }
-        List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
-        if (parts == null || parts.isEmpty()) {
-            throw new IllegalStateException("GMS 응답에 parts가 없습니다.");
-        }
-        Object text = parts.get(0).get("text");
+        Object text = content.get(0).get("text");
         if (text == null) {
-            throw new IllegalStateException("GMS 응답 parts에 text가 없습니다.");
+            throw new IllegalStateException("GMS 응답 content에 text가 없습니다.");
         }
         return text.toString();
     }
@@ -119,10 +117,12 @@ public class AiScratchSimilarityClient {
         }
     }
 
-    private Map<String, Object> inlineData(String base64Data, String mimeType) {
+    private Map<String, Object> imageContent(String base64Data, String mimeType) {
         return Map.of(
-                "inlineData", Map.of(
-                        "mimeType", mimeType,
+                "type", "image",
+                "source", Map.of(
+                        "type", "base64",
+                        "media_type", mimeType,
                         "data", base64Data
                 )
         );

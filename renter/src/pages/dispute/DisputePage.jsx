@@ -106,10 +106,17 @@ export default function DisputePage() {
     navigate('/dispute-scratch-logs', { state: { reservation, disputeId } })
   }
 
+  // 업체가 무과실 인정 제안한 상태 (아직 renter가 동의 안 한 경우)
+  const isNoFaultOffered = !!(
+    dispute?.companySettlementAgreed &&
+    !dispute?.renterSettlementAgreed &&
+    (dispute?.settlementStatus === 'REFUNDED' || dispute?.settlementFinalAmount === 0)
+  )
+
   // 이미 완료된 분쟁이거나 방금 정산 동의한 경우 → 완료 화면
   const isSettled = settledResult || ['COMPLETED', 'RESOLVED', 'REFUNDED'].includes(dispute?.status)
   const isRefunded = settledResult?.isRefunded || dispute?.settlementStatus === 'REFUNDED'
-  const resolvedAmount = settledResult?.finalAmount ?? dispute?.settlementFinalAmount ?? dispute?.claimAmount ?? 15000
+  const resolvedAmount = settledResult?.finalAmount ?? dispute?.settlementFinalAmount ?? dispute?.claimAmount ?? 0
 
   if (isSettled) {
     return (
@@ -170,6 +177,8 @@ export default function DisputePage() {
     )
   }
 
+  const locationLabel = scratchZone ? (LOCATION_LABELS[scratchZone] || scratchZone) : null
+
   return (
     <div className="dp-page">
       {/* 헤더 */}
@@ -185,25 +194,96 @@ export default function DisputePage() {
       </header>
 
       <div className="dp-scroll">
-        {/* 분쟁 배너 - OPEN 상태에서만 표시 */}
-        {(!dispute || dispute.status === 'OPEN') && (
-        <button className="dp-dispute-banner" onClick={handleDispute}>
-          <div className="dp-banner-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path d="M12 9v4M12 17h.01" stroke="white" strokeWidth="2.2"
-                strokeLinecap="round"/>
-              <path d="M12 2L2 20h20L12 2z" stroke="white" strokeWidth="2"
-                strokeLinejoin="round"/>
-            </svg>
+        {/* ① 이미지 섹션 — 최상단 */}
+        <div className="dp-section">
+          {dispute?.snapshotBeforeCropS3Url ? (
+            <>
+              <p className="dp-section-title">사진 비교</p>
+              <div className="dp-compare-row">
+                <div className="dp-compare-card">
+                  <div className="dp-compare-img before">
+                    <img src={dispute.snapshotBeforeCropS3Url} alt="픽업 전" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                  </div>
+                  <p className="dp-compare-label">픽업 전</p>
+                  {dispute?.snapshotCapturedAt && (
+                    <p className="dp-compare-date">{formatDateTime(dispute.snapshotCapturedAt)}</p>
+                  )}
+                  <span className="dp-compare-tag normal">픽업 전 상태</span>
+                </div>
+                <div className="dp-compare-card">
+                  <div className="dp-compare-img after">
+                    {dispute?.snapshotAfterCropS3Url
+                      ? <img src={dispute.snapshotAfterCropS3Url} alt="반납 후" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                      : <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                          <rect x="3" y="5" width="18" height="14" rx="2" stroke="#ccc" strokeWidth="1.5"/>
+                          <circle cx="12" cy="12" r="3" stroke="#ccc" strokeWidth="1.5"/>
+                          <circle cx="17.5" cy="7.5" r="1" fill="#ccc"/>
+                        </svg>
+                    }
+                  </div>
+                  <p className="dp-compare-label">반납 후</p>
+                  {dispute?.createdAt && (
+                    <p className="dp-compare-date">{formatDateTime(dispute.createdAt)}</p>
+                  )}
+                  <span className={`dp-compare-tag${dispute?.snapshotWarning ? ' attention' : ' normal'}`}>
+                    {dispute?.snapshotWarning ? '주의 필요' : '유사도 정상'}
+                  </span>
+                </div>
+              </div>
+            </>
+          ) : dispute?.snapshotAfterCropS3Url ? (
+            <>
+              <p className="dp-section-title">새 흠집 감지</p>
+              <div className="dp-compare-img after" style={{ width: '100%', borderRadius: 12, overflow: 'hidden', aspectRatio: '4/3' }}>
+                <img src={dispute.snapshotAfterCropS3Url} alt="반납 후" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            </>
+          ) : null}
+
+          {/* 부위 표시 + 이력 딥링크 */}
+          {locationLabel && (
+            <div className="dp-zone-row">
+              <span className="dp-zone-label">📍 {locationLabel}</span>
+              <button
+                className="dp-zone-btn"
+                onClick={() => navigate('/damage-history', { state: { reservation, filterZone: scratchZone } })}
+              >
+                해당 부위 이력 보기 →
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ② 상태 배너 */}
+        {isNoFaultOffered ? (
+          <div className="dp-nofault-banner">
+            <div className="dp-nofault-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.25)"/>
+                <path d="M7 12.5l3.5 3.5 6.5-7" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="dp-banner-text">
+              <p className="dp-banner-title">업체에서 무과실을 인정했습니다</p>
+              <p className="dp-banner-sub">아래 정산 동의 버튼으로 확인해주세요</p>
+            </div>
           </div>
-          <div className="dp-banner-text">
-            <p className="dp-banner-title">{t('dispute.bannerTitle')}</p>
-            <p className="dp-banner-sub">{t('dispute.bannerSub')}</p>
-          </div>
-        </button>
+        ) : (!dispute || dispute.status === 'OPEN') && (
+          <button className="dp-dispute-banner" onClick={handleDispute}>
+            <div className="dp-banner-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M12 9v4M12 17h.01" stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
+                <path d="M12 2L2 20h20L12 2z" stroke="white" strokeWidth="2" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="dp-banner-text">
+              <p className="dp-banner-title">{t('dispute.bannerTitle')}</p>
+              <p className="dp-banner-sub">{t('dispute.bannerSub')}</p>
+            </div>
+          </button>
         )}
 
-        {/* 로딩 / 에러 */}
+        {/* ③ 로딩 / 에러 */}
         {loading && (
           <div className="dp-desc-box">
             <p className="dp-desc-text">{t('dispute.loading')}</p>
@@ -215,7 +295,7 @@ export default function DisputePage() {
           </div>
         )}
 
-        {/* 분쟁 상세 정보 (API 데이터) */}
+        {/* ④ 분쟁 상세 정보 */}
         {dispute && !loading && (
           <div className="dp-section">
             <p className="dp-section-title">{t('dispute.sectionTitle')}</p>
@@ -224,6 +304,12 @@ export default function DisputePage() {
                 <span className="dp-info-label">{t('dispute.status')}</span>
                 <span className="dp-info-value">{t(`dispute.status${dispute.status.charAt(0)+dispute.status.slice(1).toLowerCase()}`) || dispute.status}</span>
               </div>
+              {locationLabel && (
+                <div className="dp-info-row">
+                  <span className="dp-info-label">손상 부위</span>
+                  <span className="dp-info-value" style={{ color: '#E84040' }}>{locationLabel}</span>
+                </div>
+              )}
               {dispute.reason && (
                 <div className="dp-info-row">
                   <span className="dp-info-label">{t('dispute.reason')}</span>
@@ -240,9 +326,7 @@ export default function DisputePage() {
                 <div className="dp-info-row">
                   <span className="dp-info-label">업체 제안 금액</span>
                   <span className="dp-info-value" style={{ color: '#1a7a45', fontWeight: 800 }}>
-                    {dispute.settlementStatus === 'REFUNDED'
-                      ? '무과실 인정 (0 CARE)'
-                      : `${dispute.settlementFinalAmount.toLocaleString('ko-KR')} CARE`}
+                    {isNoFaultOffered ? '무과실 인정 (0 CARE)' : `${dispute.settlementFinalAmount.toLocaleString('ko-KR')} CARE`}
                   </span>
                 </div>
               )}
@@ -252,108 +336,17 @@ export default function DisputePage() {
                   <span className="dp-info-value">{formatDateTime(dispute.createdAt)}</span>
                 </div>
               )}
-              {dispute.updatedAt && (
-                <div className="dp-info-row">
-                  <span className="dp-info-label">{t('dispute.lastUpdated')}</span>
-                  <span className="dp-info-value">{formatDateTime(dispute.updatedAt)}</span>
-                </div>
-              )}
             </div>
           </div>
         )}
 
-        {/* AI 유사도 판별 결과 */}
-        <div className="dp-section">
-          {dispute?.snapshotBeforeCropS3Url ? (
-            /* ── 기존 흠집과 비교 가능한 경우 ── */
-            <>
-              <p className="dp-section-title">AI 유사도 비교</p>
-              <div className="dp-compare-row">
-                {/* 픽업 전 */}
-                <div className="dp-compare-card">
-                  <div className="dp-compare-img before">
-                    <img src={dispute.snapshotBeforeCropS3Url} alt="픽업 전" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
-                  </div>
-                  <p className="dp-compare-label">픽업 전</p>
-                  {dispute?.snapshotCapturedAt && (
-                    <p className="dp-compare-date">{formatDateTime(dispute.snapshotCapturedAt)}</p>
-                  )}
-                  <span className="dp-compare-tag normal">픽업 전 상태</span>
-                </div>
-
-                {/* 반납 후 */}
-                <div className="dp-compare-card">
-                  <div className="dp-compare-img after">
-                    {dispute?.snapshotAfterCropS3Url
-                      ? <img src={dispute.snapshotAfterCropS3Url} alt="반납 후" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
-                      : <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                          <rect x="3" y="5" width="18" height="14" rx="2" stroke="#ccc" strokeWidth="1.5"/>
-                          <circle cx="12" cy="12" r="3" stroke="#ccc" strokeWidth="1.5"/>
-                          <circle cx="17.5" cy="7.5" r="1" fill="#ccc"/>
-                          <path d="M5 9l3 3M7 7l4 4" stroke="#FF4D4F" strokeWidth="1.5" strokeLinecap="round"/>
-                        </svg>
-                    }
-                  </div>
-                  <p className="dp-compare-label">반납 후</p>
-                  {dispute?.createdAt && (
-                    <p className="dp-compare-date">{formatDateTime(dispute.createdAt)}</p>
-                  )}
-                  <span className={`dp-compare-tag${dispute?.snapshotWarning ? ' attention' : ' normal'}`}>
-                    {dispute?.snapshotWarning ? '주의 필요' : '유사도 정상'}
-                  </span>
-                </div>
-              </div>
-            </>
-          ) : (
-            /* ── 픽업 전 스캔에 없던 새 흠집 ── */
-            <>
-              <p className="dp-section-title">새 흠집 감지</p>
-              <div className="dp-new-scratch-card">
-                <div className="dp-new-scratch-badge">🆕 새로운 손상</div>
-                <p className="dp-new-scratch-desc">
-                  픽업 전 스캔에서 이 부위에 흠집이 없었습니다.<br/>
-                  반납 후 새로운 손상이 감지되었습니다.
-                </p>
-                {dispute?.snapshotAfterCropS3Url && (
-                  <div className="dp-new-scratch-img-wrap">
-                    <p className="dp-new-scratch-img-label">반납 후 촬영</p>
-                    <div className="dp-compare-img after" style={{ width: '100%', maxWidth: 240, margin: '0 auto' }}>
-                      <img src={dispute.snapshotAfterCropS3Url} alt="반납 후" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* 부위 표시 + 이력 버튼 */}
-          {scratchZone && (
-            <div className="dp-zone-row">
-              <span className="dp-zone-label">
-                📍 부위: {LOCATION_LABELS[scratchZone] || scratchZone}
-              </span>
-              <button
-                className="dp-zone-btn"
-                onClick={() => navigate('/damage-history', { state: { reservation, filterZone: scratchZone } })}
-              >
-                해당 부위 이력 보기 →
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* 설명 텍스트 */}
-        {dispute && (
+        {/* ⑤ 설명 텍스트 (무과실 인정 시 숨김) */}
+        {dispute && !isNoFaultOffered && (
           <div className="dp-desc-box">
             <p className="dp-desc-text">
-              이전에 발생했던 흠집과 달리<br/>
-              유사도가 <strong>{dispute.snapshotSimilarity != null ? Number(dispute.snapshotSimilarity).toFixed(2) : '--'}%</strong>로 확인되는<br/>
-              다른 흠집들이 발견됐어요.
+              새로운 흠집이 발견되었습니다.
               {dispute.status === 'OPEN' && (
-                <>
-                  <br/>관련 사항에 대해 소명을 하고 싶으신 경우<br/>
-                  이의 신청 버튼을 해주세요.
-                </>
+                <><br/>소명하시려면 이의 신청 버튼을 눌러주세요.</>
               )}
             </p>
           </div>
@@ -362,25 +355,29 @@ export default function DisputePage() {
         <div style={{ height: 160 }} />
       </div>
 
-      {/* 하단 버튼 - OPEN 상태에서만 표시 */}
-      {(!dispute || dispute.status === 'OPEN') && (
+      {/* 하단 버튼 */}
+      {isNoFaultOffered ? (
+        <div className="dp-footer">
+          <button className="dp-settle-btn dp-settle-btn--nofault" onClick={handleSettle} disabled={settling}>
+            {settling ? (
+              <span className="dp-settle-btn-inner"><span className="dp-spinner" />처리 중...</span>
+            ) : '무과실 확인 및 정산 동의'}
+          </button>
+        </div>
+      ) : (!dispute || dispute.status === 'OPEN') ? (
         <div className="dp-footer">
           <button className="dp-dispute-btn" onClick={handleDispute}>
             이의 신청하기
           </button>
           <button className="dp-settle-btn" onClick={handleSettle} disabled={settling}>
             {settling ? (
-              <span className="dp-settle-btn-inner">
-                <span className="dp-spinner" />
-                처리 중...
-              </span>
+              <span className="dp-settle-btn-inner"><span className="dp-spinner" />처리 중...</span>
             ) : (
               dispute?.settlementFinalAmount != null ? '정산 동의' : '이의 없음'
             )}
           </button>
         </div>
-      )}
-      {dispute && dispute.status !== 'OPEN' && (
+      ) : (
         <div className="dp-footer dp-footer-resolved">
           <p className="dp-resolved-text">
             {['RESOLVED', 'COMPLETED'].includes(dispute.status) ? '완료된 분쟁입니다.' : '이의 신청이 접수되어 검토 중입니다.'}

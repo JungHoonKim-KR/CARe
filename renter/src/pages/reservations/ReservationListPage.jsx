@@ -63,7 +63,7 @@ export default function ReservationListPage() {
   }
 
   const DEPOSIT_BADGE = {
-    LOCKED:   { text: t('reservationList.depositLocked'),   color: '#FF4D4F', bg: '#FF4D4F' },
+    LOCKED:   { text: t('reservationList.depositLocked'),   color: '#FF4D4F', bg: '#FFF0F0' },
     DEDUCTED: { text: t('reservationList.depositDeducted'), color: '#fff',    bg: '#888'    },
   }
 

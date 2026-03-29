@@ -103,8 +103,9 @@ public class RenterNotification extends BaseEntity {
         notification.renter = renter;
         notification.notificationType = SETTLEMENT_REQUESTED_TYPE;
         notification.title = "업체가 정산에 동의했습니다.";
-        notification.message = "예약 " + reservationId + " 분쟁 정산 금액 " + finalAmount
-                + "원에 업체 동의가 완료되었습니다. 최종 동의 여부를 확인해주세요.";
+        String shortId = reservationId.substring(0, Math.min(8, reservationId.length())).toUpperCase();
+        String amountMsg = finalAmount == 0 ? "무과실 인정 (환불)" : finalAmount + " CARE";
+        notification.message = "예약 #" + shortId + " — " + amountMsg + "\n최종 동의 여부를 확인해주세요.";
         notification.disputeId = disputeId;
         notification.reservationId = reservationId;
         notification.read = false;
@@ -132,8 +133,9 @@ public class RenterNotification extends BaseEntity {
         notification.renter = renter;
         notification.notificationType = SETTLEMENT_COMPLETED_TYPE;
         notification.title = "분쟁 정산이 완료되었습니다.";
-        notification.message = "예약 " + reservationId + " 분쟁 정산이 완료되었습니다. 상태: "
-                + settlementStatus + ", 금액: " + finalAmount + "원";
+        String shortId2 = reservationId.substring(0, Math.min(8, reservationId.length())).toUpperCase();
+        String statusMsg = "REFUNDED".equals(settlementStatus) ? "무과실 처리 (전액 환불)" : finalAmount + " CARE 차감";
+        notification.message = "예약 #" + shortId2 + " 분쟁 정산이 완료되었습니다.\n" + statusMsg;
         notification.disputeId = disputeId;
         notification.reservationId = reservationId;
         notification.read = false;
@@ -174,9 +176,10 @@ public class RenterNotification extends BaseEntity {
     }
 
     private static String buildDisputeCreatedMessage(String reservationId, String reason) {
+        String shortId = reservationId.substring(0, Math.min(8, reservationId.length())).toUpperCase();
         if (reason == null || reason.isBlank()) {
-            return "예약 " + reservationId + "에서 새로운 분쟁이 접수되었습니다.";
+            return "예약 #" + shortId + "에서 새로운 분쟁이 접수되었습니다.";
         }
-        return "예약 " + reservationId + "에서 새로운 분쟁이 접수되었습니다. 사유: " + reason;
+        return "예약 #" + shortId + "에서 새로운 분쟁이 접수되었습니다.\n사유: " + reason;
     }
 }

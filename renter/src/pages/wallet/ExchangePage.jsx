@@ -49,15 +49,15 @@ export default function ExchangePage() {
         <div className="charge-success-card">
           <div className="charge-success-icon">✓</div>
           <p className="charge-success-label">환전 완료</p>
-          <p className="charge-success-amount">{result.exchangedAmount} <span>CARE</span></p>
+          <p className="charge-success-amount">{Number(result.exchangedAmount).toLocaleString()} <span>CARE</span></p>
           <div className="charge-success-divider" />
           <div className="charge-success-row">
             <span>환전 금액</span>
-            <strong>-{result.exchangedAmount} CARE</strong>
+            <strong>-{Number(result.exchangedAmount).toLocaleString()} CARE</strong>
           </div>
           <div className="charge-success-row">
             <span>현재 잔액</span>
-            <strong>{result.balance} CARE</strong>
+            <strong>{Number(result.balance).toLocaleString()} CARE</strong>
           </div>
         </div>
 

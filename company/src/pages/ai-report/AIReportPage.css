@@ -115,10 +115,12 @@
 }
 
 .comparison-list {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-bottom: 16px;
+  overflow-y: auto;
 }
 
 .comparison-item {
@@ -222,6 +224,9 @@
 
 .damage-map-card,
 .damage-detail-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   background: white;
   border-radius: 12px;
   padding: 24px;
@@ -243,58 +248,86 @@
   color: #dc3545;
 }
 
-/* Car Diagram */
+/* Car Diagram — renter DamageHistoryPage .dh-car-diagram 구조와 동일 */
 .car-diagram {
   background: #f8f9fa;
   border-radius: 12px;
-  padding: 40px;
-  margin-bottom: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 400px;
 }
 
-.car-outline {
+.car-map-wrap {
   position: relative;
   width: 200px;
-  height: 400px;
-  background: white;
-  border: 3px solid #dee2e6;
-  border-radius: 80px 80px 40px 40px;
+  height: 280px;
+  flex-shrink: 0;
 }
 
-.damage-marker {
+.car-map-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Zone Markers */
+.zone-marker {
   position: absolute;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 2.5px solid white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+
+.zone-marker.zone-empty {
+  background: rgba(180, 180, 180, 0.3);
+  border-color: rgba(255,255,255,0.5);
+  pointer-events: none;
+}
+
+.zone-marker.zone-safe {
+  background: #0d6efd;
+  cursor: pointer;
+}
+
+.zone-marker.zone-warning {
+  background: #dc3545;
+  cursor: pointer;
+  animation: zone-pulse 1.8s ease-out infinite;
+}
+
+.zone-marker.marker-selected {
+  transform: translate(-50%, -50%) scale(1.3);
+  box-shadow: 0 0 0 3px white, 0 0 0 5px currentColor;
+  z-index: 2;
+}
+
+.zone-marker:not(.zone-empty):hover {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+.zone-count {
+  font-size: 11px;
   font-weight: 700;
   color: white;
-  transform: translate(-50%, -50%);
-  cursor: pointer;
-  transition: transform 0.2s;
+  line-height: 1;
 }
 
-.damage-marker:hover {
-  transform: translate(-50%, -50%) scale(1.1);
-}
-
-.damage-marker.existing {
-  background-color: #0d6efd;
-}
-
-.damage-marker.bidirectional {
-  background-color: #ffc107;
-  color: #000;
-}
-
-.damage-marker.new {
-  background-color: #dc3545;
+@keyframes zone-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(220,53,69,0.6), 0 2px 6px rgba(0,0,0,0.2); }
+  70%  { box-shadow: 0 0 0 8px rgba(220,53,69,0), 0 2px 6px rgba(0,0,0,0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(220,53,69,0),   0 2px 6px rgba(0,0,0,0.2); }
 }
 
 /* Legend */

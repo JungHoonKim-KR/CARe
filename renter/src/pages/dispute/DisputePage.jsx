@@ -41,6 +41,7 @@ export default function DisputePage() {
   const [error, setError] = useState(null)
   const [settling, setSettling] = useState(false)
   const [scratchZone, setScratchZone] = useState(null)
+  const [settledResult, setSettledResult] = useState(null) // 정산 완료 결과
 
   useEffect(() => {
     const reservationId = reservation?.reservationId
@@ -83,18 +84,16 @@ export default function DisputePage() {
     try {
       const result = await settleDispute(dispute.disputeId, finalAmount, settlementStatus)
 
-      if (['COMPLETED', 'REFUNDED'].includes(result?.status)) {
-        alert(t('dispute.settleComplete'))
-      } else {
-        alert(t('dispute.settlePending'))
-      }
-
       if (reservation?.reservationId) {
         localStorage.removeItem(`disputePending_${reservation.reservationId}`)
         localStorage.removeItem(`disputeDate_${reservation.reservationId}`)
       }
 
-      navigate('/my-car')
+      setSettledResult({
+        status: result?.status,
+        finalAmount,
+        isRefunded: result?.status === 'REFUNDED' || settlementStatus === 'REFUNDED',
+      })
     } catch (settleError) {
       console.error('분쟁 정산 동의 실패:', settleError)
       alert(settleError?.response?.data?.message || '정산 동의 처리에 실패했어요.')
@@ -105,6 +104,70 @@ export default function DisputePage() {
 
   const handleDispute = () => {
     navigate('/dispute-scratch-logs', { state: { reservation, disputeId } })
+  }
+
+  // 이미 완료된 분쟁이거나 방금 정산 동의한 경우 → 완료 화면
+  const isSettled = settledResult || ['COMPLETED', 'RESOLVED', 'REFUNDED'].includes(dispute?.status)
+  const isRefunded = settledResult?.isRefunded || dispute?.settlementStatus === 'REFUNDED'
+  const resolvedAmount = settledResult?.finalAmount ?? dispute?.settlementFinalAmount ?? dispute?.claimAmount ?? 15000
+
+  if (isSettled) {
+    return (
+      <div className="dp-page">
+        <header className="dp-header">
+          <button className="dp-back" onClick={() => navigate(-1)}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18l-6-6 6-6" stroke="#111" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <img src={careLogo} alt="CARe" className="dp-logo" />
+          <div style={{ width: 38 }} />
+        </header>
+
+        <div className="dp-settled-wrap">
+          <div className="dp-settled-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="11" fill="#4CAF50"/>
+              <path d="M7 12.5l3.5 3.5 6.5-7" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <h2 className="dp-settled-title">정산이 완료되었습니다</h2>
+          <p className="dp-settled-sub">
+            {isRefunded ? '업체에서 무과실을 인정하였습니다.' : '분쟁이 정산 처리되었습니다.'}
+          </p>
+
+          <div className="dp-settled-card">
+            <div className="dp-settled-row">
+              <span className="dp-settled-label">최종 정산 금액</span>
+              <span className="dp-settled-amount" style={{ color: isRefunded ? '#4CAF50' : '#E84040' }}>
+                {isRefunded ? '0 CARE' : `${resolvedAmount?.toLocaleString() ?? '--'} CARE`}
+              </span>
+            </div>
+            {dispute?.reason && (
+              <div className="dp-settled-row">
+                <span className="dp-settled-label">분쟁 사유</span>
+                <span className="dp-settled-val">{dispute.reason}</span>
+              </div>
+            )}
+          </div>
+
+          <p className="dp-settled-notice">
+            {isRefunded
+              ? '보증금이 전액 환급됩니다.'
+              : '정산 금액이 보증금에서 차감됩니다.'}
+          </p>
+
+          <div className="dp-settled-btns">
+            <button className="dp-settled-btn-primary" onClick={() => navigate('/my-car')}>
+              내 예약 보기
+            </button>
+            <button className="dp-settled-btn-secondary" onClick={() => navigate('/home')}>
+              홈으로
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

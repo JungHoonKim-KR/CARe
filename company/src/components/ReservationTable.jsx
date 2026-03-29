@@ -16,7 +16,7 @@ function StatusBadge({ status }) {
   return <span className={`res-status-badge ${cls}`}>{label}</span>
 }
 
-export default function ReservationTable({ reservations = [] }) {
+export default function ReservationTable({ reservations = [], sortOrder = 'desc', onSortToggle }) {
   const navigate = useNavigate()
 
   /* 빈 상태 */
@@ -37,7 +37,9 @@ export default function ReservationTable({ reservations = [] }) {
           <th>예약번호</th>
           <th>차량</th>
           <th>임차인</th>
-          <th>대여 기간</th>
+          <th className="res-th-sortable" onClick={onSortToggle}>
+              대여 기간 {sortOrder === 'desc' ? '↓' : '↑'}
+            </th>
           <th>금액</th>
           <th>상태</th>
         </tr>
@@ -54,7 +56,11 @@ export default function ReservationTable({ reservations = [] }) {
             {/* 차량 */}
             <td>
               <div className="res-car-cell">
-                <div className="res-car-icon-wrap">🚗</div>
+                <div className="res-car-icon-wrap">
+                    {r.thumbnailUrl
+                      ? <img src={r.thumbnailUrl} alt={r.carName} className="res-car-thumbnail" />
+                      : '🚗'}
+                  </div>
                 <div>
                   <div className="res-car-name">{r.carName}</div>
                   <div className="res-car-plate">{r.carType}</div>
@@ -84,6 +90,9 @@ export default function ReservationTable({ reservations = [] }) {
             {/* 상태 */}
             <td>
               <StatusBadge status={r.status} />
+              {r.disputeStatus === 'COMPLETED' && (
+                <span className="res-status-badge dispute-done" style={{ marginTop: 4, display: 'block' }}>분쟁완료</span>
+              )}
             </td>
 
 

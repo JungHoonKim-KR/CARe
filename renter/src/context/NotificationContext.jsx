@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useAuth } from './AuthContext'
-import { subscribeNotifications, getMyNotifications, markNotificationAsRead } from '../api/reservation'
+import { subscribeNotifications, markNotificationAsRead } from '../api/reservation'
 
 const NotificationContext = createContext(null)
 
@@ -9,16 +9,6 @@ export function NotificationProvider({ children }) {
   const [notifications, setNotifications] = useState([])
   const [toast, setToast] = useState(null)
   const abortRef = useRef(null)
-
-  useEffect(() => {
-    if (!isAuthenticated || !token) {
-      setNotifications([])
-      return
-    }
-    getMyNotifications()
-      .then(data => setNotifications(Array.isArray(data) ? data : []))
-      .catch(() => setNotifications([]))
-  }, [isAuthenticated, token])
 
   useEffect(() => {
     if (!isAuthenticated || !token) return

@@ -37,11 +37,14 @@ export default function ReservationDetailPage() {
       return
     }
     const r = result.data
-    const pickupDone = ['IN_USE', 'AFTER_SCAN', 'COMPLETED', 'DISPUTE'].includes(r.status)
-    const returnDone = ['COMPLETED', 'DISPUTE'].includes(r.status)
+    const isDispute  = r.depositStatus === 'LOCKED'
+    const pickupDone = ['IN_USE', 'AFTER_SCAN', 'COMPLETED'].includes(r.status) || isDispute
+    const returnDone = r.status === 'COMPLETED' || isDispute
     setData({
       reservationId: r.reservationId,
       status:        r.status,
+      depositStatus: r.depositStatus,
+      disputeId:     r.disputeId || null,
       carName:       `${r.car?.brand || ''} ${r.car?.modelName || ''}`.trim() || '-',
       plateNumber:   r.car?.plateNumber || '-',
       pickupDate:    formatDate(r.pickupDate),
@@ -50,10 +53,10 @@ export default function ReservationDetailPage() {
       returnDone,
       renterName:    r.renter?.name  || '-',
       renterEmail:   r.renter?.email || '-',
-      insurance:     r.insurance?.price ?? null,
-      insuranceName: r.insurance?.name  || '-',
-      totalPrice:    r.totalPrice ?? null,
-      isDispute:     r.status === 'DISPUTE',
+      insurancePrice: r.insurance?.price ?? null,
+      insuranceName:  r.insurance?.name  || '-',
+      totalPrice:     r.totalPrice ?? null,
+      isDispute,
     })
     setLoading(false)
   }
@@ -166,7 +169,7 @@ export default function ReservationDetailPage() {
 
             <div className="rdp-action-row">
               {data.isDispute && (
-                <button className="rdp-btn-dispute" onClick={() => navigate(`/disputes/${id}`)}>
+                <button className="rdp-btn-dispute" onClick={() => navigate(`/disputes/${data.disputeId}`)}>
                   분쟁 정보 확인하기
                 </button>
               )}
@@ -209,7 +212,7 @@ export default function ReservationDetailPage() {
               <div className="rdp-payment-row">
                 <span className="rdp-payment-label">보험료</span>
                 <span className="rdp-payment-value">
-                  {data.insurance !== null ? `${data.insurance.toLocaleString()} CARE` : '-'}
+                  {data.insurancePrice !== null ? `${data.insurancePrice.toLocaleString()} CARE` : '-'}
                 </span>
               </div>
               <div className="rdp-payment-divider" />

@@ -130,9 +130,12 @@ public class ReservationService {
 
     @Transactional(readOnly = true)
     public ReservationDetailResponse getReservationDetail(String reservationId) {
-        return reservationRepository.findByReservationId(reservationId)
-                .map(ReservationDetailResponse::from)
+        Reservation r = reservationRepository.findByReservationId(reservationId)
                 .orElseThrow(() -> new BusinessException(ReservationErrorCode.RESERVATION_NOT_FOUND));
+        String disputeId = disputeRepository.findByReservation_ReservationId(reservationId)
+                .map(d -> d.getDisputeId())
+                .orElse(null);
+        return ReservationDetailResponse.from(r, disputeId);
     }
 
     @Transactional

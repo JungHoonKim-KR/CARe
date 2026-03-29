@@ -9,6 +9,8 @@ public record ReservationDetailResponse(
         String status,
         String smartContractAddress,
         String depositStatus,
+        String disputeId,
+        int totalPrice,
         LocalDateTime pickupDate,
         LocalDateTime returnDate,
         String beforeScanTxHash,
@@ -36,12 +38,14 @@ public record ReservationDetailResponse(
             int price
     ) {}
 
-    public static ReservationDetailResponse from(Reservation r) {
+    public static ReservationDetailResponse from(Reservation r, String disputeId) {
         return new ReservationDetailResponse(
                 r.getReservationId(),
                 r.getStatus(),
                 r.getSmartContractAddress(),
                 r.getDepositStatus() != null ? r.getDepositStatus().name() : null,
+                disputeId,
+                r.getTotalPrice(),
                 r.getPickupDate(),
                 r.getReturnDate(),
                 r.getBeforeScanTxHash(),

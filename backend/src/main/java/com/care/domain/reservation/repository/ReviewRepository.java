@@ -8,4 +8,6 @@ import java.util.List;
 public interface ReviewRepository extends JpaRepository<Review, String> {
 
     List<Review> findByOwnedCarCarId(String carId);
+
+    List<Review> findByReservation_ReservationId(String reservationId);
 }

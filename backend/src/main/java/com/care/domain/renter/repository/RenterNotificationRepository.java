@@ -11,4 +11,6 @@ public interface RenterNotificationRepository extends JpaRepository<RenterNotifi
     List<RenterNotification> findByRenter_UserIdOrderByCreatedAtDesc(String userId);
 
     Optional<RenterNotification> findByNotificationIdAndRenter_UserId(String notificationId, String userId);
+
+    void deleteByReservationId(String reservationId);
 }

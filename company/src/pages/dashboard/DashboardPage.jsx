@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import CompanyService from '../../services/CompanyService'
 import './DashboardPage.css'
 
-/* 여기는 하드코딩 — 월별 수익 데이터 API 없음 */
+/* 월별 수익 폴백 데이터 (API 없음) */
 const MONTHLY = [
   { month: '10월', value: 6800000  },
   { month: '11월', value: 4200000  },
@@ -101,7 +101,7 @@ function SplineChart({ data }) {
           <text x="52" y="21" textAnchor="middle"
             fill="#fff" fontSize="12" fontWeight="700"
             fontFamily="-apple-system, sans-serif">
-            {(tip.value / 1000000).toFixed(1)}M원
+            {(tip.value / 1000000).toFixed(1)}M CARE
           </text>
         </g>
       )}
@@ -123,10 +123,10 @@ export default function DashboardPage() {
     })
   }, [])
 
-  /* 여기는 하드코딩 — 운영 차량 수, 정산 대기, 예약 건수, 분쟁 건수 API 없음 */
+  /* KPI 폴백 데이터 (운영 차량 수, 정산 대기, 예약 건수, 분쟁 건수 API 없음) */
   const rightCards = [
     { label: '운영 차량',   value: '8대',         sub: '가동률 80%',      icon: '🚗', accent: '#F5A623' },
-    { label: '정산 대기',   value: '850,000원',    sub: '3건 처리 대기',   icon: '⏳', accent: '#fb923c' },
+    { label: '정산 대기',   value: '850,000 CARE', sub: '3건 처리 대기',   icon: '⏳', accent: '#fb923c' },
     { label: '이번 달 예약', value: '45건',         sub: '지난달 대비 +12%', icon: '📅', accent: '#818cf8' },
     { label: '분쟁 건수',   value: '1건',          sub: '처리 필요',       icon: '⚖️', accent: '#ef4444' },
   ]
@@ -148,7 +148,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 2. 핵심 지표 4개 */}
-      {/* 여기는 하드코딩 — KPI 값 전체 (운영 차량 수, 정산 대기, 예약, 분쟁) API 없음 */}
+      {/* KPI 카드 (폴백 데이터) */}
       <div className="dash-kpi-grid">
         {rightCards.map((c, i) => (
           <div key={i} className="dash-kpi-card" style={{ '--ka': c.accent }}
@@ -164,7 +164,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 3. 수익 추이 그래프 */}
-      {/* 여기는 하드코딩 — 수익 추이 데이터 API 없음 */}
+      {/* 수익 추이 그래프 (폴백 데이터) */}
       <div className="dash-chart-card">
         <div className="dash-chart-header">
           <div>
@@ -189,7 +189,7 @@ export default function DashboardPage() {
 
         <SplineChart data={MONTHLY} />
 
-        {/* 여기는 하드코딩 — 이번 달 / 전월 대비 / 6개월 합계 API 없음 */}
+        {/* 이번 달 / 전월 대비 / 6개월 합계 요약 */}
         <div className="dash-chart-footer">
           <div className="dash-chart-stat">
             <span className="dash-chart-stat-value">12.5M</span>

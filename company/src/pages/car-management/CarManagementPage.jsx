@@ -18,7 +18,7 @@ const CAT_MAP = {
 }
 const CAR_ICONS = ['🚗','🚙','🚕','🏎️','🚐']
 
-/* 여기는 하드코딩 — API 실패 또는 데이터 없을 때 사용하는 폴백 */
+/* API 실패 또는 데이터 없을 때 사용하는 폴백 */
 const MOCK_CARS = [
   { carId: 1, brand: '현대', modelName: '아반떼', fuelType: 'GASOLINE', status: 'ACTIVE',      dailyPrice: 65000,  reservationCount: 12 },
   { carId: 2, brand: '기아',  modelName: 'K5',    fuelType: 'HYBRID',   status: 'RENTED',      dailyPrice: 80000,  reservationCount: 8  },
@@ -160,7 +160,7 @@ export default function CarManagementPage() {
                     </td>
                     <td>{FUEL_MAP[car.fuelType] ?? '-'}</td>
                     <td className="cell-amount">
-                      {car.dailyPrice ? `${car.dailyPrice.toLocaleString()}원` : '-'}
+                      {car.dailyPrice ? `${car.dailyPrice.toLocaleString()} CARE` : '-'}
                     </td>
                     <td>
                       <div className="reservation-bar-wrap">

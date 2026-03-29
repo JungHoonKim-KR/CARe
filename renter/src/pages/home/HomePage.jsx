@@ -1,6 +1,7 @@
 import { useState, useReducer, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useNotification } from '../../context/NotificationContext'
 import careLogo from '../../assets/care_logo.png'
 import mapIcon from '../../assets/map_icon.png'
 import carIcon from '../../assets/car_icon.png'
@@ -51,6 +52,7 @@ const formReducer = (state, action) => {
 export default function HomePage() {
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
+  const { unreadCount } = useNotification()
 
   const didVerified =
     localStorage.getItem('passport_verified') === 'true' &&
@@ -74,8 +76,6 @@ export default function HomePage() {
     { key: '밴', label: t('home.carTypeVan') },
     { key: '럭셔리', label: t('home.carTypeLuxury') },
   ]
-
-  const LANG_LABELS = { ko: '한국어', en: 'English', zh: '中文', ja: '日本語', fr: 'Français' }
 
   const [showDidAlert, setShowDidAlert] = useState(false)
   const [countrySheet, setCountrySheet] = useState(false)
@@ -214,9 +214,14 @@ export default function HomePage() {
       <header className="home-header">
         <img src={careLogo} alt="CARe" className="home-logo" />
         <div className="home-header-right">
-          <button className="lang-btn" onClick={() => navigate('/language')}>
-            <span className="lang-icon">🌐</span>
-            <span>{LANG_LABELS[i18n.language] || i18n.language}</span>
+          <button className="home-bell-btn" onClick={() => navigate('/notifications')}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {unreadCount > 0 && (
+              <span className="home-bell-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+            )}
           </button>
           <span
             className={`did-badge ${didVerified ? 'did-badge--verified' : 'did-badge--pending'}`}

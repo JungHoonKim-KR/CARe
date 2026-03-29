@@ -104,7 +104,7 @@ export default function DisputePage() {
   }
 
   const handleDispute = () => {
-    navigate('/dispute-history', { state: { reservation, disputeId } })
+    navigate('/dispute-scratch-logs', { state: { reservation, disputeId } })
   }
 
   return (

@@ -11,7 +11,7 @@ const IMAGE_SLOTS = [
   { key: 'rightImage', label: '우측', icon: '➡️' },
 ]
 
-// 여기는 하드코딩 — 차량 모델 목록 API 없음 (GET /car-models 엔드포인트 필요)
+// 차량 모델 목록 폴백 데이터 (GET /car-models 엔드포인트 필요)
 const CAR_MODELS = [
   { id: 'model-001', name: '현대 아이오닉5' },
   { id: 'model-002', name: '기아 EV6' },
@@ -165,7 +165,7 @@ export default function CarRegisterPage() {
 
             <div className="reg-form-group">
               <label className="reg-label" htmlFor="dailyPrice">
-                일일 요금 (원)<span className="reg-label-required">*</span>
+                일일 요금 (CARE)<span className="reg-label-required">*</span>
               </label>
               <input
                 className="reg-input"

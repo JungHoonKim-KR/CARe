@@ -90,6 +90,9 @@ export default function ReservationTable({ reservations = [], sortOrder = 'desc'
             {/* 상태 */}
             <td>
               <StatusBadge status={r.status} />
+              {r.disputeStatus === 'COMPLETED' && (
+                <span className="res-status-badge dispute-done" style={{ marginTop: 4, display: 'block' }}>분쟁완료</span>
+              )}
             </td>
 
 

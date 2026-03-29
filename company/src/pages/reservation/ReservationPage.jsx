@@ -37,8 +37,14 @@ export default function ReservationPage() {
     return statusMap[status] || status
   }
 
-  const getCategoryFromStatus = (status, depositStatus) => {
-    if (depositStatus === 'LOCKED') return 'dispute'
+  const getCategoryFromStatus = (status, depositStatus, disputeId, disputeStatus) => {
+    if (disputeId) {
+      if (disputeStatus === 'COMPLETED') return 'completed'   // 분쟁 완료 → 반납 탭
+      if (disputeStatus === 'OPEN')      return 'dispute'     // 분쟁 진행중
+      // disputeStatus null(백엔드 미반영) → depositStatus로 폴백
+      if (depositStatus === 'LOCKED')    return 'dispute'
+      return 'completed'                                      // LOCKED 아니면 완료로 간주
+    }
     if (status === 'COMPLETED') return 'completed'
     return 'ongoing'
   }
@@ -60,7 +66,9 @@ export default function ReservationPage() {
             endDate: formatDate(reservation.returnDate),
             amount: reservation.totalPrice != null ? `${reservation.totalPrice.toLocaleString()} CARE` : '-',
             status: getStatusLabel(reservation.status),
-            category: getCategoryFromStatus(reservation.status, reservation.depositStatus),
+            disputeId: reservation.disputeId || null,
+            disputeStatus: reservation.disputeStatus || null,
+            category: getCategoryFromStatus(reservation.status, reservation.depositStatus, reservation.disputeId, reservation.disputeStatus),
             _pickupDate: reservation.pickupDate,
           }))
         setReservations(formatted)
@@ -88,7 +96,7 @@ export default function ReservationPage() {
 
   const tabs = [
     { id: 'ongoing',   label: '진행중', count: stats.ongoing   },
-    { id: 'completed', label: '완료',   count: stats.completed },
+    { id: 'completed', label: '반납',   count: stats.completed },
     { id: 'dispute',   label: '분쟁',   count: stats.dispute   },
   ]
 
@@ -122,7 +130,7 @@ export default function ReservationPage() {
         <div className="res-kpi-card" style={{ '--ka': '#7ED321' }}>
           <div className="res-kpi-icon" style={{ '--ka': '#7ED321' }}>✅</div>
           <div>
-            <div className="res-kpi-label">완료</div>
+            <div className="res-kpi-label">반납</div>
             <div className="res-kpi-value">{stats.completed}<span className="res-kpi-unit">건</span></div>
           </div>
         </div>

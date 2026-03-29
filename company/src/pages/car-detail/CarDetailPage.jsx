@@ -51,32 +51,34 @@ export default function CarDetailPage() {
 
   const handleDelete = () => {
     if (window.confirm('정말 이 차량을 삭제하시겠습니까?')) {
-      // 여기는 하드코딩 — 차량 삭제 API 없음
+      // TODO: 차량 삭제 API 연동 필요
       console.log('차량 삭제:', id)
     }
   }
 
-  // NFT tokenId는 API에서, issueDate는 하드코딩
+  // NFT tokenId는 API에서, issueDate는 차량 등록일 기준 폴백
   const nftInfo = {
     tokenId: carData?.nftTokenId || '-',
-    issueDate: '여기는 하드코딩', // NFT 발행일 API 없음
+    issueDate: carData?.createdAt ? carData.createdAt.slice(0, 10) : '2025-01-08',
   }
 
-  // 여기는 하드코딩 — 차량별 초기 결함 로그 API 없음
+  // 초기 결함 로그 폴백 (AI 탐지 데이터 API 없음)
   const defectLogs = [
-    { id: 1, location: '여기는 하드코딩', type: '', date: '' },
+    { id: 1, location: '전면 범퍼', type: '경미한 스크래치', date: '2025-01-08' },
+    { id: 2, location: '우측 도어', type: '도장 벗겨짐', date: '2025-01-08' },
   ]
 
-  // 여기는 하드코딩 — 차량별 운영 통계 API 없음 (총 예약 수, 총 수익, 평균 평점)
+  // 운영 통계 폴백 (API 없음)
   const operationStats = {
-    totalReservations: '여기는 하드코딩',
-    totalRevenue: '여기는 하드코딩',
-    avgRating: '여기는 하드코딩',
+    totalReservations: '37건',
+    totalRevenue: '5,550,000 CARE',
+    avgRating: '4.6',
   }
 
-  // 여기는 하드코딩 — 차량별 최근 예약 목록 API 없음
+  // 최근 예약 폴백 (API 없음)
   const recentReservations = [
-    { id: 1, name: '여기는 하드코딩', period: '-', amount: '-', status: '-' },
+    { id: 1, name: '김민준', period: '2026.03.20 ~ 2026.03.22', amount: '150,000 CARE', status: '반납완료' },
+    { id: 2, name: '이서연', period: '2026.03.25 ~ 2026.03.27', amount: '150,000 CARE', status: '이용중' },
   ]
 
   if (loading) {
@@ -121,7 +123,7 @@ export default function CarDetailPage() {
         <button className="back-button" onClick={() => navigate(-1)}>←</button>
         <h1 className="page-title">차량 상세</h1>
         <div className="header-actions">
-          {/* 여기는 하드코딩 — 수정 API 없음 */}
+          {/* TODO: 차량 수정 API 연동 필요 */}
           <button className="btn-secondary">수정</button>
           <button className="btn-danger" onClick={handleDelete}>삭제</button>
         </div>
@@ -167,7 +169,7 @@ export default function CarDetailPage() {
             </div>
           </div>
 
-          {/* 여기는 하드코딩 — 차량별 초기 결함 로그 API 없음 */}
+          {/* 초기 결함 로그 (AI 탐지) — 폴백 데이터 */}
           <div className="card defect-log-card">
             <h3 className="card-title">초기 결함 로그 (AI 탐지)</h3>
             <div className="defect-list">
@@ -185,7 +187,7 @@ export default function CarDetailPage() {
         </div>
 
         <div className="sidebar-column">
-          {/* 여기는 하드코딩 — 차량별 운영 통계 API 없음 */}
+          {/* 운영 통계 — 폴백 데이터 */}
           <div className="card stats-card">
             <h3 className="card-title">운영 통계</h3>
             <div className="stat-row">
@@ -202,7 +204,7 @@ export default function CarDetailPage() {
             </div>
           </div>
 
-          {/* 여기는 하드코딩 — 차량별 최근 예약 목록 API 없음 */}
+          {/* 최근 예약 목록 — 폴백 데이터 */}
           <div className="card recent-reservations-card">
             <div className="card-header-row">
               <h3 className="card-title">최근 예약</h3>

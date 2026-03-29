@@ -129,6 +129,20 @@ public class RenterNotificationService {
         pushNotification(renter.getUserId(), RenterNotificationResponse.from(saved));
     }
 
+    @Transactional
+    public void createReservationCreatedNotification(Renter renter, String reservationId, String modelName, int totalPrice) {
+        RenterNotification notification = RenterNotification.reservationCreated(renter, reservationId, modelName, totalPrice);
+        RenterNotification saved = renterNotificationRepository.save(notification);
+        pushNotification(renter.getUserId(), RenterNotificationResponse.from(saved));
+    }
+
+    @Transactional
+    public void createReservationCompletedNotification(Renter renter, String reservationId, String modelName) {
+        RenterNotification notification = RenterNotification.reservationCompleted(renter, reservationId, modelName);
+        RenterNotification saved = renterNotificationRepository.save(notification);
+        pushNotification(renter.getUserId(), RenterNotificationResponse.from(saved));
+    }
+
     @Transactional(readOnly = true)
     public List<RenterNotificationResponse> getMyNotifications(String userId) {
         return renterNotificationRepository.findByRenter_UserIdOrderByCreatedAtDesc(userId)

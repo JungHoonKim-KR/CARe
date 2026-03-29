@@ -161,7 +161,7 @@ export default function DisputePage() {
             <button className="dp-settled-btn-primary" onClick={() => navigate('/my-car')}>
               내 예약 보기
             </button>
-            <button className="dp-settled-btn-secondary" onClick={() => navigate('/')}>
+            <button className="dp-settled-btn-secondary" onClick={() => navigate('/home')}>
               홈으로
             </button>
           </div>

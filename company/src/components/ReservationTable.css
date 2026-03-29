@@ -84,6 +84,16 @@
 .res-table tbody tr:hover .res-car-icon-wrap {
   transform: scale(1.08) rotate(-3deg);
 }
+.res-th-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.res-th-sortable:hover { color: #5a5a6a; }
+.res-car-thumbnail {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 11px;
+}
 .res-car-name  { font-size: 17px; font-weight: 700; color: #2d2d2d; }
 .res-car-plate { font-size: 14px; color: #b0a898; font-weight: 500; margin-top: 2px; }
 

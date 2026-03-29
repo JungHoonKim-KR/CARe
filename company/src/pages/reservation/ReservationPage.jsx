@@ -4,19 +4,12 @@ import ReservationTable from '../../components/ReservationTable'
 import ReservationService from '../../services/ReservationService'
 import './ReservationPage.css'
 
-// API 실패 또는 데이터 없을 때 사용하는 폴백
-const MOCK_RESERVATIONS = [
-  { id: 'RES-2603-01', carName: 'Tesla Model 3', carType: '123가 4567', renterName: '김현우', renterCountry: '삼성화재', startDate: '2026.03.26 10:00', endDate: '2026.03.28 10:00', location: '서울 강남구', amount: '150,000 CARE', status: '이용중', category: 'ongoing' },
-  { id: 'RES-2603-02', carName: 'Hyundai Ioniq 5', carType: '890나 1234', renterName: '이서연', renterCountry: '현대해상', startDate: '2026.03.25 14:00', endDate: '2026.03.27 14:00', location: '부산 해운대구', amount: '120,000 CARE', status: '반납대기', category: 'ongoing' },
-  { id: 'RES-2603-03', carName: 'Kia EV6', carType: '456다 7890', renterName: '박지훈', renterCountry: 'KB손해보험', startDate: '2026.03.20 09:00', endDate: '2026.03.22 09:00', location: '제주 국제공항', amount: '200,000 CARE', status: '반납완료', category: 'completed' },
-  { id: 'RES-2603-04', carName: 'Genesis GV60', carType: '111라 2222', renterName: '최유진', renterCountry: 'DB손해보험', startDate: '2026.03.27 11:00', endDate: '2026.03.30 11:00', location: '인천 연수구', amount: '180,000 CARE', status: '예약완료', category: 'ongoing' },
-  { id: 'RES-2603-05', carName: 'Polestar 2', carType: '333마 4444', renterName: '정민수', renterCountry: '메리츠화재', startDate: '2026.03.26 15:00', endDate: '2026.03.29 15:00', location: '서울 서초구', amount: '165,000 CARE', status: '분쟁중', category: 'dispute' },
-]
 
 export default function ReservationPage() {
   const [activeTab, setActiveTab] = useState('ongoing')
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
+  const [sortOrder, setSortOrder] = useState('desc')
 
   useEffect(() => {
     fetchReservations()
@@ -54,26 +47,26 @@ export default function ReservationPage() {
     setLoading(true)
     try {
       const result = await ReservationService.getReservations()
-      if (!result.success || !result.data || result.data.length === 0) {
-        setReservations(MOCK_RESERVATIONS)
-      } else {
-        const formatted = result.data.map((reservation) => ({
-          id: reservation.reservationId,
-          carName: `${reservation.brand || '-'} ${reservation.modelName || ''}`.trim(),
-          carType: reservation.plateNumber || '-',
-          renterName: '-', // 예약 목록 API에 임차인 이름 미포함
-          renterCountry: reservation.insuranceName || '-',
-          startDate: formatDate(reservation.pickupDate),
-          endDate: formatDate(reservation.returnDate),
-          location: '-', // 위치 정보 API 미제공
-          amount: reservation.totalPrice != null ? `${reservation.totalPrice.toLocaleString()} CARE` : '-',
-          status: getStatusLabel(reservation.status),
-          category: getCategoryFromStatus(reservation.status, reservation.depositStatus),
-        }))
-        setReservations(formatted.length > 0 ? formatted : MOCK_RESERVATIONS)
+      if (result.success && result.data) {
+        const formatted = result.data
+          .map((reservation) => ({
+            id: reservation.reservationId,
+            carName: `${reservation.brand || ''} ${reservation.modelName || ''}`.trim() || '-',
+            carType: reservation.plateNumber || '-',
+            thumbnailUrl: reservation.thumbnailUrl || null,
+            renterName: reservation.renterName || '-',
+            renterCountry: reservation.insuranceName || '-',
+            startDate: formatDate(reservation.pickupDate),
+            endDate: formatDate(reservation.returnDate),
+            amount: reservation.totalPrice != null ? `${reservation.totalPrice.toLocaleString()} CARE` : '-',
+            status: getStatusLabel(reservation.status),
+            category: getCategoryFromStatus(reservation.status, reservation.depositStatus),
+            _pickupDate: reservation.pickupDate,
+          }))
+        setReservations(formatted)
       }
     } catch {
-      setReservations(MOCK_RESERVATIONS)
+      setReservations([])
     } finally {
       setLoading(false)
     }
@@ -86,9 +79,12 @@ export default function ReservationPage() {
     dispute: reservations.filter((r) => r.category === 'dispute').length,
   }
 
-  const filteredReservations = reservations.filter(
-    (r) => r.category === activeTab
-  )
+  const filteredReservations = reservations
+    .filter((r) => r.category === activeTab)
+    .sort((a, b) => sortOrder === 'desc'
+      ? new Date(b._pickupDate || 0) - new Date(a._pickupDate || 0)
+      : new Date(a._pickupDate || 0) - new Date(b._pickupDate || 0)
+    )
 
   const tabs = [
     { id: 'ongoing',   label: '진행중', count: stats.ongoing   },
@@ -150,7 +146,11 @@ export default function ReservationPage() {
             </div>
           ) : (
             <div className="res-table-wrapper">
-              <ReservationTable reservations={filteredReservations} />
+              <ReservationTable
+                reservations={filteredReservations}
+                sortOrder={sortOrder}
+                onSortToggle={() => setSortOrder(o => o === 'desc' ? 'asc' : 'desc')}
+              />
             </div>
           )}
         </div>

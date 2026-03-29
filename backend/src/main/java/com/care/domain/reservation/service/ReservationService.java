@@ -108,10 +108,10 @@ public class ReservationService {
     public List<ReservationSummaryResponse> getRenterReservations(String renterId) {
         return reservationRepository.findByRenterUserId(renterId).stream()
                 .map(r -> {
-                    String disputeId = disputeRepository.findByReservation_ReservationId(r.getReservationId())
-                            .map(d -> d.getDisputeId())
-                            .orElse(null);
-                    return ReservationSummaryResponse.from(r, disputeId);
+                    var dispute = disputeRepository.findByReservation_ReservationId(r.getReservationId());
+                    String disputeId     = dispute.map(d -> d.getDisputeId()).orElse(null);
+                    String disputeStatus = dispute.map(d -> d.getStatus()).orElse(null);
+                    return ReservationSummaryResponse.from(r, disputeId, disputeStatus);
                 })
                 .toList();
     }
@@ -120,10 +120,10 @@ public class ReservationService {
     public List<ReservationSummaryResponse> getCompanyReservations(String companyId) {
         return reservationRepository.findByOwnedCarCompanyCompanyId(companyId).stream()
                 .map(r -> {
-                    String disputeId = disputeRepository.findByReservation_ReservationId(r.getReservationId())
-                            .map(d -> d.getDisputeId())
-                            .orElse(null);
-                    return ReservationSummaryResponse.from(r, disputeId);
+                    var dispute = disputeRepository.findByReservation_ReservationId(r.getReservationId());
+                    String disputeId     = dispute.map(d -> d.getDisputeId()).orElse(null);
+                    String disputeStatus = dispute.map(d -> d.getStatus()).orElse(null);
+                    return ReservationSummaryResponse.from(r, disputeId, disputeStatus);
                 })
                 .toList();
     }

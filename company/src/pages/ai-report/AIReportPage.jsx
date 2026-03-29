@@ -3,9 +3,59 @@ import { useNavigate, useParams } from 'react-router-dom'
 import DisputeService from '../../services/DisputeService'
 import ReservationService from '../../services/ReservationService'
 import { carPartLabel } from '../../utils/formatId'
+import carIconTop from '../../assets/car_icon_top.png'
 import './AIReportPage.css'
 
 const DEFAULT_THRESHOLD = 60
+
+// 고정 6구역 (좌측/우측 제거) — 200×280 컨테이너 기준
+const FIXED_ZONES = [
+  { id: 'front',       label: '전면',   left: '50%', top: '14%' },
+  { id: 'rear',        label: '후면',   left: '50%', top: '82%' },
+  { id: 'front-left',  label: '좌전방', left: '22%', top: '28%' },
+  { id: 'front-right', label: '우전방', left: '78%', top: '28%' },
+  { id: 'rear-left',   label: '좌후방', left: '22%', top: '70%' },
+  { id: 'rear-right',  label: '우후방', left: '78%', top: '70%' },
+]
+
+// carPart → 구역 매핑 (underscore 기준)
+const CAR_PART_TO_ZONE = {
+  front: 'front', front_bumper: 'front', hood: 'front',
+  windshield: 'front', front_windshield: 'front', roof: 'front',
+  rear: 'rear', rear_bumper: 'rear', trunk: 'rear',
+  rear_windshield: 'rear', bottom: 'rear',
+  left_side: 'front-left', left_door: 'front-left', left_mirror: 'front-left',
+  right_side: 'front-right', right_door: 'front-right', right_mirror: 'front-right',
+  front_left_fender: 'front-left', left_front_fender: 'front-left',
+  front_left_door: 'front-left', front_left_wheel: 'front-left',
+  front_right_fender: 'front-right', right_front_fender: 'front-right',
+  front_right_door: 'front-right', front_right_wheel: 'front-right',
+  rear_left_fender: 'rear-left', left_rear_fender: 'rear-left',
+  rear_left_door: 'rear-left', rear_left_wheel: 'rear-left',
+  rear_right_fender: 'rear-right', right_rear_fender: 'rear-right',
+  rear_right_door: 'rear-right', rear_right_wheel: 'rear-right',
+}
+
+const ZONE_IDS = new Set(FIXED_ZONES.map((z) => z.id))
+
+// carPart 문자열 → zone ID 변환 (hyphen/underscore 모두 지원)
+const getZoneForCarPart = (carPart) => {
+  if (!carPart) return null
+  const lower = carPart.toLowerCase()
+  if (CAR_PART_TO_ZONE[lower]) return CAR_PART_TO_ZONE[lower]
+  // hyphen → underscore 정규화 후 재시도
+  const underscored = lower.replace(/-/g, '_')
+  if (CAR_PART_TO_ZONE[underscored]) return CAR_PART_TO_ZONE[underscored]
+  // carPart 자체가 zone ID인 경우 (예: 'front-left')
+  if (ZONE_IDS.has(lower)) return lower
+  return null
+}
+
+const WARNING_THRESHOLD = 80
+
+// 프론트엔드 기준 warning 판단 (유사도 80% 미만 또는 신규 흠집)
+const isWarning = (item) =>
+  item.isNewScratch || toPercent(item.similarity) < WARNING_THRESHOLD
 
 const toPercent = (value) => {
   if (value == null) return 0
@@ -89,9 +139,7 @@ export default function AIReportPage() {
         .map((scratch) => [scratch.logId, scratch])
     )
 
-    const warningCount = Number.isFinite(returnReport.warningCount)
-      ? returnReport.warningCount
-      : comparisons.filter((item) => item.warning).length
+    const warningCount = comparisons.filter(isWarning).length
 
     setReportData({
       dispute,
@@ -191,12 +239,13 @@ export default function AIReportPage() {
   }
 
   const carInfo = reportData.reservation?.car
-  const carPlate = carInfo?.plateNumber || '-'
   const carModel = [carInfo?.brand, carInfo?.modelName].filter(Boolean).join(' ') || '-'
+  const reservationId = reportData.reservationId || '-'
   const warningCount = reportData.warningCount || 0
   const threshold = reportData.threshold
   const hasWarning = warningCount > 0
   const isReservationMode = reportData.mode === 'reservation'
+  const existingDisputeId = reportData.reservation?.disputeId || null
 
   return (
     <div className="ai-report-page">
@@ -215,7 +264,7 @@ export default function AIReportPage() {
         <div className="car-info">
           <div className="car-details">
             <div className="car-plate-row">
-              <h2 className="car-plate">{carPlate}</h2>
+              <h2 className="car-plate">#{reservationId.slice(-8).toUpperCase()}</h2>
               {warningCount > 0 && (
                 <span className="damage-badge">주의 필요 {warningCount}건</span>
               )}
@@ -229,7 +278,7 @@ export default function AIReportPage() {
           <p className="status-label">AI 경고 기준</p>
           <p className="status-value">
             <span className="status-icon">{hasWarning ? '⚠️' : '✅'}</span>
-            유사도 {threshold.toFixed(1)}% 미만 주의
+            유사도 {WARNING_THRESHOLD}% 미만 주의
           </p>
         </div>
       </div>
@@ -244,6 +293,46 @@ export default function AIReportPage() {
         <div className="left-section">
           <div className="damage-map-card">
             <h3 className="section-title">AI 비교 결과</h3>
+
+            {/* 차량 탑뷰 도식 — 고정 6구역, 비교 항목 번호·색 매핑 */}
+            <div className="car-diagram">
+              <div className="car-map-wrap">
+                <img src={carIconTop} alt="차량 탑뷰" className="car-map-img" />
+                {FIXED_ZONES.map((zone) => {
+                  const zoneItems = reportData.comparisons
+                    .map((item, index) => ({ item, index }))
+                    .filter(({ item }) => {
+                      const scratch = reportData.afterScratchMap.get(item.afterLogId)
+                      return getZoneForCarPart(scratch?.carPart) === zone.id
+                    })
+                  const hasWarning = zoneItems.some(({ item }) => isWarning(item))
+                  const hasDamage = zoneItems.length > 0
+                  const isSelected = zoneItems.some(
+                    ({ item }) => item.afterLogId === selectedComparison?.afterLogId
+                  )
+                  const markerCls = hasDamage
+                    ? (hasWarning ? 'zone-warning' : 'zone-safe')
+                    : 'zone-empty'
+                  return (
+                    <div
+                      key={zone.id}
+                      className={`zone-marker ${markerCls}${isSelected ? ' marker-selected' : ''}`}
+                      style={{ left: zone.left, top: zone.top }}
+                      onClick={() => hasDamage && setSelectedAfterLogId(zoneItems[0].item.afterLogId)}
+                      title={zone.label}
+                    >
+                      {hasDamage && (
+                        <span className="zone-count">
+                          {zoneItems.map(({ index }) => index + 1).join(',')}
+                        </span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* 비교 목록 */}
             <div className="comparison-list">
               {reportData.comparisons.map((item, index) => {
                 const afterScratch = reportData.afterScratchMap.get(item.afterLogId)
@@ -258,8 +347,8 @@ export default function AIReportPage() {
                       <span className="comparison-item-title">
                         {index + 1}. {carPartLabel(afterScratch?.carPart) || '위치 미상'}
                       </span>
-                      <span className={`comparison-item-badge ${item.isNewScratch ? 'new-scratch' : item.warning ? 'warn' : 'safe'}`}>
-                        {item.isNewScratch ? '신규 흠집' : item.warning ? '주의' : '정상'}
+                      <span className={`comparison-item-badge ${item.isNewScratch ? 'new-scratch' : isWarning(item) ? 'warn' : 'safe'}`}>
+                        {item.isNewScratch ? '신규 흠집' : isWarning(item) ? '주의' : '정상'}
                       </span>
                     </div>
                   </button>
@@ -269,6 +358,7 @@ export default function AIReportPage() {
                 <p className="empty-message">AI 비교 데이터가 없습니다.</p>
               )}
             </div>
+
             <div className="legend">
               <div className="legend-item">
                 <span className="legend-dot new"></span>
@@ -286,7 +376,7 @@ export default function AIReportPage() {
           <div className="damage-detail-card">
             <div className="detail-header">
               <h3 className="section-title">
-                <span className="warning-icon">{selectedComparison?.warning ? '⚠️' : '✅'}</span>
+                <span className="warning-icon">{selectedComparison && isWarning(selectedComparison) ? '⚠️' : '✅'}</span>
                 {carPartLabel(selectedAfterScratch?.carPart) || '선택된 비교 없음'} 상세
               </h3>
             </div>
@@ -297,12 +387,8 @@ export default function AIReportPage() {
                 {selectedComparison?.isNewScratch || !selectedComparison?.beforeCropS3Url ? (
                   <div className="no-before-placeholder">
                     <span className="no-before-icon">🚫</span>
-                    <p>{selectedComparison?.isNewScratch ? '사전 스캔 없음' : 'BEFORE 이미지 없음'}</p>
-                    <p className="no-before-sub">
-                      {selectedComparison?.isNewScratch
-                        ? '고객님께서 스캔을 건너뛰었습니다.'
-                        : '해당 흠집에 대한 사전 이미지가 존재하지 않습니다.'}
-                    </p>
+                    <p>사전 이미지 없음</p>
+                    <p className="no-before-sub">해당 부위의 사전 스캔 이미지가 존재하지 않습니다.</p>
                   </div>
                 ) : (
                   <img
@@ -344,20 +430,27 @@ export default function AIReportPage() {
                   </div>
                   <p className="similarity-description">
                     <span className="info-icon">ℹ️</span>
-                    {selectedComparison?.warning
-                      ? `유사도가 기준치(${threshold.toFixed(1)}%) 미만입니다. 추가 확인이 필요합니다.`
-                      : `유사도가 기준치(${threshold.toFixed(1)}%) 이상입니다.`}
+                    {selectedComparison && isWarning(selectedComparison)
+                      ? `유사도가 기준치(${WARNING_THRESHOLD}%) 미만입니다. 추가 확인이 필요합니다.`
+                      : `유사도가 기준치(${WARNING_THRESHOLD}%) 이상입니다.`}
                   </p>
                 </>
               )}
             </div>
 
             <div className="action-buttons">
-              <button className="dispute-btn" onClick={handleDispute}>
-                {isReservationMode ? '🛠️ 선택 항목으로 분쟁 생성' : '🛠️ 수리비 청구 (분쟁 상세 이동)'}
-              </button>
+              {existingDisputeId ? (
+                <button className="dispute-btn" style={{ backgroundColor: '#6c757d' }}
+                  onClick={() => navigate(`/disputes/${existingDisputeId}`)}>
+                  📋 기존 분쟁 확인하기
+                </button>
+              ) : (
+                <button className="dispute-btn" onClick={handleDispute}>
+                  {isReservationMode ? '🛠️ 선택 항목으로 분쟁 생성' : '🛠️ 수리비 청구 (분쟁 상세 이동)'}
+                </button>
+              )}
             </div>
-            {isReservationMode && (
+            {isReservationMode && !existingDisputeId && (
               <div className="dispute-create-box">
                 <p className="dispute-create-title">분쟁 생성 정보</p>
                 <textarea

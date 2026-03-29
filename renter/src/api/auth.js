@@ -12,7 +12,6 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-
 // ── 응답 인터셉터: 401 → 토큰 갱신 후 재시도 ──────────────────
 let isRefreshing = false
 let failedQueue = []

@@ -30,7 +30,6 @@ export default function DisputePage() {
   const [actionLoading,  setActionLoading]  = useState(false)
   const [isResolveModal, setIsResolveModal] = useState(false)
   const [isRejectModal,  setIsRejectModal]  = useState(false)
-  const [isDefenseModal, setIsDefenseModal] = useState(false)
 
   // API 실패 시 폴백
   const MOCK = {
@@ -142,36 +141,58 @@ export default function DisputePage() {
         {/* ── 왼쪽 ── */}
         <div className="dp-main-col">
 
-          {/* 청구 금액 */}
-          <div className="dp-card dp-amount-card">
-            <div className="dp-amount-icon">💰</div>
-            <div>
-              <div className="dp-amount-label">청구 금액</div>
-              <div className="dp-amount-value">
-                {(dispute.claimAmount || 0).toLocaleString()}
-                <span className="dp-amount-unit">CARE</span>
-              </div>
-              <div className="dp-amount-desc">파손·수리로 인해 업체가 청구한 보상 금액</div>
-            </div>
-          </div>
-
-          {/* 손상 부위 이미지 */}
-          {(dispute.targetCropS3Url || dispute.targetOriginalS3Url) && (
+          {/* 손상 부위 이미지 / 이미지 비교 */}
+          {(dispute.targetCropS3Url || dispute.targetOriginalS3Url || hasDefense) && (
             <div className="dp-card dp-scratch-card">
-              <h2 className="dp-card-title">손상 부위 이미지</h2>
-              <div className="dp-scratch-imgs">
-                {dispute.targetCropS3Url && (
-                  <div className="dp-scratch-img-wrap">
-                    <div className="dp-scratch-img-label">클로즈업</div>
-                    <img src={dispute.targetCropS3Url} alt="손상 클로즈업" className="dp-scratch-img" />
+              <h2 className="dp-card-title">이미지 비교</h2>
+              <div className="dp-compare-grid">
+
+                {/* 왼쪽: 업체 신고 이미지 */}
+                <div className="dp-compare-col">
+                  <div className="dp-compare-header">
+                    <span className="dp-compare-who company">업체 신고</span>
+                    <span className="dp-compare-date">{formatDate(dispute.createdAt)}</span>
                   </div>
-                )}
-                {dispute.targetOriginalS3Url && (
-                  <div className="dp-scratch-img-wrap">
-                    <div className="dp-scratch-img-label">전체 사진</div>
-                    <img src={dispute.targetOriginalS3Url} alt="손상 전체 사진" className="dp-scratch-img" />
+                  {dispute.targetCropS3Url && (
+                    <div className="dp-scratch-img-wrap">
+                      <div className="dp-scratch-img-label">클로즈업</div>
+                      <img src={dispute.targetCropS3Url} alt="손상 클로즈업" className="dp-scratch-img" />
+                    </div>
+                  )}
+                  {dispute.targetOriginalS3Url && (
+                    <div className="dp-scratch-img-wrap">
+                      <div className="dp-scratch-img-label">전체 사진</div>
+                      <img src={dispute.targetOriginalS3Url} alt="손상 전체 사진" className="dp-scratch-img" />
+                    </div>
+                  )}
+                </div>
+
+                {/* 오른쪽: 렌터 제출 증거 */}
+                <div className="dp-compare-col">
+                  <div className="dp-compare-header">
+                    <span className="dp-compare-who renter">렌터 제출</span>
+                    {hasDefense && <span className="dp-compare-date">{formatDate(dispute.updatedAt)}</span>}
                   </div>
-                )}
+                  {hasDefense && dispute.defenseCropS3Url && (
+                    <div className="dp-scratch-img-wrap">
+                      <div className="dp-scratch-img-label">클로즈업</div>
+                      <img src={dispute.defenseCropS3Url} alt="증거 클로즈업" className="dp-scratch-img" />
+                    </div>
+                  )}
+                  {hasDefense && dispute.defenseOriginalS3Url && (
+                    <div className="dp-scratch-img-wrap">
+                      <div className="dp-scratch-img-label">전체 사진</div>
+                      <img src={dispute.defenseOriginalS3Url} alt="증거 전체 사진" className="dp-scratch-img" />
+                    </div>
+                  )}
+                  {!hasDefense && (
+                    <div className="dp-compare-empty">
+                      <span>📭</span>
+                      <p>현재는 제출한 이미지가 없습니다.</p>
+                    </div>
+                  )}
+                </div>
+
               </div>
             </div>
           )}
@@ -198,11 +219,8 @@ export default function DisputePage() {
               <h2 className="dp-card-title dp-text-red">🚨 렌터 이의 제기 수신</h2>
               <p className="dp-desc">
                 렌터가 본인의 과실이 아님을 증명하는 반납 전 이미지를 제출했습니다.
-                이미지를 확인하고 정산 진행 여부를 결정하세요.
+                위 이미지를 확인하고 정산 진행 여부를 결정하세요.
               </p>
-              <button className="dp-btn-block" onClick={() => setIsDefenseModal(true)}>
-                📸 제출된 증거 이미지 확인
-              </button>
               {!isCompleted && (
                 <div className="dp-action-row">
                   <button
@@ -284,6 +302,12 @@ export default function DisputePage() {
                 <span className="dp-info-value dp-mono">{shortId(dispute.reservationId)}</span>
               </div>
               <div className="dp-info-row">
+                <span className="dp-info-label">청구 금액</span>
+                <span className="dp-info-value" style={{ color: '#D0021B', fontWeight: 800 }}>
+                  {(dispute.claimAmount || 0).toLocaleString()} CARE
+                </span>
+              </div>
+              <div className="dp-info-row">
                 <span className="dp-info-label">접수일</span>
                 <span className="dp-info-value">{formatDate(dispute.createdAt)}</span>
               </div>
@@ -297,27 +321,6 @@ export default function DisputePage() {
           </div>
         </div>
       </div>
-
-      {/* ── 증거 이미지 모달 ── */}
-      {isDefenseModal && (
-        <div className="dp-modal-overlay" onClick={() => setIsDefenseModal(false)}>
-          <div className="dp-modal" onClick={e => e.stopPropagation()}>
-            <h3 className="dp-modal-title">렌터 제출 증거 이미지</h3>
-            {defenseImages.length > 0 ? (
-              <div className="dp-modal-grid">
-                {defenseImages.map((url, i) => (
-                  <img key={i} src={url} alt="증거" className="dp-proof-img" />
-                ))}
-              </div>
-            ) : (
-              <p className="dp-modal-empty">제출된 이미지가 없습니다.</p>
-            )}
-            <button className="dp-btn-block dp-btn-close" onClick={() => setIsDefenseModal(false)}>
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
 
       <ConfirmModal
         isOpen={isResolveModal}

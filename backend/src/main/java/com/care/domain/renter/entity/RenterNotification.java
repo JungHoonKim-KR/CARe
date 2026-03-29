@@ -25,6 +25,8 @@ public class RenterNotification extends BaseEntity {
     private static final String DISPUTE_CREATED_TITLE = "분쟁이 접수되었습니다.";
     private static final String SETTLEMENT_REQUESTED_TYPE = "SETTLEMENT_REQUESTED";
     private static final String SETTLEMENT_COMPLETED_TYPE = "SETTLEMENT_COMPLETED";
+    private static final String RESERVATION_CREATED_TYPE = "RESERVATION_CREATED";
+    private static final String RESERVATION_COMPLETED_TYPE = "RESERVATION_COMPLETED";
 
     @Id
     @Column(name = "notification_id", length = 100)
@@ -137,6 +139,30 @@ public class RenterNotification extends BaseEntity {
         notification.read = false;
         notification.readAt = null;
         return notification;
+    }
+
+    public static RenterNotification reservationCreated(Renter renter, String reservationId, String modelName, int totalPrice) {
+        RenterNotification n = new RenterNotification();
+        n.notificationId = UUID.randomUUID().toString();
+        n.renter = renter;
+        n.notificationType = RESERVATION_CREATED_TYPE;
+        n.title = "예약이 완료되었습니다.";
+        n.message = modelName + " 예약이 확정되었습니다. 결제 금액: " + totalPrice + " CARE";
+        n.reservationId = reservationId;
+        n.read = false;
+        return n;
+    }
+
+    public static RenterNotification reservationCompleted(Renter renter, String reservationId, String modelName) {
+        RenterNotification n = new RenterNotification();
+        n.notificationId = UUID.randomUUID().toString();
+        n.renter = renter;
+        n.notificationType = RESERVATION_COMPLETED_TYPE;
+        n.title = "반납이 완료되었습니다.";
+        n.message = modelName + " 차량 반납이 정상적으로 처리되었습니다. 이용해주셔서 감사합니다.";
+        n.reservationId = reservationId;
+        n.read = false;
+        return n;
     }
 
     public void markAsRead() {

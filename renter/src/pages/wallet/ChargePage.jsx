@@ -52,15 +52,15 @@ export default function ChargePage() {
         <div className="charge-success-card">
           <div className="charge-success-icon">✓</div>
           <p className="charge-success-label">충전 완료</p>
-          <p className="charge-success-amount">{result.chargedAmount} <span>CARE</span></p>
+          <p className="charge-success-amount">{Number(result.chargedAmount).toLocaleString()} <span>CARE</span></p>
           <div className="charge-success-divider" />
           <div className="charge-success-row">
             <span>충전 금액</span>
-            <strong>+{result.chargedAmount} CARE</strong>
+            <strong>+{Number(result.chargedAmount).toLocaleString()} CARE</strong>
           </div>
           <div className="charge-success-row">
             <span>현재 잔액</span>
-            <strong>{result.balance} CARE</strong>
+            <strong>{Number(result.balance).toLocaleString()} CARE</strong>
           </div>
         </div>
 

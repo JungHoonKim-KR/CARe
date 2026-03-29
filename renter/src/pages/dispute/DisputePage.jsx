@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import careLogo from '../../assets/care_logo.png'
-import { getDisputeDetail, settleDispute, getCarScratches } from '../../api/reservation'
+import { getDisputeDetail, settleDispute } from '../../api/reservation'
 import './DisputePage.css'
 
 const LOCATION_LABELS = {
@@ -40,7 +40,6 @@ export default function DisputePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [settling, setSettling] = useState(false)
-  const [scratchZone, setScratchZone] = useState(null)
   const [settledResult, setSettledResult] = useState(null) // 정산 완료 결과
 
   useEffect(() => {
@@ -60,16 +59,8 @@ export default function DisputePage() {
       .finally(() => setLoading(false))
   }, [reservation?.reservationId, disputeId])
 
-  useEffect(() => {
-    if (!dispute?.targetLogId || !reservation?.reservationId) return
-    getCarScratches(reservation.reservationId)
-      .then(data => {
-        const list = Array.isArray(data) ? data : data?.data || []
-        const match = list.find(s => s.logId === dispute.targetLogId || s.scratchId === dispute.targetLogId)
-        if (match) setScratchZone(match.zone || match.location || null)
-      })
-      .catch(() => {})
-  }, [dispute?.targetLogId, reservation?.reservationId])
+  // scratchZone은 dispute.targetCarPart에서 직접 가져옴 (별도 API 불필요)
+  const scratchZone = dispute?.targetCarPart || null
 
   const handleSettle = async () => {
     if (!dispute?.disputeId) {

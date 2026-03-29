@@ -171,7 +171,11 @@ export default function MyCarPage() {
                 const country   = r.airportCode || r.countryCode || null
                 return (
                     <button key={r.reservationId} className="mc-sel-item" onClick={() => setSelectedIdx(i)}>
-                      <div className="mc-sel-icon">🚗</div>
+                      <div className="mc-sel-icon">
+                        {r.thumbnailUrl
+                          ? <img src={r.thumbnailUrl} alt={carLabel} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                          : '🚗'}
+                      </div>
                       <div className="mc-sel-info">
                         <div className="mc-sel-car-row">
                           <p className="mc-sel-car">{carLabel}</p>

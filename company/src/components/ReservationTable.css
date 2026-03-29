@@ -134,7 +134,8 @@
 .res-status-badge.waiting    { background: #fff3e0; color: #b45309; }
 .res-status-badge.completed  { background: #e8f7ef; color: #1a7a45; }
 .res-status-badge.reserved   { background: rgba(245,166,35,0.12); color: #a06a00; }
-.res-status-badge.dispute    { background: #fdecea; color: #c0392b; }
+.res-status-badge.dispute      { background: #fdecea; color: #c0392b; }
+.res-status-badge.dispute-done { background: #f0f0f0; color: #6c757d; font-size: 11px; }
 
 /* ── 메뉴 버튼 ── */
 .res-menu-button {

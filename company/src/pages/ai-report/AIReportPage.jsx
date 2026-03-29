@@ -334,7 +334,7 @@ export default function AIReportPage() {
                 <>
                   <div className="similarity-header">
                     <span className="similarity-label">AI 이미지 유사도 (Similarity)</span>
-                    <span className="similarity-value">{toPercent(selectedComparison?.similarity).toFixed(1)}%</span>
+                    <span className="similarity-value">{toPercent(selectedComparison?.similarity).toFixed(4)}%</span>
                   </div>
                   <div className="similarity-bar">
                     <div

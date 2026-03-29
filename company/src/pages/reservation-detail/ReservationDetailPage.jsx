@@ -209,14 +209,14 @@ export default function ReservationDetailPage() {
               <div className="rdp-payment-row">
                 <span className="rdp-payment-label">보험료</span>
                 <span className="rdp-payment-value">
-                  {data.insurance !== null ? `${data.insurance.toLocaleString()}원` : '-'}
+                  {data.insurance !== null ? `${data.insurance.toLocaleString()} CARE` : '-'}
                 </span>
               </div>
               <div className="rdp-payment-divider" />
               <div className="rdp-payment-row rdp-total-row">
                 <span className="rdp-payment-label">총 결제 금액</span>
                 <span className="rdp-payment-total">
-                  {data.totalPrice !== null ? `${data.totalPrice.toLocaleString()}원` : '-'}
+                  {data.totalPrice !== null ? `${data.totalPrice.toLocaleString()} CARE` : '-'}
                 </span>
               </div>
             </div>

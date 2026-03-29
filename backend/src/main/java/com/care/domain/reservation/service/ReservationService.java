@@ -6,6 +6,7 @@ import com.care.domain.company.entity.Insurance;
 import com.care.domain.company.repository.InsuranceRepository;
 import com.care.domain.renter.entity.Renter;
 import com.care.domain.renter.repository.RenterRepository;
+import com.care.domain.renter.service.RenterNotificationService;
 import com.care.domain.reservation.controller.dto.request.ReservationCreateRequest;
 import com.care.domain.reservation.controller.dto.response.ReservationCreateResponse;
 import com.care.domain.reservation.controller.dto.response.ReservationDetailResponse;
@@ -51,6 +52,7 @@ public class ReservationService {
     private final CareTokenService careTokenService;
     private final ReportRepository reportRepository;
     private final DisputeRepository disputeRepository;
+    private final RenterNotificationService renterNotificationService;
 
     @Value("${ai.scratch.similarity-threshold:60.0}")
     private double similarityThreshold;
@@ -91,6 +93,13 @@ public class ReservationService {
 
         log.info("[Reservation] 예약 생성 | id={}, renter={}, car={}, price={}, txHash={}",
                 reservation.getReservationId(), userId, request.carId(), totalPrice, txHash);
+
+        try {
+            String modelName = car.getCarModel().getModelName();
+            renterNotificationService.createReservationCreatedNotification(renter, reservation.getReservationId(), modelName, totalPrice);
+        } catch (Exception e) {
+            log.warn("[Reservation] 예약 알림 전송 실패: {}", e.getMessage());
+        }
 
         return ReservationCreateResponse.from(reservation);
     }
@@ -157,6 +166,13 @@ public class ReservationService {
             saveReport(reservation);
         } catch (Exception e) {
             log.warn("[Reservation] AI 리포트 생성 중 오류 발생: {}", e.getMessage());
+        }
+
+        try {
+            String modelName = reservation.getOwnedCar().getCarModel().getModelName();
+            renterNotificationService.createReservationCompletedNotification(reservation.getRenter(), reservationId, modelName);
+        } catch (Exception e) {
+            log.warn("[Reservation] 반납 알림 전송 실패: {}", e.getMessage());
         }
 
         return ReservationReturnResponse.of(

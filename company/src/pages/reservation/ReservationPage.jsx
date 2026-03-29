@@ -4,13 +4,13 @@ import ReservationTable from '../../components/ReservationTable'
 import ReservationService from '../../services/ReservationService'
 import './ReservationPage.css'
 
-// 여기는 하드코딩 — API 실패 또는 데이터 없을 때 사용하는 폴백
+// API 실패 또는 데이터 없을 때 사용하는 폴백
 const MOCK_RESERVATIONS = [
-  { id: 'RES-2603-01', carName: 'Tesla Model 3', carType: '123가 4567', renterName: '김현우', renterCountry: '삼성화재', startDate: '2026.03.26 10:00', endDate: '2026.03.28 10:00', location: '서울 강남구', amount: '150,000원', status: '이용중', category: 'ongoing' },
-  { id: 'RES-2603-02', carName: 'Hyundai Ioniq 5', carType: '890나 1234', renterName: '이서연', renterCountry: '현대해상', startDate: '2026.03.25 14:00', endDate: '2026.03.27 14:00', location: '부산 해운대구', amount: '120,000원', status: '반납대기', category: 'ongoing' },
-  { id: 'RES-2603-03', carName: 'Kia EV6', carType: '456다 7890', renterName: '박지훈', renterCountry: 'KB손해보험', startDate: '2026.03.20 09:00', endDate: '2026.03.22 09:00', location: '제주 국제공항', amount: '200,000원', status: '반납완료', category: 'completed' },
-  { id: 'RES-2603-04', carName: 'Genesis GV60', carType: '111라 2222', renterName: '최유진', renterCountry: 'DB손해보험', startDate: '2026.03.27 11:00', endDate: '2026.03.30 11:00', location: '인천 연수구', amount: '180,000원', status: '예약완료', category: 'ongoing' },
-  { id: 'RES-2603-05', carName: 'Polestar 2', carType: '333마 4444', renterName: '정민수', renterCountry: '메리츠화재', startDate: '2026.03.26 15:00', endDate: '2026.03.29 15:00', location: '서울 서초구', amount: '165,000원', status: '분쟁중', category: 'dispute' },
+  { id: 'RES-2603-01', carName: 'Tesla Model 3', carType: '123가 4567', renterName: '김현우', renterCountry: '삼성화재', startDate: '2026.03.26 10:00', endDate: '2026.03.28 10:00', location: '서울 강남구', amount: '150,000 CARE', status: '이용중', category: 'ongoing' },
+  { id: 'RES-2603-02', carName: 'Hyundai Ioniq 5', carType: '890나 1234', renterName: '이서연', renterCountry: '현대해상', startDate: '2026.03.25 14:00', endDate: '2026.03.27 14:00', location: '부산 해운대구', amount: '120,000 CARE', status: '반납대기', category: 'ongoing' },
+  { id: 'RES-2603-03', carName: 'Kia EV6', carType: '456다 7890', renterName: '박지훈', renterCountry: 'KB손해보험', startDate: '2026.03.20 09:00', endDate: '2026.03.22 09:00', location: '제주 국제공항', amount: '200,000 CARE', status: '반납완료', category: 'completed' },
+  { id: 'RES-2603-04', carName: 'Genesis GV60', carType: '111라 2222', renterName: '최유진', renterCountry: 'DB손해보험', startDate: '2026.03.27 11:00', endDate: '2026.03.30 11:00', location: '인천 연수구', amount: '180,000 CARE', status: '예약완료', category: 'ongoing' },
+  { id: 'RES-2603-05', carName: 'Polestar 2', carType: '333마 4444', renterName: '정민수', renterCountry: '메리츠화재', startDate: '2026.03.26 15:00', endDate: '2026.03.29 15:00', location: '서울 서초구', amount: '165,000 CARE', status: '분쟁중', category: 'dispute' },
 ]
 
 export default function ReservationPage() {
@@ -61,12 +61,12 @@ export default function ReservationPage() {
           id: reservation.reservationId,
           carName: `${reservation.brand || '-'} ${reservation.modelName || ''}`.trim(),
           carType: reservation.plateNumber || '-',
-          renterName: '-', // 여기는 하드코딩 — 예약 목록 API에 임차인 이름 없음
+          renterName: '-', // 예약 목록 API에 임차인 이름 미포함
           renterCountry: reservation.insuranceName || '-',
           startDate: formatDate(reservation.pickupDate),
           endDate: formatDate(reservation.returnDate),
-          location: '-', // 여기는 하드코딩 — 위치 정보 API 없음
-          amount: reservation.totalPrice != null ? `${reservation.totalPrice.toLocaleString()}원` : '-',
+          location: '-', // 위치 정보 API 미제공
+          amount: reservation.totalPrice != null ? `${reservation.totalPrice.toLocaleString()} CARE` : '-',
           status: getStatusLabel(reservation.status),
           category: getCategoryFromStatus(reservation.status, reservation.depositStatus),
         }))

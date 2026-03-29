@@ -73,7 +73,7 @@ export default function DamageDetailPage() {
                       onClick={() => setExpanded(isExpanded ? null : s.scratchId)}
                     >
                       <div className="dd-card-title-row">
-                        <span className="dd-reporter">{s.reporterName || `user_${s.scratchId * 111}`}</span>
+                        <span className="dd-reporter">{s.reporterName || '작성자 미상'}</span>
                         <span className={`dd-status-badge ${s.status === 'PENDING' ? 'badge-pending' : s.status === 'IN_PROGRESS' ? 'badge-progress' : 'badge-resolved'}`}>
                           {STATUS_LABELS[s.status] || s.status}
                         </span>

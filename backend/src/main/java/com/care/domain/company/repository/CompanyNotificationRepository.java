@@ -11,4 +11,6 @@ public interface CompanyNotificationRepository extends JpaRepository<CompanyNoti
     List<CompanyNotification> findByCompany_CompanyIdOrderByCreatedAtDesc(String companyId);
 
     Optional<CompanyNotification> findByNotificationIdAndCompany_CompanyId(String notificationId, String companyId);
+
+    void deleteByReservationId(String reservationId);
 }

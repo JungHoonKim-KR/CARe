@@ -181,7 +181,7 @@ export default function DisputePage() {
                   )}
                   {hasDefense && dispute.defenseOriginalS3Url && (
                     <div className="dp-scratch-img-wrap">
-                      <div className="dp-scratch-img-label">전체많이</div>
+                      <div className="dp-scratch-img-label">전체화면</div>
                       <img src={dispute.defenseOriginalS3Url} alt="증거 전체 사진" className="dp-scratch-img" />
                     </div>
                   )}

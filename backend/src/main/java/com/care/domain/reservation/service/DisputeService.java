@@ -196,7 +196,7 @@ public class DisputeService {
 
 	@Transactional(readOnly = true)
 	public List<DisputePreviousScratchResponse> getReservationScratchLogs(String requesterId,
-																			  String reservationId) {
+																		  String reservationId) {
 		Reservation reservation = reservationRepository.findByReservationId(reservationId)
 				.orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
 
@@ -336,8 +336,8 @@ public class DisputeService {
 		}
 	}
 	@Transactional
-    public DisputeSettleResponse settleDispute(String requesterId, String disputeId, DisputeSettleRequest request) {
-        Dispute dispute = disputeRepository.findByDisputeId(disputeId)
+	public DisputeSettleResponse settleDispute(String requesterId, String disputeId, DisputeSettleRequest request) {
+		Dispute dispute = disputeRepository.findByDisputeId(disputeId)
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 분쟁입니다: " + disputeId));
 		Reservation reservation = dispute.getReservation();
 		validateParticipantAccess(requesterId, reservation);
@@ -472,7 +472,7 @@ public class DisputeService {
 				LocalDateTime.now(),
 				usdcTxHash
 		);
-    }
+	}
 
 	private String transferUsdcByStatus(Reservation reservation, long finalAmount, SettlementStatus targetStatus) throws Exception {
 		String renterWallet = reservation.getRenter().getWalletAddress();

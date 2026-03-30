@@ -33,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -207,11 +206,12 @@ public class DisputeService {
 				.map(d -> d.getTargetScratch().getLogId())
 				.orElse(null);
 
-		List<Scratch> beforeScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "BEFORE");
-		List<Scratch> afterScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "AFTER");
+		String carId = reservation.getOwnedCar().getCarId();
+		List<Scratch> allScratches = scratchRepository.findByOwnedCar_CarId(carId);
 
-		return Stream.concat(beforeScratches.stream(), afterScratches.stream())
+		return allScratches.stream()
 				.filter(scratch -> !scratch.isManual())
+				.filter(scratch -> scratch.getCropS3Url() != null && !scratch.getCropS3Url().isBlank())
 				.filter(scratch -> !scratch.getLogId().equals(targetLogId))
 				.map(DisputePreviousScratchResponse::from)
 				.toList();

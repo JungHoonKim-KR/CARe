@@ -149,6 +149,39 @@ export default function DisputePage() {
               <h2 className="dp-card-title">{t('dispute.imageCompareTitle')}</h2>
               <div className="dp-compare-grid">
 
+                {/* AFTER: 업체 신고 */}
+                <div className="dp-compare-col">
+                  <div className="dp-compare-col-header after">
+                    <span className="dp-compare-badge after">{t('dispute.after')}</span>
+                    <div className="dp-compare-meta">
+                      <span className="dp-compare-who company">{t('dispute.companyReport')}</span>
+                      <span className="dp-compare-date">{formatDate(dispute.createdAt)}</span>
+                    </div>
+                  </div>
+                  <div className="dp-compare-imgs">
+                    {dispute.targetCropS3Url && (
+                      <div className="dp-scratch-img-wrap">
+                        <div className="dp-scratch-img-label">{t('dispute.closeUp')}</div>
+                        <img src={dispute.targetCropS3Url} alt={t('dispute.closeUp')} className="dp-scratch-img" />
+                      </div>
+                    )}
+                    {dispute.targetOriginalS3Url && (
+                      <div className="dp-scratch-img-wrap">
+                        <div className="dp-scratch-img-label">{t('dispute.fullPhoto')}</div>
+                        <img src={dispute.targetOriginalS3Url} alt={t('dispute.fullPhoto')} className="dp-scratch-img" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 중간 화살표 */}
+                <div className="dp-compare-arrow">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M5 12h14M13 6l6 6-6 6" stroke="#b0a898" strokeWidth="2"
+                      strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+
                 {/* BEFORE: 렌터 제출 */}
                 <div className="dp-compare-col">
                   <div className="dp-compare-col-header before">
@@ -178,69 +211,6 @@ export default function DisputePage() {
                       </div>
                     )}
                   </div>
-                  {dispute.targetCropS3Url && (
-                    <div className="dp-scratch-img-wrap">
-                      <div className="dp-scratch-img-label">클로즈업</div>
-                      <img src={dispute.targetCropS3Url} alt="손상 클로즈업" className="dp-scratch-img" />
-                    </div>
-                  )}
-                  {dispute.targetOriginalS3Url && (
-                    <div className="dp-scratch-img-wrap">
-                      <div className="dp-scratch-img-label">전체화면</div>
-                      <img src={dispute.targetOriginalS3Url} alt="손상 전체 사진" className="dp-scratch-img" />
-                    </div>
-                  )}
-                </div>
-
-                {/* 중간 화살표 */}
-                <div className="dp-compare-arrow">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M5 12h14M13 6l6 6-6 6" stroke="#b0a898" strokeWidth="2"
-                      strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-
-                {/* AFTER: 업체 신고 */}
-                <div className="dp-compare-col">
-                  <div className="dp-compare-col-header after">
-                    <span className="dp-compare-badge after">{t('dispute.after')}</span>
-                    <div className="dp-compare-meta">
-                      <span className="dp-compare-who company">{t('dispute.companyReport')}</span>
-                      <span className="dp-compare-date">{formatDate(dispute.createdAt)}</span>
-                    </div>
-                  </div>
-                  <div className="dp-compare-imgs">
-                    {dispute.targetCropS3Url && (
-                      <div className="dp-scratch-img-wrap">
-                        <div className="dp-scratch-img-label">{t('dispute.closeUp')}</div>
-                        <img src={dispute.targetCropS3Url} alt={t('dispute.closeUp')} className="dp-scratch-img" />
-                      </div>
-                    )}
-                    {dispute.targetOriginalS3Url && (
-                      <div className="dp-scratch-img-wrap">
-                        <div className="dp-scratch-img-label">{t('dispute.fullPhoto')}</div>
-                        <img src={dispute.targetOriginalS3Url} alt={t('dispute.fullPhoto')} className="dp-scratch-img" />
-                      </div>
-                    )}
-                  </div>
-                  {hasDefense && dispute.defenseCropS3Url && (
-                    <div className="dp-scratch-img-wrap">
-                      <div className="dp-scratch-img-label">클로즈업</div>
-                      <img src={dispute.defenseCropS3Url} alt="증거 클로즈업" className="dp-scratch-img" />
-                    </div>
-                  )}
-                  {hasDefense && dispute.defenseOriginalS3Url && (
-                    <div className="dp-scratch-img-wrap">
-                      <div className="dp-scratch-img-label">전체화면</div>
-                      <img src={dispute.defenseOriginalS3Url} alt="증거 전체 사진" className="dp-scratch-img" />
-                    </div>
-                  )}
-                  {!hasDefense && (
-                    <div className="dp-compare-empty">
-                      <span>📭</span>
-                      <p>현재는 제출한 이미지가 없습니다.</p>
-                    </div>
-                  )}
                 </div>
 
               </div>

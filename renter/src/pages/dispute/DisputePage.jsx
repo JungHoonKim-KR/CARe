@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import careLogo from '../../assets/care_logo.png'
 import { getDisputeDetail, settleDispute } from '../../api/reservation'
+import { parseReason } from '../../utils/parseReason'
 import './DisputePage.css'
 
 const LOCATION_LABELS = {
@@ -144,7 +145,7 @@ export default function DisputePage() {
             {dispute?.reason && (
               <div className="dp-settled-row">
                 <span className="dp-settled-label">분쟁 사유</span>
-                <span className="dp-settled-val">{dispute.reason}</span>
+                <span className="dp-settled-val">{parseReason(dispute.reason, t)}</span>
               </div>
             )}
           </div>
@@ -304,7 +305,7 @@ export default function DisputePage() {
               {dispute.reason && (
                 <div className="dp-info-row">
                   <span className="dp-info-label">{t('dispute.reason')}</span>
-                  <span className="dp-info-value">{dispute.reason}</span>
+                  <span className="dp-info-value">{parseReason(dispute.reason, t)}</span>
                 </div>
               )}
               {dispute.claimAmount != null && (

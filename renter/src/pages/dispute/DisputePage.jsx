@@ -145,7 +145,7 @@ export default function DisputePage() {
             {dispute?.reason && (
               <div className="dp-settled-row">
                 <span className="dp-settled-label">분쟁 사유</span>
-                <span className="dp-settled-val">{parseReason(dispute.reason, t)}</span>
+                <span className="dp-settled-val">{parseReason(dispute.reason)}</span>
               </div>
             )}
           </div>
@@ -340,7 +340,7 @@ export default function DisputePage() {
               {dispute.reason && (
                 <div className="dp-info-row">
                   <span className="dp-info-label">{t('dispute.reason')}</span>
-                  <span className="dp-info-value">{parseReason(dispute.reason, t)}</span>
+                  <span className="dp-info-value">{parseReason(dispute.reason)}</span>
                 </div>
               )}
               {dispute.claimAmount != null && (

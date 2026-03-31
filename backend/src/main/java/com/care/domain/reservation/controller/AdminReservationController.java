@@ -3,13 +3,16 @@ package com.care.domain.reservation.controller;
 import com.care.domain.reservation.service.AdminReservationService;
 import com.care.domain.reservation.service.DisputeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.Map;
 
 @RestController
@@ -33,6 +36,18 @@ public class AdminReservationController {
         return ResponseEntity.ok(Map.of(
                 "logId", logId,
                 "message", "흠집이 삭제되었습니다."
+        ));
+    }
+
+    @DeleteMapping("/scratches")
+    public ResponseEntity<Map<String, Object>> deleteScratchesByDate(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        int count = adminReservationService.deleteScratchesByDate(date);
+        return ResponseEntity.ok(Map.of(
+                "date", date.toString(),
+                "deletedCount", count,
+                "message", count + "개의 흠집이 삭제되었습니다."
         ));
     }
 

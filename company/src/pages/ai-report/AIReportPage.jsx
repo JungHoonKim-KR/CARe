@@ -209,10 +209,10 @@ export default function AIReportPage() {
       return
     }
 
-    createDisputeFn(targetLogId, claimAmount)
+    createDisputeFn(targetLogId, finalReason, claimAmount)
   }
 
-  const createDisputeFn = async (targetLogId, claimAmount) => {
+  const createDisputeFn = async (targetLogId, finalReason, claimAmount) => {
     setCreateLoading(true)
     setCreateError('')
 

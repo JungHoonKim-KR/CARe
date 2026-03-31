@@ -356,15 +356,16 @@
     "closeBtn": "閉じる",
     "explorerBtn": "ブロックチェーンエクスプローラーで表示"
   },
+
   "reservationTable": {
     "colReservationNo": "予約番号",
     "colCar": "車両",
-    "colRenter": "借主",
-    "colPeriod": "貸出期間",
+    "colRenter": "借り手",
+    "colPeriod": "レンタル期間",
     "colAmount": "金額",
-    "colStatus": "状態",
+    "colStatus": "ステータス",
     "emptyTitle": "予約履歴がありません。",
-    "emptySub": "該当カテゴリに予約が存在しません。",
+    "emptySub": "該当するカテゴリに予約が存在しません。",
     "statusInUse": "利用中",
     "statusReturnPending": "返却待ち",
     "statusReturned": "返却完了",

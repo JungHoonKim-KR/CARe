@@ -67,6 +67,7 @@ export default function ReservationPage() {
             endDate: formatDate(reservation.returnDate),
             amount: reservation.totalPrice != null ? `${reservation.totalPrice.toLocaleString()} CARE` : '-',
             status: getStatusLabel(reservation.status),
+            rawStatus: reservation.status,
             disputeId: reservation.disputeId || null,
             disputeStatus: reservation.disputeStatus || null,
             category: getCategoryFromStatus(reservation.status, reservation.depositStatus, reservation.disputeId, reservation.disputeStatus),

@@ -46,7 +46,7 @@ public class AdminReservationService {
         });
 
         // defense_log_id로 참조된 경우: dispute의 defense만 초기화
-        disputeRepository.findByDefenseScratch_LogId(logId).ifPresent(Dispute::clearDefenseScratch);
+        disputeRepository.findByDefenseScratch_LogId(logId).forEach(Dispute::clearDefenseScratch);
 
         scratchRepository.delete(scratch);
     }
@@ -65,7 +65,7 @@ public class AdminReservationService {
                 disputeRepository.delete(dispute);
             });
 
-            disputeRepository.findByDefenseScratch_LogId(logId).ifPresent(Dispute::clearDefenseScratch);
+            disputeRepository.findByDefenseScratch_LogId(logId).forEach(Dispute::clearDefenseScratch);
         }
 
         scratchRepository.deleteAll(scratches);

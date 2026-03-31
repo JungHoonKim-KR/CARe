@@ -15,6 +15,6 @@ public interface DisputeRepository extends JpaRepository<Dispute, String> {
     List<Dispute> findByReservation_OwnedCar_Company_CompanyIdOrderByCreatedAtDesc(String companyId);
     boolean existsByTargetScratch_LogIdAndStatusNotIn(String logId, List<String> statuses);
     Optional<Dispute> findByTargetScratch_LogId(String logId);
-    Optional<Dispute> findByDefenseScratch_LogId(String logId);
+    List<Dispute> findByDefenseScratch_LogId(String logId);
 
 }

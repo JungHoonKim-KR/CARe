@@ -17,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -47,6 +49,27 @@ public class AdminReservationService {
         disputeRepository.findByDefenseScratch_LogId(logId).ifPresent(Dispute::clearDefenseScratch);
 
         scratchRepository.delete(scratch);
+    }
+
+    @Transactional
+    public int deleteScratchesByDate(LocalDate date) {
+        LocalDateTime from = date.atStartOfDay();
+        LocalDateTime to = date.plusDays(1).atStartOfDay();
+        List<Scratch> scratches = scratchRepository.findByCreatedAtBetween(from, to);
+
+        for (Scratch scratch : scratches) {
+            String logId = scratch.getLogId();
+
+            disputeRepository.findByTargetScratch_LogId(logId).ifPresent(dispute -> {
+                dispute.getReservation().safeDeposit();
+                disputeRepository.delete(dispute);
+            });
+
+            disputeRepository.findByDefenseScratch_LogId(logId).ifPresent(Dispute::clearDefenseScratch);
+        }
+
+        scratchRepository.deleteAll(scratches);
+        return scratches.size();
     }
 
     @Transactional

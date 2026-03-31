@@ -402,22 +402,8 @@ export default function AIReportPage() {
 
             <div className="comparison-images">
               <div className="image-container">
-                <p className="image-label">{t('aiReport.imageLabel')} ({t('dispute.closeUp')})</p>
+                <p className="image-label">{t('aiReport.imageLabel')}</p>
                 {selectedComparison?.isNewScratch || !selectedComparison?.beforeCropS3Url ? (
-                  <div className="no-before-placeholder">
-                    <span className="no-before-icon">{'\ud83d\udeab'}</span>
-                    <p>{t('aiReport.noBeforeTitle')}</p>
-                  </div>
-                ) : (
-                  <img
-                    src={selectedComparison.beforeCropS3Url}
-                    alt="Before Crop"
-                    className="damage-image"
-                  />
-                )}
-
-                <p className="image-label" style={{ marginTop: '12px' }}>{t('aiReport.imageLabel')} ({t('dispute.fullPhoto')})</p>
-                {selectedComparison?.isNewScratch || !selectedComparison?.beforeOriginalS3Url ? (
                   <div className="no-before-placeholder">
                     <span className="no-before-icon">{'\ud83d\udeab'}</span>
                     <p>{t('aiReport.noBeforeTitle')}</p>
@@ -425,24 +411,17 @@ export default function AIReportPage() {
                   </div>
                 ) : (
                   <img
-                    src={selectedComparison.beforeOriginalS3Url}
-                    alt="Before Original"
+                    src={selectedComparison.beforeCropS3Url}
+                    alt="Before"
                     className="damage-image"
                   />
                 )}
               </div>
               <div className="image-container highlighted">
-                <p className="image-label">{t('aiReport.imageAfterLabel')} ({t('dispute.closeUp')})</p>
+                <p className="image-label">{t('aiReport.imageAfterLabel')}</p>
                 <img
                   src={selectedComparison?.afterCropS3Url || 'https://via.placeholder.com/400x300?text=No+After'}
-                  alt="After Crop"
-                  className="damage-image"
-                />
-
-                <p className="image-label" style={{ marginTop: '12px' }}>{t('aiReport.imageAfterLabel')} ({t('dispute.fullPhoto')})</p>
-                <img
-                  src={selectedComparison?.afterOriginalS3Url || 'https://via.placeholder.com/400x300?text=No+After'}
-                  alt="After Original"
+                  alt="After"
                   className="damage-image"
                 />
               </div>

@@ -178,6 +178,18 @@ export default function DisputePage() {
                       </div>
                     )}
                   </div>
+                  {dispute.targetCropS3Url && (
+                    <div className="dp-scratch-img-wrap">
+                      <div className="dp-scratch-img-label">클로즈업</div>
+                      <img src={dispute.targetCropS3Url} alt="손상 클로즈업" className="dp-scratch-img" />
+                    </div>
+                  )}
+                  {dispute.targetOriginalS3Url && (
+                    <div className="dp-scratch-img-wrap">
+                      <div className="dp-scratch-img-label">전체화면</div>
+                      <img src={dispute.targetOriginalS3Url} alt="손상 전체 사진" className="dp-scratch-img" />
+                    </div>
+                  )}
                 </div>
 
                 {/* 중간 화살표 */}
@@ -211,6 +223,24 @@ export default function DisputePage() {
                       </div>
                     )}
                   </div>
+                  {hasDefense && dispute.defenseCropS3Url && (
+                    <div className="dp-scratch-img-wrap">
+                      <div className="dp-scratch-img-label">클로즈업</div>
+                      <img src={dispute.defenseCropS3Url} alt="증거 클로즈업" className="dp-scratch-img" />
+                    </div>
+                  )}
+                  {hasDefense && dispute.defenseOriginalS3Url && (
+                    <div className="dp-scratch-img-wrap">
+                      <div className="dp-scratch-img-label">전체화면</div>
+                      <img src={dispute.defenseOriginalS3Url} alt="증거 전체 사진" className="dp-scratch-img" />
+                    </div>
+                  )}
+                  {!hasDefense && (
+                    <div className="dp-compare-empty">
+                      <span>📭</span>
+                      <p>현재는 제출한 이미지가 없습니다.</p>
+                    </div>
+                  )}
                 </div>
 
               </div>

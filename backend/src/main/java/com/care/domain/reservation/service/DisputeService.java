@@ -33,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -197,17 +196,23 @@ public class DisputeService {
 
 	@Transactional(readOnly = true)
 	public List<DisputePreviousScratchResponse> getReservationScratchLogs(String requesterId,
-																			  String reservationId) {
+																		  String reservationId) {
 		Reservation reservation = reservationRepository.findByReservationId(reservationId)
 				.orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
 
 		validateParticipantAccess(requesterId, reservation);
 
-		List<Scratch> beforeScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "BEFORE");
-		List<Scratch> afterScratches = scratchRepository.findByReservation_ReservationIdAndLogType(reservationId, "AFTER");
+		String targetLogId = disputeRepository.findByReservation_ReservationId(reservationId)
+				.map(d -> d.getTargetScratch().getLogId())
+				.orElse(null);
 
-		return Stream.concat(beforeScratches.stream(), afterScratches.stream())
+		String carId = reservation.getOwnedCar().getCarId();
+		List<Scratch> allScratches = scratchRepository.findByOwnedCar_CarId(carId);
+
+		return allScratches.stream()
 				.filter(scratch -> !scratch.isManual())
+				.filter(scratch -> scratch.getCropS3Url() != null && !scratch.getCropS3Url().isBlank())
+				.filter(scratch -> !scratch.getLogId().equals(targetLogId))
 				.map(DisputePreviousScratchResponse::from)
 				.toList();
 	}
@@ -331,8 +336,8 @@ public class DisputeService {
 		}
 	}
 	@Transactional
-    public DisputeSettleResponse settleDispute(String requesterId, String disputeId, DisputeSettleRequest request) {
-        Dispute dispute = disputeRepository.findByDisputeId(disputeId)
+	public DisputeSettleResponse settleDispute(String requesterId, String disputeId, DisputeSettleRequest request) {
+		Dispute dispute = disputeRepository.findByDisputeId(disputeId)
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 분쟁입니다: " + disputeId));
 		Reservation reservation = dispute.getReservation();
 		validateParticipantAccess(requesterId, reservation);
@@ -467,7 +472,7 @@ public class DisputeService {
 				LocalDateTime.now(),
 				usdcTxHash
 		);
-    }
+	}
 
 	private String transferUsdcByStatus(Reservation reservation, long finalAmount, SettlementStatus targetStatus) throws Exception {
 		String renterWallet = reservation.getRenter().getWalletAddress();

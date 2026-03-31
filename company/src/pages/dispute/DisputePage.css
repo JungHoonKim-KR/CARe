@@ -362,13 +362,15 @@
   min-width: 0;
 }
 .dp-compare-who {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 6px;
 }
 .dp-compare-who.company { color: #4A90E2; }
 .dp-compare-who.renter  { color: #D0021B; }
 .dp-compare-date {
-  font-size: 11px;
+  font-size: 12px;
   color: #b0a898;
   font-weight: 500;
 }

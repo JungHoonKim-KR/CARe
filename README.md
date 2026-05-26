@@ -441,7 +441,7 @@ Jenkinsfile                      # CI/CD Pipeline (Blue-Green 무중단 배포)
 
 **📹 Video Portfolio**
 
-[> 영상 포트폴리오는 추후 업데이트 예정입니다.](https://youtu.be/p3fs4m-h9Bw?si=KIqtkicPyjpTqwwz)
+[영상 포트폴리오](https://youtu.be/p3fs4m-h9Bw?si=KIqtkicPyjpTqwwz)
 
 ---
 

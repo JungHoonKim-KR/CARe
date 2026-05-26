@@ -447,9 +447,10 @@ Jenkinsfile                      # CI/CD Pipeline (Blue-Green 무중단 배포)
 
 
 **🗄️ ERD**
-
-> <img width="3940" height="1782" alt="ERD" src="https://github.com/user-attachments/assets/0758e723-27c9-4456-bd56-9a4dc7d222fa" />
-
+<details>
+<summary>자세히</summary>
+<img width="3940" height="1782" alt="ERD" src="https://github.com/user-attachments/assets/0758e723-27c9-4456-bd56-9a4dc7d222fa" />
+</details>
 
 ---
 

@@ -7,6 +7,9 @@
 CARe는 AI 신분증 인증, 얼굴 인식, YOLO 기반 흠집 탐지, 스마트 컨트랙트 자동 정산을 결합한  
 렌터카 서비스입니다. 렌터(사용자)와 업체 모두를 위한 듀얼 플랫폼으로 구성되어 있습니다.
 
+<img width="2000" height="1125" alt="E201_결선발표_최종_page-0018" src="https://github.com/user-attachments/assets/58468cb5-50db-4040-97e8-524192461bbc" />
+
+
 **개발 기간** : (추후 업데이트 예정)  
 **플랫폼** : Web (PWA) & Blockchain & AI  
 **개발 인원** : 6명
